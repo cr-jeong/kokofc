@@ -2,8 +2,8 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="우리 팀 풋살 라인업 매니저", layout="centered")
-st.title("⚽ 우리 팀 풋살 라인업 매니저")
+st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
+st.title("⚽ KOKO FC 풋살 라인업 매니저")
 st.caption("출전 횟수 균등 + 포지션 중복 방지 완벽 지원 버전")
 
 # 포지션 정의
