@@ -2,11 +2,19 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 풋살 라인업 매니저")
-st.caption("필드 균등 + 포지션 중복 방지 + 골레이로 로테이션 보장 버전")
+st.set_page_config(page_title="우리 팀 풋살 라인업 매니저", layout="centered")
+st.title("⚽ 우리 팀 풋살 라인업 매니저")
+st.caption("시각적 가독성 업그레이드 | 필드 균등 + 포지션 중복 방지 + 골레이로 로테이션")
 
-# 포지션 정의
+# 💡 포지션별 고유 이모지와 색상 정의 (구분을 쉽게 하기 위함)
+POS_CONFIG = {
+    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)'},
+    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)'},
+    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ ALA_R (우윙)'},
+    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO (수비)'},
+    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO (키퍼)'}
+}
+
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
 ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
@@ -26,7 +34,13 @@ with col1:
     
     with st.form(key="player_add_form", clear_on_submit=True):
         name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
-        wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS)
+        
+        # 선택창에도 이모지를 추가하여 직관성 업그레이드
+        wished_input = st.multiselect(
+            "2. 희망 포지션 선택 (생략 가능)", 
+            options=ALL_POSITIONS,
+            format_func=lambda x: POS_CONFIG[x]['label']
+        )
         submit_button = st.form_submit_button("🏃 선수 등록하기", use_container_width=True)
         
         if submit_button:
@@ -48,10 +62,11 @@ with col2:
 st.write(f"### 👥 참석 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
-        pos_text = ", ".join([p.split(" ")[0] for p in positions])
+        # 명단 출력 시 포지션별 이모지만 묶어서 이쁘게 노출
+        emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions])
         col_p, col_b = st.columns([4, 1])
         with col_p:
-            st.write(f"🏃 **{player}** <span style='color:gray; font-size:12px;'>({pos_text})</span>", unsafe_allow_html=True)
+            st.write(f"🏃 **{player}** <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
         with col_b:
             if st.button("제거", key=f"del_{player}"):
                 del st.session_state.players_dict[player]
@@ -61,40 +76,33 @@ else:
 
 st.markdown("---")
 
-# 2. 모든 포지션의 공정 분배 알고리즘
+# 모든 포지션의 공정 분배 알고리즘
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
     
-    # 1. 선수별 출전 횟수 관리 데이터 구조
-    field_counts = {name: 0 for name in player_names} # 필드 출전 횟수
-    gk_counts = {name: 0 for name in player_names}    # 💡 [추가] 골레이로 출전 횟수
-    
-    # 선수별 필드 포지션 소화 기록
-    player_pos_history = {
-        name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names
-    }
+    field_counts = {name: 0 for name in player_names} 
+    gk_counts = {name: 0 for name in player_names}    
+    player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names}
     
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
-        # 💡 [핵심 변경 1단계] 골레이로(GK) 선출 시에도 "가장 적게 키퍼를 본 사람" 우선
+        # [1단계] 골레이로(GK) 선출
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
         
-        # 동률 처리를 위해 섞은 뒤, '오늘 키퍼 장갑을 가장 적게 낀 순서'로 정렬
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         
-        # 가장 안 본 사람이 이번 쿼터 키퍼로 낙점
         chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
-        gk_counts[chosen_gk] += 1  # 키퍼 출전 횟수 증가
+        gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
         
-        # [2단계] 필드 플레이어 4명 선출 (필드 출전이 가장 적은 사람 최우선 고정)
+        # [2단계] 필드 플레이어 4명 선출
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
@@ -110,14 +118,12 @@ def generate_fair_lineups(players_pool, total_q):
             if not valid_wishes:
                 valid_wishes = available_positions.copy()
             
-            # 과거에 내가 안 뛰어본 필드 포지션 우선 정렬
             valid_wishes.sort(key=lambda pos: player_pos_history[player][pos])
             
             best_pos = valid_wishes[0]
             starters[best_pos] = player
             available_positions.remove(best_pos)
             
-            # 필드 기록 누적
             field_counts[player] += 1
             player_pos_history[player][best_pos] += 1
             
@@ -145,13 +151,16 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
         for idx, pos in enumerate(ALL_POSITIONS):
-            row[pos] = data["starters"][idx] if data["starters"][idx] else "미지정"
-        row["대기 명단"] = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
+            # 💡 표의 헤더 제목 컬럼명에 고유 이모지를 결합하여 시각적으로 완벽히 분류되도록 유도
+            header_label = POS_CONFIG[pos]['label']
+            row[header_label] = data["starters"][idx] if data["starters"][idx] else "미지정"
+        row["💤 대기 명단"] = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         edited_data.append(row)
         
+    # 표 출력
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 공정 분배 통계 표 출력 (필드와 키퍼를 나누어서 투명하게 공개)
+    # 공정 분배 통계 표 출력
     st.write("### 📊 최종 포지션별 출전 통계 (자동 계산 기준)")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
