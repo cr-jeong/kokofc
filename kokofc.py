@@ -81,6 +81,8 @@ def generate_fair_lineups(players_pool, total_q):
     
     field_counts = {name: 0 for name in player_names} 
     gk_counts = {name: 0 for name in player_names}    
+    
+    # 선수별 포지션 소화 기록 (나중에 표로 뿌릴 데이터)
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names}
     
     for q in range(1, total_q + 1):
@@ -129,7 +131,8 @@ def generate_fair_lineups(players_pool, total_q):
             "starters": [starters[pos] for pos in ALL_POSITIONS],
             "subs": actual_subs,
             "field_snapshot": field_counts.copy(),
-            "gk_snapshot": gk_counts.copy()
+            "gk_snapshot": gk_counts.copy(),
+            "history_snapshot": {name: player_pos_history[name].copy() for name in player_names} # 히스토리 스냅샷 저장
         }
     return lineups
 
@@ -156,17 +159,21 @@ if st.session_state.lineups:
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # [수정] 합계 컬럼이 삭제된 깔끔한 통계 표
-    st.write("### 📊 최종 포지션별 출전 통계")
+    # ✨ [대개편] 포지션별 상세 출전 횟수 표 생성
+    st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
-    final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
+    final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
     stats_data = []
     for name in st.session_state.players_dict.keys():
+        player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "필드 출전": f"{final_fields[name]}회",
-            "골레이로 출전": f"{final_gks[name]}회"
+            "🔥 PIVO (공격)": f"{player_history['PIVO (공격)']}회",
+            "⚡ ALA_L (좌윙)": f"{player_history['ALA_L (좌윙)']}회",
+            "✨ ALA_R (우윙)": f"{player_history['ALA_R (우윙)']}회",
+            "🛡️ FIXO (수비)": f"{player_history['FIXO (수비)']}회",
+            "🧤 GOLEIRO (키퍼)": f"{final_gks[name]}회"
         })
     st.table(stats_data)
