@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("구글 스프레드시트 DB 로드 + 필드 균등 완벽 분배 + 골레이로 독립 로테이션")
+st.caption("구글 스프레드시트 DB 로드 + 필드 균등 완벽 분배 + 골레이로 연속 출전 방지")
 
 # 구글 스프레드시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -53,10 +53,10 @@ def load_players_from_db():
     except Exception as e:
         return {}
 
-# 🛠️ 에러가 나던 저장 함수를 안전하게 수정
+# 쓰기 에러 방지를 위한 우회 함수
 def save_players_to_db(players_dict):
-    # 구글 서비스 계정(비밀키)이 없으면 시트 쓰기가 불가능하므로, 
-    # 에러를 내지 않고 캐시만 비워 앱 내부 메모리에서만 작동하도록 우회합니다.
+    # 단순 URL 공유로는 쓰기 권한이 제한되므로, 
+    # 에러 없이 캐시만 비우고 앱 내부 메모리(session_state)에서 실시간 수정되도록 처리합니다.
     st.cache_data.clear()
 
 # 앱 최초 실행 시 DB에서 선수 명단 동기화
@@ -118,7 +118,7 @@ else:
 
 st.markdown("---")
 
-# 라인업 생성 알고리즘
+# 라인업 생성 알고리즘 (골레이로 연속 출전 방지 버전)
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
@@ -126,14 +126,23 @@ def generate_fair_lineups(players_pool, total_q):
     gk_counts = {name: 0 for name in player_names}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names}
     
+    # 직전 쿼터 골레이로를 기억하기 위한 변수
+    last_quarter_gk = None
+    
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
+        # 1. 골레이로(GK) 후보군 필터링 (희망 포지션에 GK가 있는 선수들)
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
             
+        # 🚨 직전 쿼터 골레이로는 후보에서 제외 (단, 전체 후보가 1명뿐이면 연속 출전 허용)
+        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
+            gk_candidates.remove(last_quarter_gk)
+            
+        # 골레이로 선정: 누적 출전 횟수가 적은 순 -> 무작위 셔플
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         
@@ -142,6 +151,10 @@ def generate_fair_lineups(players_pool, total_q):
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
         
+        # 다음 쿼터를 위해 현재 골레이로 저장
+        last_quarter_gk = chosen_gk
+        
+        # 2. 필드 플레이어 선정 로직
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
