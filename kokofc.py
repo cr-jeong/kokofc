@@ -3,50 +3,7 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 페이지 설정
-st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("명단 저장 Ver + 필드 균등 완벽 분배 + 골레이로 독립 로테이션")
-
-# 구글 스프레드시트 연결 초기화
-conn = st.connection("gsheets", type=GSheetsConnection)
-
-# DB에서 선수 명단 로드 함수
-def load_players_from_db():
-    try:
-        # 구글 시트에서 데이터 읽기 (첫 2개 컬럼만)
-        df = conn.read(ttl="5s", usecols=[0, 1])
-        df = df.dropna(subset=['name']) # 이름이 비어있는 행 제거
-        
-        players_dict = {}
-        for _, row in df.iterrows():
-            name = str(row['name']).strip()
-            pos_str = str(row['positions']).strip()
-            
-            # 문자열로 저장된 포지션을 리스트로 변환
-            if pos_str and pos_str != 'nan':
-                positions = [p.strip() for p in pos_str.split(',')]
-            else:
-                positions = ALL_POSITIONS.copy()
-            players_dict[name] = positions
-        return players_dict
-    except Exception as e:
-        return {}
-
-# DB에 선수 명단 저장 함수
-def save_players_to_db(players_dict):
-    data = []
-    for name, positions in players_dict.items():
-        data.append({
-            "name": name,
-            "positions": ",".join(positions)
-        })
-    df = pd.DataFrame(data)
-    # 구글 시트에 덮어쓰기 업데이트
-    conn.update(data=df)
-    st.cache_data.clear()
-
-# 포지션 설정
+# 포지션 및 기본 설정
 POS_CONFIG = {
     'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)'},
     'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)'},
@@ -57,6 +14,50 @@ POS_CONFIG = {
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
 ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
+
+# 페이지 설정
+st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
+st.title("⚽ KOKO FC 😈 라인업 매니저")
+st.caption("구글 스프레드시트 DB 로드 + 필드 균등 완벽 분배 + 골레이로 독립 로테이션")
+
+# 구글 스프레드시트 연결 초기화
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# DB에서 선수 명단 로드 함수 (읽기는 안전하게 작동)
+def load_players_from_db():
+    try:
+        df = conn.read(ttl="5s")
+        if df.empty:
+            return {}
+            
+        players_dict = {}
+        for _, row in df.iterrows():
+            if len(row) >= 1 and pd.notna(row.iloc[0]):
+                name = str(row.iloc[0]).strip()
+                if not name or name.lower() == 'nan':
+                    continue
+                
+                pos_str = str(row.iloc[1]).strip() if len(row) >= 2 and pd.notna(row.iloc[1]) else ""
+                
+                if pos_str and pos_str.lower() != 'nan':
+                    positions = [p.strip() for p in pos_str.split(',')]
+                    positions = [p for p in positions if p in ALL_POSITIONS]
+                else:
+                    positions = ALL_POSITIONS.copy()
+                
+                if not positions:
+                    positions = ALL_POSITIONS.copy()
+                    
+                players_dict[name] = positions
+        return players_dict
+    except Exception as e:
+        return {}
+
+# 🛠️ 에러가 나던 저장 함수를 안전하게 수정
+def save_players_to_db(players_dict):
+    # 구글 서비스 계정(비밀키)이 없으면 시트 쓰기가 불가능하므로, 
+    # 에러를 내지 않고 캐시만 비워 앱 내부 메모리에서만 작동하도록 우회합니다.
+    st.cache_data.clear()
 
 # 앱 최초 실행 시 DB에서 선수 명단 동기화
 if 'players_dict' not in st.session_state:
@@ -69,7 +70,7 @@ st.subheader("⚙️ 설정 및 선수 등록")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.write("**① 선수 등록 (등록 시 구글 시트에 자동 저장)**")
+    st.write("**① 선수 등록 (실시간 반영)**")
     with st.form(key="player_add_form", clear_on_submit=True):
         name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
         wished_input = st.multiselect(
@@ -86,9 +87,8 @@ with col1:
                     st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
                 else:
                     st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
-                    # DB(구글시트)에 저장
                     save_players_to_db(st.session_state.players_dict)
-                    st.success(f"'{name}' 선수가 등록 및 DB에 저장되었습니다!")
+                    st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
                     st.rerun()
             else:
                 st.error("선수 이름을 먼저 입력해 주세요.")
@@ -96,7 +96,7 @@ with col1:
 with col2:
     st.write("**② 경기 설정**")
     total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=4)
-    if st.button("🔄 DB명단 새로고침", use_container_width=True):
+    if st.button("🔄 구글 시트 원본 로드 (새로고침)", use_container_width=True):
         st.session_state.players_dict = load_players_from_db()
         st.rerun()
 
@@ -104,7 +104,7 @@ with col2:
 st.write(f"### 👥 참석 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
-        emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions])
+        emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
         col_p, col_b = st.columns([4, 1])
         with col_p:
             st.write(f"🏃 **{player}** <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
