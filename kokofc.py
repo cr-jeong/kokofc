@@ -4,7 +4,7 @@ import random
 # 페이지 설정
 st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 풋살 라인업 매니저")
-st.caption("출전 횟수 균등 + 포지션 중복 방지 완벽 지원 버전")
+st.caption("필드 균등 + 포지션 중복 방지 + 골레이로 로테이션 보장 버전")
 
 # 포지션 정의
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
@@ -17,7 +17,7 @@ if 'players_dict' not in st.session_state:
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
 
-# 1. 설정 및 입력 섹션
+# 선수 등록 및 폼 섹션
 st.subheader("⚙️ 설정 및 선수 등록")
 col1, col2 = st.columns(2)
 
@@ -61,15 +61,16 @@ else:
 
 st.markdown("---")
 
-# 2. 포지션 다양성을 고려한 공정 분배 알고리즘
+# 2. 모든 포지션의 공정 분배 알고리즘
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
     
-    # 1. 선수별 필드 전체 출전 횟수 {선수명: 횟수}
-    play_counts = {name: 0 for name in player_names}
+    # 1. 선수별 출전 횟수 관리 데이터 구조
+    field_counts = {name: 0 for name in player_names} # 필드 출전 횟수
+    gk_counts = {name: 0 for name in player_names}    # 💡 [추가] 골레이로 출전 횟수
     
-    # 2. [추가] 선수별 각 포지션 소화 횟수 {선수명: {포지션: 횟수}}
+    # 선수별 필드 포지션 소화 기록
     player_pos_history = {
         name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names
     }
@@ -78,54 +79,53 @@ def generate_fair_lineups(players_pool, total_q):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
-        # [1단계] 골레이로(GK) 선출
+        # 💡 [핵심 변경 1단계] 골레이로(GK) 선출 시에도 "가장 적게 키퍼를 본 사람" 우선
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
-        chosen_gk = random.choice(gk_candidates)
+        
+        # 동률 처리를 위해 섞은 뒤, '오늘 키퍼 장갑을 가장 적게 낀 순서'로 정렬
+        random.shuffle(gk_candidates)
+        gk_candidates.sort(key=lambda name: gk_counts[name])
+        
+        # 가장 안 본 사람이 이번 쿼터 키퍼로 낙점
+        chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
+        gk_counts[chosen_gk] += 1  # 키퍼 출전 횟수 증가
         remaining.remove(chosen_gk)
         
-        # [2단계] 필드 플레이어 4명 선출 (가장 적게 뛴 사람 최우선 고정)
+        # [2단계] 필드 플레이어 4명 선출 (필드 출전이 가장 적은 사람 최우선 고정)
         random.shuffle(remaining)
-        remaining.sort(key=lambda name: play_counts[name])
+        remaining.sort(key=lambda name: field_counts[name])
         
         current_field_players = remaining[:4]
         actual_subs = remaining[4:]
         
-        # [3단계] 포지션 중복 방지를 매칭 시스템
+        # [3단계] 필드 플레이어 내 포지션 중복 방지 매칭
         available_positions = FIELD_POSITIONS.copy()
-        
-        # 선수가 이번 쿼터에 가질 수 있는 '포지션별 패널티(과거 해당 포지션 출전 횟수)' 점수 계산
-        # 점수가 낮을수록(안 뛰어본 포지션일수록) 매칭 우선권을 가짐
         random.shuffle(current_field_players)
         
-        # 4명의 자리를 하나씩 채우기
         for player in current_field_players:
-            # 해당 선수의 선호 포지션 중, 아직 이번 쿼터에 주인이 없는(available) 포지션 필터링
             valid_wishes = [pos for pos in players_pool[player] if pos in available_positions]
-            
-            # 만약 선호 포지션이 다 찼거나 없다면 모든 남은 필드 포지션 대상으로 확대
             if not valid_wishes:
                 valid_wishes = available_positions.copy()
             
-            # 💡 [핵심] 과거에 '내가 가장 적게 뛰어본 포지션' 순으로 정렬
+            # 과거에 내가 안 뛰어본 필드 포지션 우선 정렬
             valid_wishes.sort(key=lambda pos: player_pos_history[player][pos])
             
-            # 가장 안 뛰어본 최적의 포지션 확정
             best_pos = valid_wishes[0]
-            
             starters[best_pos] = player
             available_positions.remove(best_pos)
             
-            # 카운트 업데이트 (전체 필드 수 + 특정 포지션 누적 수)
-            play_counts[player] += 1
+            # 필드 기록 누적
+            field_counts[player] += 1
             player_pos_history[player][best_pos] += 1
             
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
             "subs": actual_subs,
-            "counts_snapshot": play_counts.copy()
+            "field_snapshot": field_counts.copy(),
+            "gk_snapshot": gk_counts.copy()
         }
     return lineups
 
@@ -151,10 +151,18 @@ if st.session_state.lineups:
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 공정 분배 통계 표
-    st.write("### 📊 최종 필드 출전 횟수 (자동 계산 기준)")
+    # 공정 분배 통계 표 출력 (필드와 키퍼를 나누어서 투명하게 공개)
+    st.write("### 📊 최종 포지션별 출전 통계 (자동 계산 기준)")
     last_quarter = list(st.session_state.lineups.keys())[-1]
-    final_counts = st.session_state.lineups[last_quarter]["counts_snapshot"]
+    final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
+    final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
     
-    stats_data = [{"선수명": name, "필드 출전 쿼터 수": f"{count}회"} for name, count in final_counts.items()]
+    stats_data = []
+    for name in st.session_state.players_dict.keys():
+        stats_data.append({
+            "선수명": name,
+            "필드 출전": f"{final_fields[name]}회",
+            "골레이로 출전": f"{final_gks[name]}회",
+            "총 출전 쿼터": f"{final_fields[name] + final_gks[name]}쿼터"
+        })
     st.table(stats_data)
