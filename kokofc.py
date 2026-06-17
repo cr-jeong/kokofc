@@ -48,7 +48,6 @@ with col1:
                 if name in st.session_state.players_dict:
                     st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
                 else:
-                    # 아무것도 선택 안 하면 전 포지션 가능, 선택하면 '선택한 포지션만' 엄격 제한
                     st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                     st.rerun()
             else:
@@ -75,12 +74,11 @@ else:
 
 st.markdown("---")
 
-# 업데이트된 완벽 공정 분배 알고리즘
+# 모든 포지션의 공정 분배 알고리즘
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
     
-    # 통계 추적용 변수 (필드와 골레이로는 완벽히 독립적으로 카운트)
     field_counts = {name: 0 for name in player_names} 
     gk_counts = {name: 0 for name in player_names}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names}
@@ -89,48 +87,41 @@ def generate_fair_lineups(players_pool, total_q):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
-        # [1단계] 골레이로(GK) 우선 선출 (골레이로 출전 횟수가 가장 적은 사람)
+        # [1단계] 골레이로(GK) 선출
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates:  # 아무도 희망 안 했다면 전원 후보
+        if not gk_candidates:
             gk_candidates = remaining.copy()
             
         random.shuffle(gk_candidates)
-        gk_candidates.sort(key=lambda name: gk_counts[name])  # 오직 골레이로 뛴 횟수로만 정렬
+        gk_candidates.sort(key=lambda name: gk_counts[name])
         
         chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
-        remaining.remove(chosen_gk)  # 키퍼로 뽑힌 사람은 필드 후보에서 원천 제외
+        remaining.remove(chosen_gk)
         
-        # [2단계] 필드 플레이어 4명 선출 (★오직 '필드 출전 횟수'가 적은 순서대로)
+        # [2단계] 필드 플레이어 4명 선출
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
         current_field_players = remaining[:4]
         actual_subs = remaining[4:]
         
-        # [3단계] 선출된 필드 플레이어 4명을 포지션에 배치 (희망 포지션 엄격 반영)
+        # [3단계] 필드 플레이어 내 포지션 중복 방지 매칭
         available_positions = FIELD_POSITIONS.copy()
-        
-        # 안정적인 매칭을 위해 희망 포지션 개수가 적어 까다로운 선수부터 먼저 배치
         current_field_players.sort(key=lambda p: len([pos for pos in players_pool[p] if pos in FIELD_POSITIONS]))
         
         for player in current_field_players:
-            # 해당 선수의 희망 포지션 중 아직 남아있는 자리 필터링
             valid_wishes = [pos for pos in players_pool[player] if pos in available_positions]
-            
             if not valid_wishes:
-                # 만약 남은 포지션 중 희망하는 곳이 전혀 없다면, 어쩔 수 없이 남은 자리 중 과거에 가장 적게 서본 곳으로 강제 배정
                 valid_wishes = available_positions.copy()
             
-            # 과거에 해당 포지션을 적게 가본 순으로 정렬
             valid_wishes.sort(key=lambda pos: player_pos_history[player][pos])
             
             best_pos = valid_wishes[0]
             starters[best_pos] = player
             available_positions.remove(best_pos)
             
-            # 가중치 업데이트 (필드 카운트 증가)
             field_counts[player] += 1
             player_pos_history[player][best_pos] += 1
             
@@ -149,7 +140,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     else:
         st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, total_quarters)
 
-# 결과 표 출력 및 수정
+# 3. 결과 표 출력 및 수정
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
@@ -165,7 +156,7 @@ if st.session_state.lineups:
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 완전히 분리된 출전 통계 표 출력
+    # [수정] 합계 컬럼이 삭제된 깔끔한 통계 표
     st.write("### 📊 최종 포지션별 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -176,7 +167,6 @@ if st.session_state.lineups:
         stats_data.append({
             "선수명": name,
             "필드 출전": f"{final_fields[name]}회",
-            "골레이로 출전": f"{final_gks[name]}회",
-            "총 출전 (합계)": f"{final_fields[name] + final_gks[name]}쿼터"
+            "골레이로 출전": f"{final_gks[name]}회"
         })
     st.table(stats_data)
