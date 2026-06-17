@@ -2,9 +2,9 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 풋살 라인업 매니저")
-st.caption("필드 출전 횟수 100% 공정 분배 보장 버전")
+st.set_page_config(page_title="우리 팀 풋살 라인업 매니저", layout="centered")
+st.title("⚽ 우리 팀 풋살 라인업 매니저")
+st.caption("출전 횟수 균등 + 포지션 중복 방지 완벽 지원 버전")
 
 # 포지션 정의
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
@@ -13,20 +13,9 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 # 세션 상태 초기화
 if 'players_dict' not in st.session_state:
-    st.session_state.players_dict = {}  # {이름: [희망포지션 리스트]}
+    st.session_state.players_dict = {}
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
-
-# 선수 등록 함수
-def add_player_action():
-    name = st.session_state.player_name_input.strip()
-    if name:
-        if name in st.session_state.players_dict:
-            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
-        else:
-            st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
-    else:
-        st.error("선수 이름을 먼저 입력해 주세요.")
 
 # 1. 설정 및 입력 섹션
 st.subheader("⚙️ 설정 및 선수 등록")
@@ -72,19 +61,24 @@ else:
 
 st.markdown("---")
 
-# 2. 고도화된 공정 분배 라인업 생성 알고리즘
+# 2. 포지션 다양성을 고려한 공정 분배 알고리즘
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
     
-    # 선수별 필드(골레이로 제외) 출전 횟수만 카운트
+    # 1. 선수별 필드 전체 출전 횟수 {선수명: 횟수}
     play_counts = {name: 0 for name in player_names}
+    
+    # 2. [추가] 선수별 각 포지션 소화 횟수 {선수명: {포지션: 횟수}}
+    player_pos_history = {
+        name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names
+    }
     
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
-        # [핵심 변경 1단계] 골레이로(GK) 먼저 선출 (GK 선출은 필드 출전 횟수와 독립적)
+        # [1단계] 골레이로(GK) 선출
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
@@ -92,36 +86,41 @@ def generate_fair_lineups(players_pool, total_q):
         starters[GK_POSITION] = chosen_gk
         remaining.remove(chosen_gk)
         
-        # [핵심 변경 2단계] 필드 플레이어 4명 "무조건 출전 적은 사람"으로 선발 고정
-        random.shuffle(remaining) # 동률 처리를 위한 랜덤 셔플
-        remaining.sort(key=lambda name: play_counts[name]) # 출전 적은 순 정렬
+        # [2단계] 필드 플레이어 4명 선출 (가장 적게 뛴 사람 최우선 고정)
+        random.shuffle(remaining)
+        remaining.sort(key=lambda name: play_counts[name])
         
-        # 이번 쿼터 필드에서 뛸 최종 4명 확정 (출전 기회 균등 100% 보장)
         current_field_players = remaining[:4]
         actual_subs = remaining[4:]
         
-        # [핵심 변경 3단계] 뽑힌 4명 안에서 최선의 포지션 배치 (그리디 매칭)
-        # 4명이 선호하는 포지션에 맞춰 배치하되, 선호가 겹치거나 없으면 남는 필드 자리에 들어감
+        # [3단계] 포지션 중복 방지를 매칭 시스템
         available_positions = FIELD_POSITIONS.copy()
         
-        # 선호 포지션이 뚜렷한 사람부터 우선 매칭하기 위해 선호 목록이 적은 사람 순으로 정렬
-        current_field_players.sort(key=lambda p: len(players_pool[p]))
+        # 선수가 이번 쿼터에 가질 수 있는 '포지션별 패널티(과거 해당 포지션 출전 횟수)' 점수 계산
+        # 점수가 낮을수록(안 뛰어본 포지션일수록) 매칭 우선권을 가짐
+        random.shuffle(current_field_players)
         
+        # 4명의 자리를 하나씩 채우기
         for player in current_field_players:
-            matched_pos = None
-            # 선수가 원하는 포지션 중 아직 남아있는 자리가 있는지 확인
-            for pos in FIELD_POSITIONS:
-                if pos in players_pool[player] and pos in available_positions:
-                    matched_pos = pos
-                    break
+            # 해당 선수의 선호 포지션 중, 아직 이번 쿼터에 주인이 없는(available) 포지션 필터링
+            valid_wishes = [pos for pos in players_pool[player] if pos in available_positions]
             
-            # 원하는 자리가 이미 다 찼거나 없다면 남아있는 아무 필드 자리나 배정
-            if not matched_pos:
-                matched_pos = available_positions[0]
-                
-            starters[matched_pos] = player
-            available_positions.remove(matched_pos)
-            play_counts[player] += 1  # 필드 출전 횟수 정상 카운트
+            # 만약 선호 포지션이 다 찼거나 없다면 모든 남은 필드 포지션 대상으로 확대
+            if not valid_wishes:
+                valid_wishes = available_positions.copy()
+            
+            # 💡 [핵심] 과거에 '내가 가장 적게 뛰어본 포지션' 순으로 정렬
+            valid_wishes.sort(key=lambda pos: player_pos_history[player][pos])
+            
+            # 가장 안 뛰어본 최적의 포지션 확정
+            best_pos = valid_wishes[0]
+            
+            starters[best_pos] = player
+            available_positions.remove(best_pos)
+            
+            # 카운트 업데이트 (전체 필드 수 + 특정 포지션 누적 수)
+            play_counts[player] += 1
+            player_pos_history[player][best_pos] += 1
             
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
