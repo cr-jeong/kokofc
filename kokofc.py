@@ -2,9 +2,9 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="KOKO FC 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 라인업 매니저")
-st.caption("모바일 오작동 방지 | 엔터 기능 제거 버전")
+st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
+st.title("⚽ KOKO FC 풋살 라인업 매니저")
+st.caption("모바일 오작동 방지 및 에러 픽스 버전")
 
 # 포지션 정의
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
@@ -17,46 +17,38 @@ if 'players_dict' not in st.session_state:
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
 
-# 선수 등록 함수 (버튼을 누를 때만 실행됨)
-def add_player_action():
-    name = st.session_state.player_name_input.strip()
-    if name:
-        if name in st.session_state.players_dict:
-            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
-        else:
-            # 선택된 희망 포지션 저장 (선택 안 하면 전체 가능으로 간주)
-            selected_pos = st.session_state.wished_positions_input
-            st.session_state.players_dict[name] = selected_pos if selected_pos else ALL_POSITIONS.copy()
-            
-            # 입력창 및 멀티셀렉트 초기화 유도 (세션 값 비우기)
-            st.session_state.player_name_input = ""
-    else:
-        st.error("선수 이름을 먼저 입력해 주세요.")
-
-# 1. 설정 섹션
+# 1. 설정 및 입력 섹션
 st.subheader("⚙️ 설정 및 선수 등록")
 col1, col2 = st.columns(2)
 
 with col1:
     st.write("**① 선수 등록 (이름 입력 ➡️ 포지션 선택 ➡️ 등록 버튼)**")
     
-    # [수정] on_change를 제거하여 엔터를 쳐도 아무 일도 일어나지 않게 만듭니다.
-    st.text_input(
-        "1. 선수 이름 입력", 
-        key="player_name_input", 
-        placeholder="예: 홍길동"
-    )
-    
-    st.multiselect(
-        "2. 희망 포지션 선택 (생략 가능)", 
-        options=ALL_POSITIONS,
-        key="wished_positions_input"
-    )
-    
-    # [핵심] 이제 오직 이 버튼을 터치해야만 등록이 진행됩니다.
-    if st.button("🏃 선수 등록하기", use_container_width=True):
-        add_player_action()
-        st.rerun()
+    # [에러 해결의 핵심] form 기능을 활용하여 입력창 값 초기화를 안전하게 처리합니다.
+    with st.form(key="player_add_form", clear_on_submit=True):
+        name_input = st.text_input(
+            "1. 선수 이름 입력", 
+            placeholder="예: 홍길동"
+        )
+        
+        wished_input = st.multiselect(
+            "2. 희망 포지션 선택 (생략 가능)", 
+            options=ALL_POSITIONS
+        )
+        
+        submit_button = st.form_submit_button("🏃 선수 등록하기", use_container_width=True)
+        
+        if submit_button:
+            name = name_input.strip()
+            if name:
+                if name in st.session_state.players_dict:
+                    st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                else:
+                    # 선택된 희망 포지션 저장 (선택 안 하면 전체 가능으로 간주)
+                    st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
+                    st.rerun()  # 화면 새로고침하여 리스트 반영
+            else:
+                st.error("선수 이름을 먼저 입력해 주세요.")
 
 with col2:
     st.write("**② 경기 설정**")
