@@ -1,12 +1,12 @@
 import streamlit as st
 import random
 
-# 페이지 설정
-st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 풋살 라인업 매니저")
-st.caption("시각적 가독성 업그레이드 | 필드 균등 + 포지션 중복 방지 + 골레이로 로테이션")
+# 페이지 설정 (브라우저 탭 제목 수정)
+st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
+st.title("⚽ KOKO FC 😈 라인업 매니저")
+st.caption("필드 균등 + 포지션 중복 방지 + 골레이로 로테이션 시스템")
 
-# 💡 포지션별 고유 이모지와 색상 정의 (구분을 쉽게 하기 위함)
+# 포지션별 고유 이모지와 색상 정의
 POS_CONFIG = {
     'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)'},
     'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)'},
@@ -35,7 +35,6 @@ with col1:
     with st.form(key="player_add_form", clear_on_submit=True):
         name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
         
-        # 선택창에도 이모지를 추가하여 직관성 업그레이드
         wished_input = st.multiselect(
             "2. 희망 포지션 선택 (생략 가능)", 
             options=ALL_POSITIONS,
@@ -62,7 +61,6 @@ with col2:
 st.write(f"### 👥 참석 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
-        # 명단 출력 시 포지션별 이모지만 묶어서 이쁘게 노출
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions])
         col_p, col_b = st.columns([4, 1])
         with col_p:
@@ -136,7 +134,7 @@ def generate_fair_lineups(players_pool, total_q):
     return lineups
 
 # 라인업 생성 실행 버튼
-if st.button("🚀 공정 분배 라인업 자동 생성", type="primary", use_container_width=True):
+if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     if len(st.session_state.players_dict) < 5:
         st.error("경기를 진행하려면 최소 5명 이상의 선수가 필요합니다!")
     else:
@@ -151,17 +149,15 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
         for idx, pos in enumerate(ALL_POSITIONS):
-            # 💡 표의 헤더 제목 컬럼명에 고유 이모지를 결합하여 시각적으로 완벽히 분류되도록 유도
             header_label = POS_CONFIG[pos]['label']
             row[header_label] = data["starters"][idx] if data["starters"][idx] else "미지정"
         row["💤 대기 명단"] = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         edited_data.append(row)
         
-    # 표 출력
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
     # 공정 분배 통계 표 출력
-    st.write("### 📊 최종 포지션별 출전 통계 (자동 계산 기준)")
+    st.write("### 📊 최종 포지션별 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
