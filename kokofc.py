@@ -2,8 +2,8 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="우리 팀 풋살 라인업 매니저", layout="centered")
-st.title("⚽ 우리 팀 풋살 라인업 매니저")
+st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
+st.title("⚽ KOKO FC 풋살 라인업 매니저")
 st.caption("시각적 가독성 업그레이드 | 필드 균등 + 포지션 중복 방지 + 골레이로 로테이션")
 
 # 💡 포지션별 고유 이모지와 색상 정의 (구분을 쉽게 하기 위함)
