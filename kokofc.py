@@ -2,22 +2,22 @@ import streamlit as st
 import random
 
 # 페이지 설정
-st.set_page_config(page_title="KOKO FC 풋살 라인업 매니저", layout="centered")
-st.title("⚽ KOKO FC 풋살 라인업 매니저")
-st.caption("이름 먼저 입력 ➡️ 희망 포지션 선택 버전")
+st.set_page_config(page_title="우리 팀 풋살 라인업 매니저", layout="centered")
+st.title("⚽ 우리 팀 풋살 라인업 매니저")
+st.caption("모바일 오작동 방지 | 엔터 기능 제거 버전")
 
 # 포지션 정의
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
 ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
-# 세션 상태 초기화 (오늘 경기 데이터만 메모리에 유지)
+# 세션 상태 초기화
 if 'players_dict' not in st.session_state:
     st.session_state.players_dict = {}  # {이름: [희망포지션 리스트]}
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
 
-# 엔터 및 버튼 클릭 시 실행되는 선수 등록 함수
+# 선수 등록 함수 (버튼을 누를 때만 실행됨)
 def add_player_action():
     name = st.session_state.player_name_input.strip()
     if name:
@@ -28,7 +28,7 @@ def add_player_action():
             selected_pos = st.session_state.wished_positions_input
             st.session_state.players_dict[name] = selected_pos if selected_pos else ALL_POSITIONS.copy()
             
-            # 입력창 비우기
+            # 입력창 및 멀티셀렉트 초기화 유도 (세션 값 비우기)
             st.session_state.player_name_input = ""
     else:
         st.error("선수 이름을 먼저 입력해 주세요.")
@@ -38,24 +38,22 @@ st.subheader("⚙️ 설정 및 선수 등록")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.write("**① 선수 등록 (이름 ➡️ 포지션 ➡️ Enter)**")
+    st.write("**① 선수 등록 (이름 입력 ➡️ 포지션 선택 ➡️ 등록 버튼)**")
     
-    # [수정] 이름을 가장 먼저 입력받습니다.
+    # [수정] on_change를 제거하여 엔터를 쳐도 아무 일도 일어나지 않게 만듭니다.
     st.text_input(
         "1. 선수 이름 입력", 
         key="player_name_input", 
-        placeholder="이름 입력 후 아래 포지션 선택 가능",
-        on_change=add_player_action  # 이름만 쓰고 바로 엔터 쳐도 올라운더로 등록됨
+        placeholder="예: 홍길동"
     )
     
-    # [수정] 포지션을 그 다음에 선택합니다.
     st.multiselect(
         "2. 희망 포지션 선택 (생략 가능)", 
         options=ALL_POSITIONS,
         key="wished_positions_input"
     )
     
-    # 클릭으로도 등록할 수 있는 버튼
+    # [핵심] 이제 오직 이 버튼을 터치해야만 등록이 진행됩니다.
     if st.button("🏃 선수 등록하기", use_container_width=True):
         add_player_action()
         st.rerun()
@@ -68,7 +66,7 @@ with col2:
 st.write(f"### 👥 참석 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
-        pos_text = ", ".join([p.split(" ")[0] for p in positions]) # 약어만 노출
+        pos_text = ", ".join([p.split(" ")[0] for p in positions])
         col_p, col_b = st.columns([4, 1])
         with col_p:
             st.write(f"🏃 **{player}** <span style='color:gray; font-size:12px;'>({pos_text})</span>", unsafe_allow_html=True)
@@ -85,15 +83,13 @@ st.markdown("---")
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
-    
-    # 선수별 필드 출전 횟수 기록용 {이름: 출전횟수}
     play_counts = {name: 0 for name in player_names}
     
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = player_names.copy()
         
-        # [1단계] 골레이로(GK) 선출 (GK 희망자 우선)
+        # [1단계] 골레이로(GK) 선출
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
@@ -102,11 +98,10 @@ def generate_fair_lineups(players_pool, total_q):
         starters[GK_POSITION] = chosen_gk
         remaining.remove(chosen_gk)
         
-        # [2단계] 필드 플레이어 4명 선출 (적게 뛴 사람 최우선 배치)
+        # [2단계] 필드 플레이어 4명 선출 (적게 뛴 사람 최우선)
         random.shuffle(remaining)
         remaining.sort(key=lambda name: play_counts[name])
         
-        # 필드 포지션 매칭
         for pos in FIELD_POSITIONS:
             matched_player = None
             for p in remaining:
@@ -119,18 +114,15 @@ def generate_fair_lineups(players_pool, total_q):
                 
             if matched_player:
                 starters[pos] = matched_player
-                play_counts[matched_player] += 1  # 필드 출전 횟수 누적
+                play_counts[matched_player] += 1
                 remaining.remove(matched_player)
                 
-        # 대기 명단 기록
         subs = remaining.copy()
-        
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
             "subs": subs,
             "counts_snapshot": play_counts.copy()
         }
-        
     return lineups
 
 # 라인업 생성 실행 버튼
@@ -153,7 +145,6 @@ if st.session_state.lineups:
         row["대기 명단"] = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         edited_data.append(row)
         
-    # 결과 데이터 에디터 출력
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
     # 공정 분배 통계 표
