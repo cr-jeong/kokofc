@@ -18,7 +18,8 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("구글 스프레드시트 DB 로드 + 필드 균등 완벽 분배 + 골레이로 연속 출전 방지")
+st.caption("KOKO 최고")
+st.caption("필드 균등 완벽 분배 + 골레이로 연속 출전 방지 + 계속 수정 중!")
 
 # 구글 스프레드시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
