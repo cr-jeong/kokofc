@@ -19,7 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석자 선택 기능 + 포지션 역전 방지 완벽 고도화 버전")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 추가 완료!")
 
 # 구글 스프레드시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -67,7 +67,28 @@ if 'attendance' not in st.session_state:
 # 명단이 바뀔 때 출석부 상태 동기화
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
-        st.session_state.attendance[p] = True # 기본값은 참석
+        st.session_state.attendance[p] = True
+
+# 💡 포지션 수정을 위한 팝업창(Dialog) 정의
+@st.dialog("🎯 희망 포지션 수정")
+def edit_position_dialog(player_name):
+    st.write(f"🏃 **{player_name}** 선수의 희망 포지션을 선택하세요.")
+    st.caption("아무것도 선택하지 않으면 '모든 포지션 가능'으로 설정됩니다.")
+    
+    current_wishes = st.session_state.players_dict[player_name]
+    
+    new_wishes = st.multiselect(
+        "희망 포지션 (복수 선택 가능)",
+        options=ALL_POSITIONS,
+        default=[p for p in current_wishes if p in ALL_POSITIONS],
+        format_func=lambda x: POS_CONFIG[x]['label']
+    )
+    
+    if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
+        # 비어있으면 전체 카피, 있으면 선택 항목 저장
+        st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
+        st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
+        st.rerun()
 
 # 설정 및 선수 등록 섹션
 st.subheader("⚙️ 설정 및 선수 등록")
@@ -106,21 +127,25 @@ with col2:
         st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
         st.rerun()
 
-# 참여 명단 출력 (체크박스 고도화)
+# 참여 명단 출력 (수정 버튼 도입)
 st.write(f"### 👥 전체 명단 및 오늘 참석 체크 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 명단 관리를 편하게 하기 위한 grid/column 배치
     for player, positions in list(st.session_state.players_dict.items()):
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
-        col_att, col_p, col_b = st.columns([1, 3, 1])
+        
+        # 버튼 배치를 위해 4개 컬럼으로 쪼갭니다 (참석체크, 이름/이모지, 수정버튼, 삭제버튼)
+        col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8])
         
         with col_att:
             st.session_state.attendance[player] = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}")
         with col_p:
             color = "black" if st.session_state.attendance[player] else "#A0A0A0"
             st.write(f"<span style='color:{color}; font-weight:bold;'>🏃 {player}</span> <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
+        with col_edit:
+            if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
+                edit_position_dialog(player) # 팝업 띄우기
         with col_b:
-            if st.button("제거", key=f"del_{player}"):
+            if st.button("제거", key=f"del_{player}", use_container_width=True):
                 del st.session_state.players_dict[player]
                 if player in st.session_state.attendance:
                     del st.session_state.attendance[player]
@@ -131,11 +156,9 @@ else:
 
 st.markdown("---")
 
-# 라인업 생성 알고리즘 (고도화 버전)
+# 라인업 생성 알고리즘
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
-    # 오늘 참석하는 선수들만 필터링
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
-    
     if len(active_players) < 5:
         return None
 
@@ -167,11 +190,10 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         remaining.remove(chosen_gk)
         last_quarter_gk = chosen_gk
         
-        # 2. 필드 플레이어 선정 (포지션 순서 셔플로 공평성 극대화)
+        # 2. 필드 플레이어 선정
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
-        # 포지션 매칭 순서를 매 쿼터 섞어서 특정 포지션 선점 독점을 방지합니다.
         shuffled_positions = FIELD_POSITIONS.copy()
         random.shuffle(shuffled_positions)
         
@@ -236,7 +258,6 @@ if st.session_state.lineups:
     final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
     stats_data = []
-    # 오늘 참석한 선수들만 통계에 표출
     for name in final_fields.keys():
         player_history = final_history[name]
         stats_data.append({
