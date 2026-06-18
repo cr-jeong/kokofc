@@ -3,41 +3,41 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 가독성 최적화 컬러 매칭
+# [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 파란색 분산(퍼플/그린) 조합
 POS_CONFIG = {
     'PIVO (공격)': {
         'emoji': '🔱', 
         'label': '🔱 PIVO (공격)', 
-        'bg': '#FEE2E2',     # 연한 레드
-        'color': '#B91C1C',  # 딥 레드
+        'bg': '#FEE2E2',     
+        'color': '#B91C1C',  
         'text': 'PIVO'
     },
     'ALA_L (좌윙)': {
         'emoji': '◀️', 
         'label': '◀️ ALA_L (좌윙)', 
-        'bg': '#F5F3FF',     # 연한 퍼플 (블루기를 빼고 신비로운 포인트)
-        'color': '#6D28D9',  # 딥 퍼플
+        'bg': '#F5F3FF',     
+        'color': '#6D28D9',  
         'text': 'ALA_L'
     },
     'ALA_R (우윙)': {
         'emoji': '▶️', 
         'label': '▶️ ALA_R (우윙)', 
-        'bg': '#F0FDF4',     # 연한 그린 (싱그럽고 역동적인 측면)
-        'color': '#15803D',  # 딥 그린
+        'bg': '#F0FDF4',     
+        'color': '#15803D',  
         'text': 'ALA_R'
     },
     'FIXO (수비)': {
         'emoji': '🛡️', 
         'label': '🛡️ FIXO (수비)', 
-        'bg': '#FFF7ED',     # 연한 오렌지/앰버
-        'color': '#C2410C',  # 딥 오렌지
+        'bg': '#FFF7ED',     
+        'color': '#C2410C',  
         'text': 'FIXO'
     },
     'GOLEIRO (키퍼)': {
         'emoji': '🧤', 
         'label': '🧤 GOLEIRO (키퍼)', 
-        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이
-        'color': '#475569',  # 묵직한 그레이
+        'bg': '#F1F5F9',     
+        'color': '#475569',  
         'text': 'GK'
     }
 }
@@ -151,20 +151,17 @@ st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
         for player, positions in st.session_state.players_dict.items():
-            # 1. 이전 세션 상태 확인
             prev_status = st.session_state.attendance.get(player, True)
             
-            # 레이아웃 구성을 위해 뼈대 먼저 생성
-            col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
+            # [모바일 최적화 비율] 참석체크(0.6), 이름(1.4), 배지(3.4), 버튼 구역(1.8)으로 재조정
+            col_att, col_name, col_badge, col_btn_group = st.columns([0.6, 1.4, 3.4, 1.8])
             
-            # 체크박스를 가장 먼저 렌더링하여 데이터 엇박자 완벽 해결
             with col_att:
                 is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
                 if is_attended != prev_status:
                     st.session_state.attendance[player] = is_attended
                     st.rerun()
             
-            # 확정된 최신 'is_attended' 상태를 기반으로 배지 HTML 생성 (한 줄 압축으로 코드 노출 완전 방지)
             badge_html = ""
             for p in positions:
                 if p in POS_CONFIG:
@@ -173,28 +170,29 @@ if st.session_state.players_dict:
                     text_color = "#94A3B8" if not is_attended else cfg['color']
                     badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
             
-            # 2. 선수 이름 출력 (출석이면 선명하게, 해제(불출석)되면 흐려지고 취소선)
             with col_name:
                 color = "#1E293B" if is_attended else "#94A3B8"
                 text_style = "font-weight:bold;" if is_attended else "text-decoration: line-through; opacity: 0.4;"
-                st.markdown(f"<div style='padding-top: 3px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='padding-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
-            # 3. 배지 출력 (출석이면 선명하게, 해제(불출석)되면 흐려짐)
             with col_badge:
                 badge_opacity = "1.0" if is_attended else "0.3"
-                st.markdown(f"<div style='padding-top: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='padding-top: 3px; opacity: {badge_opacity}; line-height: 1.6;'>{badge_html}</div>", unsafe_allow_html=True)
                 
-            with col_edit:
-                if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
-                    edit_position_dialog(player)
-                    
-            with col_b:
-                if st.button("제거", key=f"del_{player}", use_container_width=True):
-                    del st.session_state.players_dict[player]
-                    if player in st.session_state.attendance:
-                        del st.session_state.attendance[player]
-                    save_players_to_db(st.session_state.players_dict)
-                    st.rerun()
+            # [모바일 UX 변경 포인트] 수정 버튼과 제거 버튼을 한 컬럼 안에 좌우로 나란히 배치!
+            with col_btn_group:
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    # 톱니바퀴 이모지만 두어 공간을 확보하고 모바일 터치 영역 최적화
+                    if st.button("⚙️", key=f"edit_{player}", use_container_width=True, help="포지션 수정"):
+                        edit_position_dialog(player)
+                with btn_col2:
+                    if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
+                        del st.session_state.players_dict[player]
+                        if player in st.session_state.attendance:
+                            del st.session_state.attendance[player]
+                        save_players_to_db(st.session_state.players_dict)
+                        st.rerun()
 else:
     st.info("등록된 선수가 없습니다.")
 
