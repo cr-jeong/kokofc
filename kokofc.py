@@ -293,8 +293,8 @@ if st.session_state.lineups:
         # th:nth-child(1) -> 첫 번째 칸 (선수명) -> 초록색
         {'selector': 'th:nth-child(1)', 'props': [('background-color', '#14532D')]},
         
-        # th:nth-child(2) -> 두 번째 칸 (🏃 필드 출전 ) -> 보라색
-        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#5B21B6')]},
+        # th:nth-child(2) -> 두 번째 칸 (🏃 필드 출전 ) -> 남색
+        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#1E3A8A')]},
         
         # th:nth-child(3~6) -> 포지션 칸들 (PIVO, ALA_L, ALA_R, FIXO) -> 회색
         {'selector': 'th:nth-child(3)', 'props': [('background-color', '#374151')]},
@@ -302,7 +302,7 @@ if st.session_state.lineups:
         {'selector': 'th:nth-child(5)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(6)', 'props': [('background-color', '#374151')]},
         
-        # th:nth-child(7) -> 일곱 번째 칸 (🧤 GOLEIRO ) -> 짙은 블루
+        # th:nth-child(7) -> 일곱 번째 칸 (🧤 GOLEIRO ) -> 남색
         {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
     ]).hide(axis="index")
     
