@@ -3,13 +3,43 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 포지션 및 기본 설정 (배지 스타일링 정보 포함)
+# [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 가독성 최적화 컬러 매칭
 POS_CONFIG = {
-    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)', 'bg': '#FEE2E2', 'color': '#991B1B', 'text': 'PIVO'},
-    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)', 'bg': '#DBEAFE', 'color': '#1E40AF', 'text': 'ALA_L'},
-    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ ALA_R (우윙)', 'bg': '#D1FAE5', 'color': '#065F46', 'text': 'ALA_R'},
-    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO (수비)', 'bg': '#FEF3C7', 'color': '#92400E', 'text': 'FIXO'},
-    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO (키퍼)', 'bg': '#F3F4F6', 'color': '#374151', 'text': 'GK'}
+    'PIVO (공격)': {
+        'emoji': '🔱', 
+        'label': '🔱 PIVO (공격)', 
+        'bg': '#FEE2E2',     # 연한 레드 (공격적, 열정)
+        'color': '#B91C1C',  # 딥 레드
+        'text': 'PIVO'
+    },
+    'ALA_L (좌윙)': {
+        'emoji': '◀️', 
+        'label': '◀️ ALA_L (좌윙)', 
+        'bg': '#EFF6FF',     # 연한 블루 (신속, 시원한 돌파)
+        'color': '#1D4ED8',  # 딥 블루
+        'text': 'ALA_L'
+    },
+    'ALA_R (우윙)': {
+        'emoji': '▶️', 
+        'label': '▶️ ALA_R (우윙)', 
+        'bg': '#ECFDF5',     # 연한 에메랄드 (안정감 있는 전진)
+        'color': '#047857',  # 딥 에메랄드
+        'text': 'ALA_R'
+    },
+    'FIXO (수비)': {
+        'emoji': '🛡️', 
+        'label': '🛡️ FIXO (수비)', 
+        'bg': '#FFF7ED',     # 연한 오렌지/앰버 (든든하고 무게감 있는 수비)
+        'color': '#C2410C',  # 딥 오렌지
+        'text': 'FIXO'
+    },
+    'GOLEIRO (키퍼)': {
+        'emoji': '🧤', 
+        'label': '🧤 GOLEIRO (키퍼)', 
+        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이 (최후방의 차분함)
+        'color': '#475569',  # 묵직한 그레이
+        'text': 'GK'
+    }
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
@@ -127,15 +157,14 @@ if st.session_state.players_dict:
             # 레이아웃 구성을 위해 뼈대 먼저 생성
             col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
             
-            # [버그 해결 핵심] 체크박스를 가장 먼저 렌더링하여 현재 상태(is_attended)를 확정짓습니다!
+            # 체크박스를 가장 먼저 렌더링하여 데이터 엇박자 완벽 해결
             with col_att:
                 is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
-                # 변경되었다면 즉시 세션 상태 동기화 및 필요시 즉각 리런
                 if is_attended != prev_status:
                     st.session_state.attendance[player] = is_attended
                     st.rerun()
             
-            # 확정된 최신 'is_attended' 상태를 기반으로 배지 HTML 생성
+            # 확정된 최신 'is_attended' 상태를 기반으로 배지 HTML 생성 (한 줄 압축으로 코드 노출 완전 방지)
             badge_html = ""
             for p in positions:
                 if p in POS_CONFIG:
@@ -239,9 +268,9 @@ if st.session_state.lineups:
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n"
-        kakao_text += f"🔥 PIVO : {data['starters'][0] or '미지정'}\n"
-        kakao_text += f"⚡ ALA_L : {data['starters'][1] or '미지정'}\n"
-        kakao_text += f"✨ ALA_R : {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🔱 PIVO : {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"◀️ ALA_L : {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"▶️ ALA_R : {data['starters'][2] or '미정'}\n"
         kakao_text += f"🛡️ FIXO : {data['starters'][3] or '미지정'}\n"
         kakao_text += f"🧤 GOLEIRO : {data['starters'][4] or '미정'}\n"
         kakao_text += "\n"
@@ -294,9 +323,9 @@ function copyToClipboard() {{
             "선수명": name,
             "🧤 GK": f"{final_gks[name]}회",
             "🏃 필드": f"{final_fields[name]}회",
-            "🔥 PIVO": f"{player_history['PIVO (공격)']}회",
-            "⚡ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
-            "✨ ALA_R": f"{player_history['ALA_R (우윙)']}회",
+            "🔱 PIVO": f"{player_history['PIVO (공격)']}회",
+            "◀️ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
+            "▶️ ALA_R": f"{player_history['ALA_R (우윙)']}회",
             "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
         })
     
@@ -351,9 +380,9 @@ function copyToClipboard() {{
                     <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
                 </tr>
                 <tr>
-                    <th>🔥 PIVO</th>
-                    <th>⚡ ALA_L</th>
-                    <th>✨ ALA_R</th>
+                    <th>🔱 PIVO</th>
+                    <th>◀️ ALA_L</th>
+                    <th>▶️ ALA_R</th>
                     <th>🛡️ FIXO</th>
                 </tr>
             </thead>
