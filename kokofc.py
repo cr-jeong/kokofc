@@ -287,7 +287,7 @@ if st.session_state.lineups:
     }).set_table_styles([
         {'selector': 'th', 'props': [('color', 'white'), ('font-weight', 'normal'), ('text-align', 'center')]},
         {'selector': 'th:nth-child(1)', 'props': [('background-color', '#14532D')]},
-        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#5B21B6')]},
+        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#1E3A8A')]},
         {'selector': 'th:nth-child(3)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(4)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(5)', 'props': [('background-color', '#374151')]},
