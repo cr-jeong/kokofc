@@ -281,7 +281,7 @@ if st.session_state.lineups:
     
     df_stats = pd.DataFrame(stats_data)
     
-    # 🎨 타이틀 스타일 정의 (소괄호 누락 버그 해결 완료)
+    # 🎨 타이틀 스타일 정의
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
@@ -305,4 +305,5 @@ if st.session_state.lineups:
         {html_code}
     </div>
     """
-    st.write(custom_html, unsafe_allow_html=True)
+    # 💡 [버그 원천 해결] st.write -> st.html로 수정하여 HTML을 정상 렌더링합니다.
+    st.html(custom_html)
