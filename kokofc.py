@@ -116,35 +116,38 @@ with col2:
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
             st.rerun()
 
-# 참여 명단 출력
+# 참여 명단 출력 (불출석 시 음영 로직 완벽 수정)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
         for player, positions in st.session_state.players_dict.items():
             is_attended = st.session_state.attendance.get(player, True)
             
-            # [수정 포인트] 줄바꿈(엔터)을 완전히 제거하여 한 줄짜리 문자열로 처리
+            # 포지션 배지 가로 나열 HTML 빌드 (한 줄 압축으로 코드 노출 버그 방지)
             badge_html = ""
             for p in positions:
                 if p in POS_CONFIG:
                     cfg = POS_CONFIG[p]
+                    # 불출석(체크 해제) 상태면 배지 배경도 연한 회색으로 변환
                     bg_color = "#E2E8F0" if not is_attended else cfg['bg']
                     text_color = "#94A3B8" if not is_attended else cfg['color']
                     badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
             
-            # 레이아웃 간격 정렬을 위해 컬럼 배치 분리
+            # 레이아웃 정렬 컬럼
             col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
             
             with col_att:
                 st.session_state.attendance[player] = st.checkbox("참석", value=is_attended, key=f"att_{player}", label_visibility="collapsed")
             
             with col_name:
+                # [로직 전면 수정] 출석 상태일 때 선명하게, 체크 해제(불출석)되면 흐려지고 취소선!
                 color = "#1E293B" if is_attended else "#94A3B8"
-                text_style = "font-weight:bold;" if is_attended else "text-decoration: line-through; opacity: 0.5;"
+                text_style = "font-weight:bold;" if is_attended else "text-decoration: line-through; opacity: 0.4;"
                 st.markdown(f"<div style='padding-top: 3px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
             with col_badge:
-                badge_opacity = "1.0" if is_attended else "0.4"
+                # 불출석(체크 해제) 상태일 때 배지 영역 전체 투명도 0.3으로 다운
+                badge_opacity = "1.0" if is_attended else "0.3"
                 st.markdown(f"<div style='padding-top: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
                 
             with col_edit:
