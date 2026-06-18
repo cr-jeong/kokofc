@@ -282,20 +282,28 @@ if st.session_state.lineups:
             "🧤 GOLEIRO ": f"{final_gks[name]}회"
         })
     
-    # 💡 [컬러 서식 변경] DataFrame 스타일링을 통해 상단 제목 셀에 네이비 배경색을 입힙니다.
+    # 💡 [핵심 수정] 타이틀 줄의 각 칸(th) 마다 번호를 매겨 개별 색상을 주입합니다.
     df_stats = pd.DataFrame(stats_data)
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
-        {
-            'selector': 'th',
-            'props': [
-                ('background-color', '#1E3A8A'),  # 타이틀 셀 배경색 (진한 네이비)
-                ('color', 'white'),               # 글자색 (흰색)
-                ('font-weight', 'bold'),          # 볼드체
-                ('text-align', 'center')
-            ]
-        }
+        # th 공통 속성 (글자색, 정렬)
+        {'selector': 'th', 'props': [('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center')]},
+        
+        # th:nth-child(1) -> 첫 번째 칸 (선수명) -> 초록색
+        {'selector': 'th:nth-child(1)', 'props': [('background-color', '#14532D')]},
+        
+        # th:nth-child(2) -> 두 번째 칸 (🏃 필드 출전 ) -> 보라색
+        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#5B21B6')]},
+        
+        # th:nth-child(3~6) -> 포지션 칸들 (PIVO, ALA_L, ALA_R, FIXO) -> 회색
+        {'selector': 'th:nth-child(3)', 'props': [('background-color', '#374151')]},
+        {'selector': 'th:nth-child(4)', 'props': [('background-color', '#374151')]},
+        {'selector': 'th:nth-child(5)', 'props': [('background-color', '#374151')]},
+        {'selector': 'th:nth-child(6)', 'props': [('background-color', '#374151')]},
+        
+        # th:nth-child(7) -> 일곱 번째 칸 (🧤 GOLEIRO ) -> 짙은 블루
+        {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
     ]).hide(axis="index")
     
     st.write(styled_stats.to_html(), unsafe_allow_html=True)
