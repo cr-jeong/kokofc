@@ -116,33 +116,21 @@ with col2:
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
             st.rerun()
 
-# 참여 명단 출력 (간격 및 HTML 버그 전면 수정 완료)
+# 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
         for player, positions in st.session_state.players_dict.items():
             is_attended = st.session_state.attendance.get(player, True)
             
-            # 포지션 배지 가로 나열 HTML 빌드
+            # [수정 포인트] 줄바꿈(엔터)을 완전히 제거하여 한 줄짜리 문자열로 처리
             badge_html = ""
             for p in positions:
                 if p in POS_CONFIG:
                     cfg = POS_CONFIG[p]
                     bg_color = "#E2E8F0" if not is_attended else cfg['bg']
                     text_color = "#94A3B8" if not is_attended else cfg['color']
-                    badge_html += f"""
-                    <span style="
-                        background-color: {bg_color}; 
-                        color: {text_color}; 
-                        padding: 2px 6px; 
-                        border-radius: 6px; 
-                        font-size: 11px; 
-                        font-weight: 600; 
-                        margin-right: 4px;
-                        margin-bottom: 2px;
-                        display: inline-block;
-                    ">{cfg['emoji']} {cfg['text']}</span>
-                    """
+                    badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
             
             # 레이아웃 간격 정렬을 위해 컬럼 배치 분리
             col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
