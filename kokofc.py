@@ -149,56 +149,50 @@ with col2:
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 모바일에서 무조건 가로 배치를 강제하는 CSS 주입
-    st.markdown("""
-        <style>
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: center !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    with st.container(border=True):
-        for player, positions in st.session_state.players_dict.items():
-            prev_status = st.session_state.attendance.get(player, True)
-            
-            # 모바일 최적화 비율 조정
-            col_att, col_name, col_badge, col_btn_group = st.columns([0.6, 1.4, 3.4, 1.8])
-            
-            with col_att:
+    for player, positions in st.session_state.players_dict.items():
+        prev_status = st.session_state.attendance.get(player, True)
+        
+        # 각 선수를 깔끔한 개별 카드 컨테이너 박스로 감싸기
+        with st.container(border=True):
+            # [1단 가로 구조]: 체크박스와 이름 (모바일에서도 절대 깨지지 않는 기본 2열 조합)
+            top_col1, top_col2 = st.columns([0.15, 0.85])
+            with top_col1:
                 is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
                 if is_attended != prev_status:
                     st.session_state.attendance[player] = is_attended
                     st.rerun()
-            
-            badge_html = ""
-            for p in positions:
-                if p in POS_CONFIG:
-                    cfg = POS_CONFIG[p]
-                    bg_color = "#E2E8F0" if not is_attended else cfg['bg']
-                    text_color = "#94A3B8" if not is_attended else cfg['color']
-                    badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
-            
-            with col_name:
+                    
+            with top_col2:
                 color = "#1E293B" if is_attended else "#94A3B8"
-                text_style = "font-weight:bold;" if is_attended else "text-decoration: line-through; opacity: 0.4;"
-                st.markdown(f"<div style='padding-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
+                text_style = "font-weight:bold; font-size:15px;" if is_attended else "text-decoration: line-through; opacity: 0.4; font-size:15px;"
+                st.markdown(f"<div style='padding-top:2px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
+            
+            # 약간의 간격 확보
+            st.write("")
+            
+            # [2단 가로 구조]: 포지션 태그 리스트(왼쪽)와 조작 버튼 그룹(오른쪽)
+            bottom_col1, bottom_col2 = st.columns([0.7, 0.3])
+            
+            with bottom_col1:
+                badge_html = ""
+                for p in positions:
+                    if p in POS_CONFIG:
+                        cfg = POS_CONFIG[p]
+                        bg_color = "#E2E8F0" if not is_attended else cfg['bg']
+                        text_color = "#94A3B8" if not is_attended else cfg['color']
+                        badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
                 
-            with col_badge:
                 badge_opacity = "1.0" if is_attended else "0.3"
-                st.markdown(f"<div style='padding-top: 3px; opacity: {badge_opacity}; line-height: 1.6;'>{badge_html}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
                 
-            # [버그 완전 해결] 하위 컬럼을 쓰지 않고, 1개 컬럼 내부에 한 줄 강제 정렬 레이아웃 구성
-            with col_btn_group:
-                sub_col1, sub_col2 = st.columns(2)
-                with sub_col1:
-                    if st.button("⚙️", key=f"edit_{player}", use_container_width=True):
+            with bottom_col2:
+                # 버튼 두 개를 컴팩트하게 미니멀 정렬
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    if st.button("⚙️", key=f"edit_{player}", use_container_width=True, help="포지션 변경"):
                         edit_position_dialog(player)
-                with sub_col2:
-                    if st.button("❌", key=f"del_{player}", use_container_width=True):
+                with btn_col2:
+                    if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 삭제"):
                         del st.session_state.players_dict[player]
                         if player in st.session_state.attendance:
                             del st.session_state.attendance[player]
