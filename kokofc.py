@@ -19,7 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [UI 최적화] 원클릭 카톡 복사 버튼 탑재 완료!")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [UI 밸런스] 튀지 않는 무난한 복사 버튼 셋팅 완료!")
 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -251,72 +251,49 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
-    # -----------------------------------------------------------------------------
-    # 2. [기능 수정] UI에서 리스트를 완전히 숨기고 오직 [원클릭 복사] 기능만 버튼화
-    # -----------------------------------------------------------------------------
-    # 데이터 가공 및 백그라운드 문자열 빌드업 (개행 문자 자바스크립트용 이스케이프 포맷 반영)
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"=[ {quarter} ]=\\n"
         kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\\n"
         kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\\n"
-        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미지정'}\\n"
+        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미정'}\\n"
         kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\\n"
         kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\\n"
         bench_str = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         kakao_text += f"💤 대기 명단: {bench_str}\\n"
         kakao_text += "------------------------\\n"
 
-    # 컴공식 부모 창 window API 직접 타격형 자바스크립트 주입 (iframe 차단 우회)
-    html_button_code = f"""
-    <button onclick="copyToClipboard()" style="
-        width: 100%;
-        background-color: #25D366;
-        color: white;
-        border: none;
-        padding: 14px;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: background-color 0.2s;
-    " onmouseover="this.style.backgroundColor='#128C7E'" onmouseout="this.style.backgroundColor='#25D366'">
-        📱 카카오톡 공유용 라인업 복사하기
-    </button>
-
-    <script>
-    function copyToClipboard() {{
-        var textToCopy = `{kakao_text}`;
-        
-        // 부모 창이나 메인 브라우저 단에서 임시 DOM 트리를 빌드하여 iframe 보안 권한을 획득
-        var textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        textArea.style.position = "fixed";  // 화면 밖 영역으로 이탈 방지
-        document.body.appendChild(textArea);
-        textArea.select();
-        
-        try {{
-            var successful = document.execCommand('copy');
-            if(successful) {{
-                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다! 카톡창에 붙여넣기 하세요.');
-            }} else {{
-                alert('복사 실패 - 브라우저 권한을 확인해 주세요.');
-            }}
-        }} catch (err) {{
-            // 모바일 최신 기기 대응용 fallback
-            navigator.clipboard.writeText(textToCopy).then(function() {{
-                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
-            }}).catch(function(e) {{
-                alert('복사 실패: ' + e);
-            }});
+    # -----------------------------------------------------------------------------
+    # 2. [디자인 밸런싱 적용] 회색 마스터 무난 테마와 폰트 크기 동기화
+    # -----------------------------------------------------------------------------
+    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #E2E8F0; padding: 11px; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: normal; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s;" onmouseover="this.style.backgroundColor='#E2E8F0'; this.style.borderColor='#CBD5E1';" onmouseout="this.style.backgroundColor='#F0F2F6'; this.style.borderColor='#E2E8F0';">📋 카카오톡 공유용 라인업 복사하기</button>
+<script>
+function copyToClipboard() {{
+    var textToCopy = `{kakao_text}`;
+    var textArea = document.createElement("textarea");
+    textArea.value = textToCopy;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {{
+        var successful = document.execCommand('copy');
+        if(successful) {{
+            alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다! 카톡창에 붙여넣기 하세요.');
+        }} else {{
+            alert('복사 실패 - 브라우저 권한을 확인해 주세요.');
         }}
-        document.body.removeChild(textArea);
+    }} catch (err) {{
+        navigator.clipboard.writeText(textToCopy).then(function() {{
+            alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
+        }}).catch(function(e) {{
+            alert('복사 실패: ' + e);
+        }});
     }}
-    </script>
-    """
-    # UI상 회색 텍스트 리스트 박스를 원천 제거하고, 오직 '초록색 톡 공유 버튼'만 렌더링
-    st.components.v1.html(html_button_code, height=58)
+    document.body.removeChild(textArea);
+}}
+</script>"""
+    
+    st.components.v1.html(html_button_code, height=52)
     st.markdown("---")
     
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
@@ -327,7 +304,6 @@ if st.session_state.lineups:
         for idx, pos in enumerate(ALL_POSITIONS):
             header_label = POS_CONFIG[pos]['label']
             row[header_label] = data["starters"][idx] if data["starters"][idx] else "미지정"
-        row["💤 대기 명단"] = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         edited_data.append(row)
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
