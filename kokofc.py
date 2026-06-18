@@ -19,7 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [완벽 보안 우회] 카톡 공유 및 데이터 캐싱 완료!")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [UI 최적화] 원클릭 카톡 복사 버튼 탑재 완료!")
 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -30,7 +30,6 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 @st.cache_data(ttl=300)
 def load_players_from_db():
     try:
-        # header=None 추가 및 ttl=300(캐싱 데이터 유지) 설정을 통한 불필요한 트래픽/딜레이 방지
         df = conn.read(header=None, ttl=300)
         if df.empty:
             return {}
@@ -60,14 +59,13 @@ def load_players_from_db():
         return {}
 
 def save_players_to_db(players_dict):
-    # 명단 변경 혹은 제거 시 캐시를 명확히 휘발시켜 동기화 꼬임 방지
     st.cache_data.clear()
 
 # 앱 시작 시 구글 시트 원본 자동 로드 로직
 if 'first_load_done' not in st.session_state:
-    st.cache_data.clear()  # 구글 시트 기존 캐시 초기화
-    st.session_state.players_dict = load_players_from_db()  # 데이터 로드 (캐시 적용)
-    st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}  # 출석부 초기화
+    st.cache_data.clear()
+    st.session_state.players_dict = load_players_from_db()
+    st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
     st.session_state.first_load_done = True
 
 # 세션 상태 기본 변수 안전장치
@@ -254,23 +252,71 @@ if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
     # -----------------------------------------------------------------------------
-    # 2. [기능 추가 - 완벽 안정형] 브라우저 보안 정책을 100% 우회하는 카톡 복사용 텍스트 상자 매핑
+    # 2. [기능 수정] UI에서 리스트를 완전히 숨기고 오직 [원클릭 복사] 기능만 버튼화
     # -----------------------------------------------------------------------------
-    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
+    # 데이터 가공 및 백그라운드 문자열 빌드업 (개행 문자 자바스크립트용 이스케이프 포맷 반영)
+    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
     for quarter, data in st.session_state.lineups.items():
-        kakao_text += f"=[ {quarter} ]=\n"
-        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\n"
-        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\n"
-        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미지정'}\n"
-        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\n"
-        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\n"
+        kakao_text += f"=[ {quarter} ]=\\n"
+        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\\n"
+        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\\n"
+        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미지정'}\\n"
+        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\\n"
+        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\\n"
         bench_str = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
-        kakao_text += f"💤 대기 명단: {bench_str}\n"
-        kakao_text += "------------------------\n"
+        kakao_text += f"💤 대기 명단: {bench_str}\\n"
+        kakao_text += "------------------------\\n"
+
+    # 컴공식 부모 창 window API 직접 타격형 자바스크립트 주입 (iframe 차단 우회)
+    html_button_code = f"""
+    <button onclick="copyToClipboard()" style="
+        width: 100%;
+        background-color: #25D366;
+        color: white;
+        border: none;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: background-color 0.2s;
+    " onmouseover="this.style.backgroundColor='#128C7E'" onmouseout="this.style.backgroundColor='#25D366'">
+        📱 카카오톡 공유용 라인업 복사하기
+    </button>
+
+    <script>
+    function copyToClipboard() {{
+        var textToCopy = `{kakao_text}`;
         
-    st.write("### 📱 카카오톡 공유 영역")
-    st.caption("아래 박스 우측 상단의 복사(📋) 버튼을 누르면 스마트폰/PC 어디서든 완벽히 복사됩니다!")
-    st.code(kakao_text, language="text")
+        // 부모 창이나 메인 브라우저 단에서 임시 DOM 트리를 빌드하여 iframe 보안 권한을 획득
+        var textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed";  // 화면 밖 영역으로 이탈 방지
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {{
+            var successful = document.execCommand('copy');
+            if(successful) {{
+                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다! 카톡창에 붙여넣기 하세요.');
+            }} else {{
+                alert('복사 실패 - 브라우저 권한을 확인해 주세요.');
+            }}
+        }} catch (err) {{
+            // 모바일 최신 기기 대응용 fallback
+            navigator.clipboard.writeText(textToCopy).then(function() {{
+                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
+            }}).catch(function(e) {{
+                alert('복사 실패: ' + e);
+            }});
+        }}
+        document.body.removeChild(textArea);
+    }}
+    </script>
+    """
+    # UI상 회색 텍스트 리스트 박스를 원천 제거하고, 오직 '초록색 톡 공유 버튼'만 렌더링
+    st.components.v1.html(html_button_code, height=58)
     st.markdown("---")
     
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
@@ -307,7 +353,6 @@ if st.session_state.lineups:
     
     df_stats = pd.DataFrame(stats_data)
     
-    # 🎨 타이틀 스타일 정의
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
@@ -321,7 +366,6 @@ if st.session_state.lineups:
         {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
     ]).hide(axis="index")
     
-    # 📱 💡 [글자 크기 수정 완료] 스타일 시트에 font-size: 14px 강제 적용
     html_code = styled_stats.to_html()
     custom_html = f"""
     <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
