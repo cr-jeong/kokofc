@@ -121,7 +121,7 @@ with col1:
 
 with col2:
     st.write("**② 경기 설정**")
-    total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=4)
+    total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
     if st.button("🔄 구글 시트 원본 로드 (새로고침)", use_container_width=True):
         st.session_state.players_dict = load_players_from_db()
         st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
