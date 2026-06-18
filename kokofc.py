@@ -336,7 +336,7 @@ function copyToClipboard() {{
                 border-collapse: collapse;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 font-size: 13px;
-                text-align: center;
+                text-align: center !important;
                 background-color: #ffffff;
                 color: #334155;
             }}
@@ -346,17 +346,22 @@ function copyToClipboard() {{
                 font-weight: 600;
                 padding: 12px 8px;
                 border-bottom: 2px solid #e2e8f0;
+                text-align: center !important;
             }}
-            .modern-table td {{
+            /* 판다스가 우측 정렬하는 속성을 !important로 강제 무력화 */
+            .modern-table td, .modern-table tr th, .modern-table tr td {{
                 padding: 12px 8px;
                 border-bottom: 1px solid #f1f5f9;
+                text-align: center !important; 
             }}
             .modern-table tr:hover {{
                 background-color: #f8fafc;
             }}
+            /* 첫 번째 열(선수명)만 왼쪽 혹은 정가운데 정렬 (취향에 따라 선택) */
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
                 color: #0f172a;
+                text-align: center !important;
             }}
         </style>
         {html_code}
