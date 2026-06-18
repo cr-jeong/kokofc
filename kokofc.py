@@ -24,9 +24,7 @@ st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# -----------------------------------------------------------------------------
-# 1. [최적화] st.cache_data를 적용하여 구글 시트 로딩 속도 향상 (TTL 5분 설정)
-# -----------------------------------------------------------------------------
+# 구글 시트 로딩 속도 향상 (TTL 5분 설정)
 @st.cache_data(ttl=300)
 def load_players_from_db():
     try:
@@ -143,7 +141,7 @@ with col2:
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    for player, positions in list(st.session_state.players_dict.items()):
+    for player, positions in st.session_state.players_dict.items():
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
         
         col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8])
@@ -168,7 +166,7 @@ else:
 
 st.markdown("---")
 
-# 라인업 생성 알고리즘
+# 공정한 라인업 생성 알고리즘
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5:
@@ -185,7 +183,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
         
-        # 1. 골레이로(GK) 선정
+        # 1. 골레이로(GK) 선정 (이전 쿼터 키퍼 제외 및 출전 횟수 균등 분배)
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
@@ -202,7 +200,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         remaining.remove(chosen_gk)
         last_quarter_gk = chosen_gk
         
-        # 2. 필드 플레이어 선정
+        # 2. 필드 플레이어 선정 (출전 횟수 적은 선수 우선순위 배정)
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
@@ -224,11 +222,9 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
-        actual_subs = remaining
-            
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
-            "subs": actual_subs,
+            "subs": remaining,
             "field_snapshot": field_counts.copy(),
             "gk_snapshot": gk_counts.copy(),
             "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
@@ -251,18 +247,18 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
-    # 카톡 복사용 텍스트 가공 (대기 명단 완전히 제외)
+    # 카톡 공유용 텍스트 포맷팅
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"=[ {quarter} ]=\n"
-        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\n"
-        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\n"
-        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미정'}\n"
-        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\n"
-        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\n"
+        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] or '미지정'}\n"
+        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] or '미정'}\n"
         kakao_text += "------------------------\n"
 
-    # 무난한 회색 톤 + Streamlit 폰트 동기화 패널 버튼
+    # 공유하기 클립보드 복사 버튼 (HTML/JavaScript)
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #E2E8F0; padding: 11px; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: normal; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s;" onmouseover="this.style.backgroundColor='#E2E8F0'; this.style.borderColor='#CBD5E1';" onmouseout="this.style.backgroundColor='#F0F2F6'; this.style.borderColor='#E2E8F0';">📋 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
@@ -292,20 +288,20 @@ function copyToClipboard() {{
     
     st.components.v1.html(html_button_code, height=52)
     st.markdown("---")
-    
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
-    # 데이터 에디터 표에서도 대기 명단 컬럼 제외
+    # 데이터 에디터 표 생성
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
         for idx, pos in enumerate(ALL_POSITIONS):
             header_label = POS_CONFIG[pos]['label']
-            row[header_label] = data["starters"][idx] if data["starters"][idx] else "미지정"
+            row[header_label] = data["starters"][idx] or "미지정"
         edited_data.append(row)
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
+    # 최종 포지션별 상세 출전 통계 표 가공
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -321,12 +317,13 @@ function copyToClipboard() {{
             "🔥 PIVO ": f"{player_history['PIVO (공격)']}회",
             "⚡ ALA_L ": f"{player_history['ALA_L (좌윙)']}회",
             "✨ ALA_R ": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ FIXO ": f"{player_history['🛡️ FIXO (수비)']}회" if '🛡️ FIXO (수비)' in player_history else f"{player_history.get('FIXO (수비)', 0)}회",
+            "🛡️ FIXO ": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회",
             "🧤 GOLEIRO ": f"{final_gks[name]}회"
         })
     
     df_stats = pd.DataFrame(stats_data)
     
+    # 통계 표 스타일 지정
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
