@@ -19,12 +19,12 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("필드 균등 분배, 골레이로 연속 출전 방지 로직 추가 + 계속 수정 중!")
+st.caption("희망 포지션 우선 고려 + 필드 균등 분배, 골레이로 연속 출전 방지 로직 적용 완료!")
 
-# 구글 스프레드시트 연결 초기화
+# 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# DB에서 선수 명단 로드 함수 (읽기는 안전하게 작동)
+# DB에서 선수 명단 로드 함수
 def load_players_from_db():
     try:
         df = conn.read(ttl="5s")
@@ -56,8 +56,6 @@ def load_players_from_db():
 
 # 쓰기 에러 방지를 위한 우회 함수
 def save_players_to_db(players_dict):
-    # 단순 URL 공유로는 쓰기 권한이 제한되므로, 
-    # 에러 없이 캐시만 비우고 앱 내부 메모리(session_state)에서 실시간 수정되도록 처리합니다.
     st.cache_data.clear()
 
 # 앱 최초 실행 시 DB에서 선수 명단 동기화
@@ -119,7 +117,7 @@ else:
 
 st.markdown("---")
 
-# 라인업 생성 알고리즘 (골레이로 연속 출전 방지 버전)
+# 라인업 생성 알고리즘 (수정본)
 def generate_fair_lineups(players_pool, total_q):
     lineups = {}
     player_names = list(players_pool.keys())
@@ -155,28 +153,35 @@ def generate_fair_lineups(players_pool, total_q):
         # 다음 쿼터를 위해 현재 골레이로 저장
         last_quarter_gk = chosen_gk
         
-        # 2. 필드 플레이어 선정 로직
+        # 2. 필드 플레이어 선정 로직 (희망 포지션 우선 고려 매칭)
+        # 남은 선수들을 '출전 횟수가 적은 순 -> 무작위'로 미리 정렬해둡니다.
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
-        current_field_players = remaining[:4]
-        actual_subs = remaining[4:]
-        
-        available_positions = FIELD_POSITIONS.copy()
-        current_field_players.sort(key=lambda p: len([pos for pos in players_pool[p] if pos in FIELD_POSITIONS]))
-        
-        for player in current_field_players:
-            valid_wishes = [pos for pos in players_pool[player] if pos in available_positions]
-            if not valid_wishes:
-                valid_wishes = available_positions.copy()
+        # 포지션별 순회하며 가장 적합한 선수 매칭
+        for pos in FIELD_POSITIONS:
+            # 1순위: 해당 포지션을 희망하는 선수 목록
+            wished_candidates = [p for p in remaining if pos in players_pool[p]]
             
-            valid_wishes.sort(key=lambda pos: player_pos_history[player][pos])
-            best_pos = valid_wishes[0]
-            starters[best_pos] = player
-            available_positions.remove(best_pos)
+            if wished_candidates:
+                # 이미 앞에서 field_counts 순으로 정렬했으므로, 
+                # 희망자 중 가장 적게 출전한 선수가 0번째(맨 앞)에 위치합니다.
+                chosen_player = wished_candidates[0]
+            else:
+                # 2순위: 해당 포지션을 희망하는 선수가 남은 인원 중 없다면,
+                # 현재 가장 덜 뛴 선수 중에서 포지션 히스토리가 적은 사람을 선택합니다.
+                remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
+                chosen_player = remaining[0]
+                
+            starters[pos] = chosen_player
+            remaining.remove(chosen_player)
             
-            field_counts[player] += 1
-            player_pos_history[player][best_pos] += 1
+            # 기록 업데이트
+            field_counts[chosen_player] += 1
+            player_pos_history[chosen_player][pos] += 1
+            
+        # 포지션 선발 4명을 제외하고 남은 선수들은 대기 명단
+        actual_subs = remaining
             
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
