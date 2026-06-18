@@ -250,13 +250,13 @@ if st.session_state.lineups:
     # 카톡 공유용 텍스트 포맷팅
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
-        kakao_text += f"=[ {quarter} ]=\n"
-        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] or '미지정'}\n"
-        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] or '미지정'}\n"
-        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] or '미정'}\n"
-        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] or '미지정'}\n"
-        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] or '미정'}\n"
-        kakao_text += "------------------------\n"
+        kakao_text += f"-----[{quarter}]-----\n"
+        kakao_text += f"🔥 PIVO : {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"⚡ ALA_L : {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"✨ ALA_R : {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🛡️ FIXO : {data['starters'][3] or '미지정'}\n"
+        kakao_text += f"🧤 GOLEIRO : {data['starters'][4] or '미정'}\n"
+        kakao_text += "\n"  # 쿼터 간 구분을 위한 줄바꿈
 
     # 공유하기 클립보드 복사 버튼 (HTML/JavaScript)
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #E2E8F0; padding: 11px; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: normal; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s;" onmouseover="this.style.backgroundColor='#E2E8F0'; this.style.borderColor='#CBD5E1';" onmouseout="this.style.backgroundColor='#F0F2F6'; this.style.borderColor='#E2E8F0';">📋 카카오톡 공유용 라인업 복사하기</button>
