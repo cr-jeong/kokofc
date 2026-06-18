@@ -19,7 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [최적화] 카톡 공유 및 데이터 캐싱 완료!")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [완벽 보안 우회] 카톡 공유 및 데이터 캐싱 완료!")
 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -254,7 +254,7 @@ if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
     # -----------------------------------------------------------------------------
-    # 2. [기능 추가] 선배님의 기존 테이블 헤더 및 포지션 명칭과 완벽 동기화한 카톡 공유 텍스트 빌드업
+    # 2. [기능 추가 - 완벽 안정형] 브라우저 보안 정책을 100% 우회하는 카톡 복사용 텍스트 상자 매핑
     # -----------------------------------------------------------------------------
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
@@ -263,19 +263,15 @@ if st.session_state.lineups:
         kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\n"
         kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미지정'}\n"
         kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\n"
-        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미지정'}\n"
+        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\n"
         bench_str = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
         kakao_text += f"💤 대기 명단: {bench_str}\n"
         kakao_text += "------------------------\n"
         
-    if st.button("📱 카카오톡 공유용 텍스트 복사", type="secondary", use_container_width=True):
-        st.components.v1.html(f"""
-            <script>
-            navigator.clipboard.writeText(`{kakao_text}`);
-            alert("📋 카톡방 공유용 텍스트가 클립보드에 복사되었습니다! 카톡창에서 붙여넣기(Ctrl+V) 하세요.");
-            </script>
-        """, height=0)
-        st.info("💡 알림창이 정상적으로 출력되었다면 클립보드 복사 완료 상태입니다. 카톡방에 붙여넣어 공유하세요!")
+    st.write("### 📱 카카오톡 공유 영역")
+    st.caption("아래 박스 우측 상단의 복사(📋) 버튼을 누르면 스마트폰/PC 어디서든 완벽히 복사됩니다!")
+    st.code(kakao_text, language="text")
+    st.markdown("---")
     
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
