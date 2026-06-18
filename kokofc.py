@@ -8,35 +8,35 @@ POS_CONFIG = {
     'PIVO (공격)': {
         'emoji': '🔱', 
         'label': '🔱 PIVO (공격)', 
-        'bg': '#FEE2E2',     # 연한 레드 (공격적, 열정)
+        'bg': '#FEE2E2',     # 연한 레드
         'color': '#B91C1C',  # 딥 레드
         'text': 'PIVO'
     },
     'ALA_L (좌윙)': {
         'emoji': '◀️', 
         'label': '◀️ ALA_L (좌윙)', 
-        'bg': '#EFF6FF',     # 연한 블루 (신속, 시원한 돌파)
-        'color': '#1D4ED8',  # 딥 블루
+        'bg': '#F5F3FF',     # 연한 퍼플 (블루기를 빼고 신비로운 포인트)
+        'color': '#6D28D9',  # 딥 퍼플
         'text': 'ALA_L'
     },
     'ALA_R (우윙)': {
         'emoji': '▶️', 
         'label': '▶️ ALA_R (우윙)', 
-        'bg': '#ECFDF5',     # 연한 에메랄드 (안정감 있는 전진)
-        'color': '#047857',  # 딥 에메랄드
+        'bg': '#F0FDF4',     # 연한 그린 (싱그럽고 역동적인 측면)
+        'color': '#15803D',  # 딥 그린
         'text': 'ALA_R'
     },
     'FIXO (수비)': {
         'emoji': '🛡️', 
         'label': '🛡️ FIXO (수비)', 
-        'bg': '#FFF7ED',     # 연한 오렌지/앰버 (든든하고 무게감 있는 수비)
+        'bg': '#FFF7ED',     # 연한 오렌지/앰버
         'color': '#C2410C',  # 딥 오렌지
         'text': 'FIXO'
     },
     'GOLEIRO (키퍼)': {
         'emoji': '🧤', 
         'label': '🧤 GOLEIRO (키퍼)', 
-        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이 (최후방의 차분함)
+        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이
         'color': '#475569',  # 묵직한 그레이
         'text': 'GK'
     }
