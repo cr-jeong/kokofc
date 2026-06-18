@@ -281,7 +281,7 @@ if st.session_state.lineups:
     
     df_stats = pd.DataFrame(stats_data)
     
-    # 🎨 타이틀 스타일 정의 (Bold체 해제 및 칸별 개별 색상 부여)
+    # 🎨 타이틀 스타일 정의 (소괄호 누락 버그 해결 완료)
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
@@ -293,3 +293,16 @@ if st.session_state.lineups:
         {'selector': 'th:nth-child(5)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(6)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
+    ]).hide(axis="index")
+    
+    # 📱 모바일 가로 스크롤 및 글자 줄바꿈 방지 적용 후 출력
+    html_code = styled_stats.to_html()
+    custom_html = f"""
+    <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
+        <style>
+            table {{ white-space: nowrap !important; min-width: 600px; }}
+        </style>
+        {html_code}
+    </div>
+    """
+    st.write(custom_html, unsafe_allow_html=True)
