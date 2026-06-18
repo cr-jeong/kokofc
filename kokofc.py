@@ -281,4 +281,21 @@ if st.session_state.lineups:
             "🛡️ FIXO ": f"{player_history['🛡️ FIXO (수비)']}회" if '🛡️ FIXO (수비)' in player_history else f"{player_history.get('FIXO (수비)', 0)}회",
             "🧤 GOLEIRO ": f"{final_gks[name]}회"
         })
-    st.table(stats_data)
+    
+    # 💡 [컬러 서식 변경] DataFrame 스타일링을 통해 상단 제목 셀에 네이비 배경색을 입힙니다.
+    df_stats = pd.DataFrame(stats_data)
+    styled_stats = df_stats.style.set_properties(**{
+        'text-align': 'center'
+    }).set_table_styles([
+        {
+            'selector': 'th',
+            'props': [
+                ('background-color', '#1E3A8A'),  # 타이틀 셀 배경색 (진한 네이비)
+                ('color', 'white'),               # 글자색 (흰색)
+                ('font-weight', 'bold'),          # 볼드체
+                ('text-align', 'center')
+            ]
+        }
+    ]).hide(axis="index")
+    
+    st.write(styled_stats.to_html(), unsafe_allow_html=True)
