@@ -60,7 +60,7 @@ def save_players_to_db(players_dict):
     st.cache_data.clear()
 
 # ========================================================
-# 💡 [핵심 수정] 앱 시작 시 구글 시트 원본 자동 로드 로직
+# 💡 앱 시작 시 구글 시트 원본 자동 로드 로직
 # ========================================================
 if 'first_load_done' not in st.session_state:
     st.cache_data.clear()  # 구글 시트 기존 캐시 초기화
@@ -146,11 +146,10 @@ if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
         
-        # 💡 vertical_alignment="center"를 추가하여 모든 요소를 수직 가운데 정렬합니다.
+        # 💡 수직 가운데 정렬 맞춤 옵션
         col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8], vertical_alignment="center")
         
         with col_att:
-            # label_visibility="collapsed"를 사용해 상단 공백 영역을 없앱니다.
             st.session_state.attendance[player] = st.checkbox(
                 "참석", 
                 value=st.session_state.attendance.get(player, True), 
@@ -159,7 +158,13 @@ if st.session_state.players_dict:
             )
         with col_p:
             color = "black" if st.session_state.attendance[player] else "#A0A0A0"
-            st.write(f"<div style='color:{color}; font-weight:bold; font-size:16px;'>🏃 {player} <span style='font-size:14px; font-weight:normal;'>{emojis}</span></div>", unsafe_allow_html=True)
+            # 💡 Flex 레이아웃을 주입하여 체크박스와 완벽하게 정중앙 일렬 정렬을 맞춥니다.
+            st.markdown(
+                f"<div style='color:{color}; font-weight:bold; font-size:16px; line-height:1; margin:0; padding:0; display:flex; align-items:center;'>"
+                f"🏃 {player} &nbsp;<span style='font-size:14px; font-weight:normal;'>{emojis}</span>"
+                f"</div>", 
+                unsafe_allow_html=True
+            )
         with col_edit:
             if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
                 edit_position_dialog(player)
