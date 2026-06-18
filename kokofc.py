@@ -326,7 +326,11 @@ function copyToClipboard() {{
         })
     
     df_stats = pd.DataFrame(stats_data)
-    html_code = df_stats.to_html(index=False, classes='modern-table')
+    
+    # 데이터 본문(tbody)의 html 코드만 추출합니다. (헤더는 수동으로 커스텀하기 위함)
+    html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
+    # <table ...> 태그와 </table> 태그 내부의 tbody 내용만 남깁니다.
+    tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
     custom_html = f"""
     <div style="overflow-x: auto; width: 100%; margin-top: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -344,27 +348,51 @@ function copyToClipboard() {{
                 background-color: #f8fafc;
                 color: #475569;
                 font-weight: 600;
-                padding: 12px 8px;
-                border-bottom: 2px solid #e2e8f0;
+                padding: 10px 8px;
+                border: 1px solid #e2e8f0;
                 text-align: center !important;
             }}
-            /* 판다스가 우측 정렬하는 속성을 !important로 강제 무력화 */
-            .modern-table td, .modern-table tr th, .modern-table tr td {{
+            /* 대분류 '상세' 헤더 배경색을 살짝 다르게 주어 구분감 추가 */
+            .modern-table th.main-header {{
+                background-color: #f1f5f9;
+                color: #1e293b;
+                font-size: 14px;
+            }}
+            .modern-table td {{
                 padding: 12px 8px;
-                border-bottom: 1px solid #f1f5f9;
+                border: 1px solid #f1f5f9;
                 text-align: center !important; 
             }}
             .modern-table tr:hover {{
                 background-color: #f8fafc;
             }}
-            /* 첫 번째 열(선수명)만 왼쪽 혹은 정가운데 정렬 (취향에 따라 선택) */
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
                 color: #0f172a;
-                text-align: center !important;
             }}
         </style>
-        {html_code}
+        
+        <table class="modern-table">
+            <thead>
+                <!-- 1층 헤더: 선수명, 필드는 그대로 두고 포지션 영역 상단을 '상세'로 병합 -->
+                <tr>
+                    <th rowspan="2" style="vertical-align: middle;">선수명</th>
+                    <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
+                    <th colspan="5" class="main-header">상세 (포지션별 출전 횟수)</th>
+                </tr>
+                <!-- 2층 헤더: 상세 아래에 들어갈 세부 포지션 이름들 -->
+                <tr>
+                    <th>🔥 PIVO</th>
+                    <th>⚡ ALA_L</th>
+                    <th>✨ ALA_R</th>
+                    <th>🛡️ FIXO</th>
+                    <th>🧤 GK</th>
+                </tr>
+            </thead>
+            <tbody>
+                {tbody_content}
+            </tbody>
+        </table>
     </div>
     """
     st.html(custom_html)
