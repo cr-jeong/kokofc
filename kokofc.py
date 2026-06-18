@@ -19,7 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [UI 밸런스] 튀지 않는 무난한 복사 버튼 셋팅 완료!")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 복사] 대기 명단 제외 버전!")
 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -251,21 +251,18 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
-    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
+    # 카톡 복사용 텍스트 가공 (대기 명단 완전히 제외)
+    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
-        kakao_text += f"=[ {quarter} ]=\\n"
-        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\\n"
-        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\\n"
-        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미정'}\\n"
-        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\\n"
-        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\\n"
-        bench_str = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
-        kakao_text += f"💤 대기 명단: {bench_str}\\n"
-        kakao_text += "------------------------\\n"
+        kakao_text += f"=[ {quarter} ]=\n"
+        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\n"
+        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\n"
+        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미정'}\n"
+        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\n"
+        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미정'}\n"
+        kakao_text += "------------------------\n"
 
-    # -----------------------------------------------------------------------------
-    # 2. [디자인 밸런싱 적용] 회색 마스터 무난 테마와 폰트 크기 동기화
-    # -----------------------------------------------------------------------------
+    # 무난한 회색 톤 + Streamlit 폰트 동기화 패널 버튼
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #F0F2F6; color: #31333F; border: 1px solid #E2E8F0; padding: 11px; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: normal; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s;" onmouseover="this.style.backgroundColor='#E2E8F0'; this.style.borderColor='#CBD5E1';" onmouseout="this.style.backgroundColor='#F0F2F6'; this.style.borderColor='#E2E8F0';">📋 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
@@ -278,15 +275,15 @@ function copyToClipboard() {{
     try {{
         var successful = document.execCommand('copy');
         if(successful) {{
-            alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다! 카톡창에 붙여넣기 하세요.');
+            alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
         }} else {{
-            alert('복사 실패 - 브라우저 권한을 확인해 주세요.');
+            alert('복사 실패');
         }}
     }} catch (err) {{
         navigator.clipboard.writeText(textToCopy).then(function() {{
             alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
         }}).catch(function(e) {{
-            alert('복사 실패: ' + e);
+            alert('복사 실패');
         }});
     }}
     document.body.removeChild(textArea);
@@ -298,6 +295,7 @@ function copyToClipboard() {{
     
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
+    # 데이터 에디터 표에서도 대기 명단 컬럼 제외
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
