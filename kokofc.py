@@ -128,7 +128,7 @@ with col2:
         st.rerun()
 
 # 참여 명단 출력 (수정 버튼 도입)
-st.write(f"### 👥 전체 명단 및 오늘 참석 체크 ({len(st.session_state.players_dict)}명)")
+st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
