@@ -26,7 +26,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_players_from_db():
     try:
-        # 💡 header=None 추가 및 ttl=0으로 설정하여 캐시 문제 방지
+        # header=None 추가 및 ttl=0으로 설정하여 캐시 문제 방지
         df = conn.read(header=None, ttl=0)
         if df.empty:
             return {}
@@ -52,16 +52,13 @@ def load_players_from_db():
                 players_dict[name] = positions
         return players_dict
     except Exception as e:
-        # 오류 발생 시 화면에 원인 출력
         st.error(f"구글 시트 로드 중 에러 발생: {e}")
         return {}
 
 def save_players_to_db(players_dict):
     st.cache_data.clear()
 
-# ========================================================
-# 💡 [핵심 수정] 앱 시작 시 구글 시트 원본 자동 로드 로직
-# ========================================================
+# 앱 시작 시 구글 시트 원본 자동 로드 로직
 if 'first_load_done' not in st.session_state:
     st.cache_data.clear()  # 구글 시트 기존 캐시 초기화
     st.session_state.players_dict = load_players_from_db()  # 데이터 강제 로드
@@ -81,7 +78,7 @@ for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
-# 💡 포지션 수정을 위한 팝업창(Dialog) 정의
+# 희망 포지션 수정을 위한 팝업창(Dialog) 정의
 @st.dialog("🎯 희망 포지션 수정")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 희망 포지션을 선택하세요.")
@@ -134,7 +131,7 @@ with col2:
     st.write("**② 경기 설정**")
     total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
     if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
-        st.cache_data.clear()  # 수동 리로드 시에도 캐시 클리어 추가
+        st.cache_data.clear()
         st.session_state.players_dict = load_players_from_db()
         st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
         st.success("구글 시트에서 명단을 다시 불러왔습니다!")
@@ -282,28 +279,30 @@ if st.session_state.lineups:
             "🧤 GOLEIRO ": f"{final_gks[name]}회"
         })
     
-    # 💡 [핵심 수정] 타이틀 줄의 각 칸(th) 마다 번호를 매겨 개별 색상을 주입합니다.
     df_stats = pd.DataFrame(stats_data)
+    
+    # 🎨 타이틀 스타일 정의 (Bold체 해제 및 칸별 개별 색상 부여)
     styled_stats = df_stats.style.set_properties(**{
         'text-align': 'center'
     }).set_table_styles([
-        # th 공통 속성 (글자색, 정렬)
         {'selector': 'th', 'props': [('color', 'white'), ('font-weight', 'normal'), ('text-align', 'center')]},
-        
-        # th:nth-child(1) -> 첫 번째 칸 (선수명) -> 초록색
         {'selector': 'th:nth-child(1)', 'props': [('background-color', '#14532D')]},
-        
-        # th:nth-child(2) -> 두 번째 칸 (🏃 필드 출전 ) -> 남색
-        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#1E3A8A')]},
-        
-        # th:nth-child(3~6) -> 포지션 칸들 (PIVO, ALA_L, ALA_R, FIXO) -> 회색
+        {'selector': 'th:nth-child(2)', 'props': [('background-color', '#5B21B6')]},
         {'selector': 'th:nth-child(3)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(4)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(5)', 'props': [('background-color', '#374151')]},
         {'selector': 'th:nth-child(6)', 'props': [('background-color', '#374151')]},
-        
-        # th:nth-child(7) -> 일곱 번째 칸 (🧤 GOLEIRO ) -> 남색
         {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
     ]).hide(axis="index")
     
-    st.write(styled_stats.to_html(), unsafe_allow_html=True)
+    # 📱 모바일 가로 스크롤 및 글자 줄바꿈 방지 적용 후 출력
+    html_code = styled_stats.to_html()
+    custom_html = f"""
+    <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
+        <style>
+            table {{ white-space: nowrap !important; min-width: 600px; }}
+        </style>
+        {html_code}
+    </div>
+    """
+    st.write(custom_html, unsafe_allow_html=True)
