@@ -19,15 +19,19 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 추가 완료!")
+st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [최적화] 카톡 공유 및 데이터 캐싱 완료!")
 
 # 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
+# -----------------------------------------------------------------------------
+# 1. [최적화] st.cache_data를 적용하여 구글 시트 로딩 속도 향상 (TTL 5분 설정)
+# -----------------------------------------------------------------------------
+@st.cache_data(ttl=300)
 def load_players_from_db():
     try:
-        # header=None 추가 및 ttl=0으로 설정하여 캐시 문제 방지
-        df = conn.read(header=None, ttl=0)
+        # header=None 추가 및 ttl=300(캐싱 데이터 유지) 설정을 통한 불필요한 트래픽/딜레이 방지
+        df = conn.read(header=None, ttl=300)
         if df.empty:
             return {}
             
@@ -56,12 +60,13 @@ def load_players_from_db():
         return {}
 
 def save_players_to_db(players_dict):
+    # 명단 변경 혹은 제거 시 캐시를 명확히 휘발시켜 동기화 꼬임 방지
     st.cache_data.clear()
 
 # 앱 시작 시 구글 시트 원본 자동 로드 로직
 if 'first_load_done' not in st.session_state:
     st.cache_data.clear()  # 구글 시트 기존 캐시 초기화
-    st.session_state.players_dict = load_players_from_db()  # 데이터 강제 로드
+    st.session_state.players_dict = load_players_from_db()  # 데이터 로드 (캐시 적용)
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}  # 출석부 초기화
     st.session_state.first_load_done = True
 
@@ -247,6 +252,31 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 # 결과 출력 섹션
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
+    
+    # -----------------------------------------------------------------------------
+    # 2. [기능 추가] 선배님의 기존 테이블 헤더 및 포지션 명칭과 완벽 동기화한 카톡 공유 텍스트 빌드업
+    # -----------------------------------------------------------------------------
+    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
+    for quarter, data in st.session_state.lineups.items():
+        kakao_text += f"=[ {quarter} ]=\n"
+        kakao_text += f"🔥 공격(PIVO): {data['starters'][0] if data['starters'][0] else '미지정'}\n"
+        kakao_text += f"⚡ 좌윙(ALA_L): {data['starters'][1] if data['starters'][1] else '미지정'}\n"
+        kakao_text += f"✨ 우윙(ALA_R): {data['starters'][2] if data['starters'][2] else '미지정'}\n"
+        kakao_text += f"🛡️ 수비(FIXO): {data['starters'][3] if data['starters'][3] else '미지정'}\n"
+        kakao_text += f"🧤 키퍼(GOLEIRO): {data['starters'][4] if data['starters'][4] else '미지정'}\n"
+        bench_str = ", ".join(data["subs"]) if data["subs"] else "- 없음 -"
+        kakao_text += f"💤 대기 명단: {bench_str}\n"
+        kakao_text += "------------------------\n"
+        
+    if st.button("📱 카카오톡 공유용 텍스트 복사", type="secondary", use_container_width=True):
+        st.components.v1.html(f"""
+            <script>
+            navigator.clipboard.writeText(`{kakao_text}`);
+            alert("📋 카톡방 공유용 텍스트가 클립보드에 복사되었습니다! 카톡창에서 붙여넣기(Ctrl+V) 하세요.");
+            </script>
+        """, height=0)
+        st.info("💡 알림창이 정상적으로 출력되었다면 클립보드 복사 완료 상태입니다. 카톡방에 붙여넣어 공유하세요!")
+    
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
     edited_data = []
