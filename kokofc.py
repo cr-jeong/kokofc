@@ -288,7 +288,7 @@ if st.session_state.lineups:
         'text-align': 'center'
     }).set_table_styles([
         # th 공통 속성 (글자색, 정렬)
-        {'selector': 'th', 'props': [('color', 'white'), ('font-weight', 'bold'), ('text-align', 'center')]},
+        {'selector': 'th', 'props': [('color', 'white'), ('text-align', 'center')]},
         
         # th:nth-child(1) -> 첫 번째 칸 (선수명) -> 초록색
         {'selector': 'th:nth-child(1)', 'props': [('background-color', '#14532D')]},
