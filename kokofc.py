@@ -3,7 +3,7 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 포지션 및 기본 설정 (글자 크기와 여백 최적화)
+# 포지션 및 기본 설정 (배지 스타일링 정보 포함)
 POS_CONFIG = {
     'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)', 'bg': '#FEE2E2', 'color': '#991B1B', 'text': 'PIVO'},
     'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)', 'bg': '#DBEAFE', 'color': '#1E40AF', 'text': 'ALA_L'},
@@ -116,14 +116,14 @@ with col2:
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
             st.rerun()
 
-# 참여 명단 출력 (간격 오류 및 음영 버그 완전 해결 버전)
+# 참여 명단 출력 (간격 및 HTML 버그 전면 수정 완료)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
         for player, positions in st.session_state.players_dict.items():
             is_attended = st.session_state.attendance.get(player, True)
             
-            # 배지를 가로로 예쁘게 나열하기 위해 inline-block 처리 및 마진 최적화
+            # 포지션 배지 가로 나열 HTML 빌드
             badge_html = ""
             for p in positions:
                 if p in POS_CONFIG:
@@ -144,7 +144,7 @@ if st.session_state.players_dict:
                     ">{cfg['emoji']} {cfg['text']}</span>
                     """
             
-            # 컬럼 너비를 여유 있게 재조정 (선수 이름과 배지 영역 분리하여 정렬)
+            # 레이아웃 간격 정렬을 위해 컬럼 배치 분리
             col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
             
             with col_att:
@@ -156,7 +156,6 @@ if st.session_state.players_dict:
                 st.markdown(f"<div style='padding-top: 3px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
             with col_badge:
-                # 불출석 시 배지 영역 전체 투명도 조절로 음영 버그 해결
                 badge_opacity = "1.0" if is_attended else "0.4"
                 st.markdown(f"<div style='padding-top: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
                 
@@ -176,7 +175,7 @@ else:
 
 st.markdown("---")
 
-# 공정한 라인업 생성 알고리즘 (기존 동일)
+# 공정한 라인업 생성 알고리즘
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
