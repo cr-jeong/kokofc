@@ -317,19 +317,18 @@ function copyToClipboard() {{
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "🏃 필드": f"{final_fields[name]}회",
+            "🧤 GK": f"{final_gks[name]}회", # 순서를 2번째로 이동
+            "🏃 필드": f"{final_fields[name]}회", # 순서를 3번째로 이동
             "🔥 PIVO": f"{player_history['PIVO (공격)']}회",
             "⚡ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
             "✨ ALA_R": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회",
-            "🧤 GK": f"{final_gks[name]}회"
+            "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
         })
     
     df_stats = pd.DataFrame(stats_data)
     
-    # 데이터 본문(tbody)의 html 코드만 추출합니다. (헤더는 수동으로 커스텀하기 위함)
+    # 데이터 본문(tbody)의 html 코드만 추출
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
-    # <table ...> 태그와 </table> 태그 내부의 tbody 내용만 남깁니다.
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
     custom_html = f"""
@@ -352,7 +351,6 @@ function copyToClipboard() {{
                 border: 1px solid #e2e8f0;
                 text-align: center !important;
             }}
-            /* 대분류 '상세' 헤더 배경색을 살짝 다르게 주어 구분감 추가 */
             .modern-table th.main-header {{
                 background-color: #f1f5f9;
                 color: #1e293b;
@@ -374,19 +372,19 @@ function copyToClipboard() {{
         
         <table class="modern-table">
             <thead>
-                <!-- 1층 헤더: 선수명, 필드는 그대로 두고 포지션 영역 상단을 '상세'로 병합 -->
+                <!-- 1층 헤더: 선수명, GK, 필드는 2층 높이로 병합, 필드 뒤의 4개 포지션을 '상세'로 묶음 -->
                 <tr>
                     <th rowspan="2" style="vertical-align: middle;">선수명</th>
+                    <th rowspan="2" style="vertical-align: middle;">🧤 GK</th>
                     <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
-                    <th colspan="5" class="main-header">상세 (포지션별 출전 횟수)</th>
+                    <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
                 </tr>
-                <!-- 2층 헤더: 상세 아래에 들어갈 세부 포지션 이름들 -->
+                <!-- 2층 헤더: 상세 지붕 아래에 들어갈 4개 포지션 -->
                 <tr>
                     <th>🔥 PIVO</th>
                     <th>⚡ ALA_L</th>
                     <th>✨ ALA_R</th>
                     <th>🛡️ FIXO</th>
-                    <th>🧤 GK</th>
                 </tr>
             </thead>
             <tbody>
