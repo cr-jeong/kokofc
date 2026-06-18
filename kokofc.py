@@ -26,7 +26,8 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_players_from_db():
     try:
-        df = conn.read(ttl="5s")
+        # 💡 header=None 추가 및 ttl=0으로 설정하여 캐시 문제 방지
+        df = conn.read(header=None, ttl=0)
         if df.empty:
             return {}
             
@@ -51,14 +52,25 @@ def load_players_from_db():
                 players_dict[name] = positions
         return players_dict
     except Exception as e:
+        # 오류 발생 시 화면에 원인 출력
+        st.error(f"구글 시트 로드 중 에러 발생: {e}")
         return {}
 
 def save_players_to_db(players_dict):
     st.cache_data.clear()
 
-# 세션 상태 초기화
+# ========================================================
+# 💡 [핵심 수정] 앱 시작 시 구글 시트 원본 자동 로드 로직
+# ========================================================
+if 'first_load_done' not in st.session_state:
+    st.cache_data.clear()  # 구글 시트 기존 캐시 초기화
+    st.session_state.players_dict = load_players_from_db()  # 데이터 강제 로드
+    st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}  # 출석부 초기화
+    st.session_state.first_load_done = True
+
+# 세션 상태 기본 변수 안전장치
 if 'players_dict' not in st.session_state:
-    st.session_state.players_dict = load_players_from_db()
+    st.session_state.players_dict = {}
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
 if 'attendance' not in st.session_state:
@@ -85,7 +97,6 @@ def edit_position_dialog(player_name):
     )
     
     if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
-        # 비어있으면 전체 카피, 있으면 선택 항목 저장
         st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
@@ -122,18 +133,19 @@ with col1:
 with col2:
     st.write("**② 경기 설정**")
     total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-    if st.button("🔄 구글 시트 원본 로드 (새로고침)", use_container_width=True):
+    if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
+        st.cache_data.clear()  # 수동 리로드 시에도 캐시 클리어 추가
         st.session_state.players_dict = load_players_from_db()
         st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+        st.success("구글 시트에서 명단을 다시 불러왔습니다!")
         st.rerun()
 
-# 참여 명단 출력 (수정 버튼 도입)
+# 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     for player, positions in list(st.session_state.players_dict.items()):
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
         
-        # 버튼 배치를 위해 4개 컬럼으로 쪼갭니다 (참석체크, 이름/이모지, 수정버튼, 삭제버튼)
         col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8])
         
         with col_att:
@@ -143,7 +155,7 @@ if st.session_state.players_dict:
             st.write(f"<span style='color:{color}; font-weight:bold;'>🏃 {player}</span> <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
         with col_edit:
             if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
-                edit_position_dialog(player) # 팝업 띄우기
+                edit_position_dialog(player)
         with col_b:
             if st.button("제거", key=f"del_{player}", use_container_width=True):
                 del st.session_state.players_dict[player]
@@ -152,7 +164,7 @@ if st.session_state.players_dict:
                 save_players_to_db(st.session_state.players_dict)
                 st.rerun()
 else:
-    st.info("등록된 선수가 없습니다. 선수를 추가하거나 우측의 새로고침을 눌러보세요.")
+    st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
 
 st.markdown("---")
 
@@ -266,7 +278,7 @@ if st.session_state.lineups:
             "🔥 PIVO (공격)": f"{player_history['PIVO (공격)']}회",
             "⚡ ALA_L (좌윙)": f"{player_history['ALA_L (좌윙)']}회",
             "✨ ALA_R (우윙)": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ FIXO (수비)": f"{player_history['FIXO (수비)']}회",
+            "🛡️ FIXO (수비)": f"{player_history['🛡️ FIXO (수비)']}회" if '🛡️ FIXO (수비)' in player_history else f"{player_history.get('FIXO (수비)', 0)}회",
             "🧤 GOLEIRO (키퍼)": f"{final_gks[name]}회"
         })
     st.table(stats_data)
