@@ -19,12 +19,11 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("희망 포지션 우선 고려 + 필드 균등 분배, 골레이로 연속 출전 방지 로직 적용 완료!")
+st.caption("참석자 선택 기능 + 포지션 역전 방지 완벽 고도화 버전")
 
-# 구글 스프레딧시트 연결 초기화
+# 구글 스프레드시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# DB에서 선수 명단 로드 함수
 def load_players_from_db():
     try:
         df = conn.read(ttl="5s")
@@ -54,15 +53,21 @@ def load_players_from_db():
     except Exception as e:
         return {}
 
-# 쓰기 에러 방지를 위한 우회 함수
 def save_players_to_db(players_dict):
     st.cache_data.clear()
 
-# 앱 최초 실행 시 DB에서 선수 명단 동기화
+# 세션 상태 초기화
 if 'players_dict' not in st.session_state:
     st.session_state.players_dict = load_players_from_db()
 if 'lineups' not in st.session_state:
     st.session_state.lineups = None
+if 'attendance' not in st.session_state:
+    st.session_state.attendance = {}
+
+# 명단이 바뀔 때 출석부 상태 동기화
+for p in st.session_state.players_dict.keys():
+    if p not in st.session_state.attendance:
+        st.session_state.attendance[p] = True # 기본값은 참석
 
 # 설정 및 선수 등록 섹션
 st.subheader("⚙️ 설정 및 선수 등록")
@@ -86,6 +91,7 @@ with col1:
                     st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
                 else:
                     st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
+                    st.session_state.attendance[name] = True
                     save_players_to_db(st.session_state.players_dict)
                     st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
                     st.rerun()
@@ -97,19 +103,27 @@ with col2:
     total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=4)
     if st.button("🔄 구글 시트 원본 로드 (새로고침)", use_container_width=True):
         st.session_state.players_dict = load_players_from_db()
+        st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
         st.rerun()
 
-# 참여 명단 출력
-st.write(f"### 👥 참석 명단 ({len(st.session_state.players_dict)}명)")
+# 참여 명단 출력 (체크박스 고도화)
+st.write(f"### 👥 전체 명단 및 오늘 참석 체크 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
+    # 명단 관리를 편하게 하기 위한 grid/column 배치
     for player, positions in list(st.session_state.players_dict.items()):
         emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
-        col_p, col_b = st.columns([4, 1])
+        col_att, col_p, col_b = st.columns([1, 3, 1])
+        
+        with col_att:
+            st.session_state.attendance[player] = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}")
         with col_p:
-            st.write(f"🏃 **{player}** <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
+            color = "black" if st.session_state.attendance[player] else "#A0A0A0"
+            st.write(f"<span style='color:{color}; font-weight:bold;'>🏃 {player}</span> <span style='font-size:14px;'>{emojis}</span>", unsafe_allow_html=True)
         with col_b:
             if st.button("제거", key=f"del_{player}"):
                 del st.session_state.players_dict[player]
+                if player in st.session_state.attendance:
+                    del st.session_state.attendance[player]
                 save_players_to_db(st.session_state.players_dict)
                 st.rerun()
 else:
@@ -117,31 +131,33 @@ else:
 
 st.markdown("---")
 
-# 라인업 생성 알고리즘 (수정본)
-def generate_fair_lineups(players_pool, total_q):
-    lineups = {}
-    player_names = list(players_pool.keys())
-    field_counts = {name: 0 for name in player_names} 
-    gk_counts = {name: 0 for name in player_names}    
-    player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in player_names}
+# 라인업 생성 알고리즘 (고도화 버전)
+def generate_fair_lineups(players_pool, attendance_dict, total_q):
+    # 오늘 참석하는 선수들만 필터링
+    active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     
-    # 직전 쿼터 골레이로를 기억하기 위한 변수
+    if len(active_players) < 5:
+        return None
+
+    lineups = {}
+    field_counts = {name: 0 for name in active_players} 
+    gk_counts = {name: 0 for name in active_players}    
+    player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
+    
     last_quarter_gk = None
     
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
-        remaining = player_names.copy()
+        remaining = active_players.copy()
         
-        # 1. 골레이로(GK) 후보군 필터링 (희망 포지션에 GK가 있는 선수들)
+        # 1. 골레이로(GK) 선정
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = remaining.copy()
             
-        # 🚨 직전 쿼터 골레이로는 후보에서 제외 (단, 전체 후보가 1명뿐이면 연속 출전 허용)
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
             gk_candidates.remove(last_quarter_gk)
             
-        # 골레이로 선정: 누적 출전 횟수가 적은 순 -> 무작위 셔플
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         
@@ -149,38 +165,31 @@ def generate_fair_lineups(players_pool, total_q):
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
-        
-        # 다음 쿼터를 위해 현재 골레이로 저장
         last_quarter_gk = chosen_gk
         
-        # 2. 필드 플레이어 선정 로직 (희망 포지션 우선 고려 매칭)
-        # 남은 선수들을 '출전 횟수가 적은 순 -> 무작위'로 미리 정렬해둡니다.
+        # 2. 필드 플레이어 선정 (포지션 순서 셔플로 공평성 극대화)
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         
-        # 포지션별 순회하며 가장 적합한 선수 매칭
-        for pos in FIELD_POSITIONS:
-            # 1순위: 해당 포지션을 희망하는 선수 목록
+        # 포지션 매칭 순서를 매 쿼터 섞어서 특정 포지션 선점 독점을 방지합니다.
+        shuffled_positions = FIELD_POSITIONS.copy()
+        random.shuffle(shuffled_positions)
+        
+        for pos in shuffled_positions:
             wished_candidates = [p for p in remaining if pos in players_pool[p]]
             
             if wished_candidates:
-                # 이미 앞에서 field_counts 순으로 정렬했으므로, 
-                # 희망자 중 가장 적게 출전한 선수가 0번째(맨 앞)에 위치합니다.
                 chosen_player = wished_candidates[0]
             else:
-                # 2순위: 해당 포지션을 희망하는 선수가 남은 인원 중 없다면,
-                # 현재 가장 덜 뛴 선수 중에서 포지션 히스토리가 적은 사람을 선택합니다.
                 remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
                 chosen_player = remaining[0]
                 
             starters[pos] = chosen_player
             remaining.remove(chosen_player)
             
-            # 기록 업데이트
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
-        # 포지션 선발 4명을 제외하고 남은 선수들은 대기 명단
         actual_subs = remaining
             
         lineups[f"{q}쿼터"] = {
@@ -188,16 +197,23 @@ def generate_fair_lineups(players_pool, total_q):
             "subs": actual_subs,
             "field_snapshot": field_counts.copy(),
             "gk_snapshot": gk_counts.copy(),
-            "history_snapshot": {name: player_pos_history[name].copy() for name in player_names}
+            "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
         }
     return lineups
 
+# 실행 버튼
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
-    if len(st.session_state.players_dict) < 5:
-        st.error("경기를 진행하려면 최소 5명 이상의 선수가 필요합니다!")
+    active_count = sum(1 for att in st.session_state.attendance.values() if att)
+    if active_count < 5:
+        st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짤 수 있습니다! 체크박스를 확인해주세요.")
     else:
-        st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, total_quarters)
+        st.session_state.lineups = generate_fair_lineups(
+            st.session_state.players_dict, 
+            st.session_state.attendance, 
+            total_quarters
+        )
 
+# 결과 출력 섹션
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
@@ -220,7 +236,8 @@ if st.session_state.lineups:
     final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
     stats_data = []
-    for name in st.session_state.players_dict.keys():
+    # 오늘 참석한 선수들만 통계에 표출
+    for name in final_fields.keys():
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
