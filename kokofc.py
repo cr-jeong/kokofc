@@ -274,11 +274,11 @@ if st.session_state.lineups:
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "🏃 필드 출전 (합계)": f"{final_fields[name]}회",
-            "🔥 PIVO (공격)": f"{player_history['PIVO (공격)']}회",
-            "⚡ ALA_L (좌윙)": f"{player_history['ALA_L (좌윙)']}회",
-            "✨ ALA_R (우윙)": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ FIXO (수비)": f"{player_history['🛡️ FIXO (수비)']}회" if '🛡️ FIXO (수비)' in player_history else f"{player_history.get('FIXO (수비)', 0)}회",
-            "🧤 GOLEIRO (키퍼)": f"{final_gks[name]}회"
+            "🏃 필드 출전 ": f"{final_fields[name]}회",
+            "🔥 PIVO ": f"{player_history['PIVO (공격)']}회",
+            "⚡ ALA_L ": f"{player_history['ALA_L (좌윙)']}회",
+            "✨ ALA_R ": f"{player_history['ALA_R (우윙)']}회",
+            "🛡️ FIXO ": f"{player_history['🛡️ FIXO (수비)']}회" if '🛡️ FIXO (수비)' in player_history else f"{player_history.get('FIXO (수비)', 0)}회",
+            "🧤 GOLEIRO ": f"{final_gks[name]}회"
         })
     st.table(stats_data)
