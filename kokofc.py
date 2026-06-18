@@ -149,11 +149,23 @@ with col2:
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
+    # 모바일에서 무조건 가로 배치를 강제하는 CSS 주입
+    st.markdown("""
+        <style>
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     with st.container(border=True):
         for player, positions in st.session_state.players_dict.items():
             prev_status = st.session_state.attendance.get(player, True)
             
-            # [모바일 최적화 비율] 참석체크(0.6), 이름(1.4), 배지(3.4), 버튼 구역(1.8)으로 재조정
+            # 모바일 최적화 비율 조정
             col_att, col_name, col_badge, col_btn_group = st.columns([0.6, 1.4, 3.4, 1.8])
             
             with col_att:
@@ -179,15 +191,14 @@ if st.session_state.players_dict:
                 badge_opacity = "1.0" if is_attended else "0.3"
                 st.markdown(f"<div style='padding-top: 3px; opacity: {badge_opacity}; line-height: 1.6;'>{badge_html}</div>", unsafe_allow_html=True)
                 
-            # [모바일 UX 변경 포인트] 수정 버튼과 제거 버튼을 한 컬럼 안에 좌우로 나란히 배치!
+            # [버그 완전 해결] 하위 컬럼을 쓰지 않고, 1개 컬럼 내부에 한 줄 강제 정렬 레이아웃 구성
             with col_btn_group:
-                btn_col1, btn_col2 = st.columns(2)
-                with btn_col1:
-                    # 톱니바퀴 이모지만 두어 공간을 확보하고 모바일 터치 영역 최적화
-                    if st.button("⚙️", key=f"edit_{player}", use_container_width=True, help="포지션 수정"):
+                sub_col1, sub_col2 = st.columns(2)
+                with sub_col1:
+                    if st.button("⚙️", key=f"edit_{player}", use_container_width=True):
                         edit_position_dialog(player)
-                with btn_col2:
-                    if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
+                with sub_col2:
+                    if st.button("❌", key=f"del_{player}", use_container_width=True):
                         del st.session_state.players_dict[player]
                         if player in st.session_state.attendance:
                             del st.session_state.attendance[player]
