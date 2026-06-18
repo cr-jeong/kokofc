@@ -295,15 +295,24 @@ if st.session_state.lineups:
         {'selector': 'th:nth-child(7)', 'props': [('background-color', '#1E3A8A')]}
     ]).hide(axis="index")
     
-    # 📱 모바일 가로 스크롤 및 글자 줄바꿈 방지 적용 후 출력
+    # 📱 모바일 가로 스크롤 구현 및 💡 [선 복구 완료] 표 테두리선(Border) 강제 CSS 주입
     html_code = styled_stats.to_html()
     custom_html = f"""
     <div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch;">
         <style>
-            table {{ white-space: nowrap !important; min-width: 600px; }}
+            table {{ 
+                white-space: nowrap !important; 
+                min-width: 600px; 
+                border-collapse: collapse !important;
+                border: 1px solid #E2E8F0 !important;
+                width: 100%;
+            }}
+            table th, table td {{
+                border: 1px solid #E2E8F0 !important;
+                padding: 10px !important;
+            }}
         </style>
         {html_code}
     </div>
     """
-    # 💡 [버그 원천 해결] st.write -> st.html로 수정하여 HTML을 정상 렌더링합니다.
     st.html(custom_html)
