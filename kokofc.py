@@ -161,7 +161,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                             st.rerun()
 
 # 참여 명단 출력
-st.markdown("### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
+st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     TAG_STYLES = {
         'PIVO (공격)': 'background-color: rgba(254, 226, 226, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);', 
