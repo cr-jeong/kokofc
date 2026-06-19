@@ -76,6 +76,29 @@ st.markdown("""
         text-decoration: line-through !important;
         color: var(--text-color) !important;
     }
+    /* 명단 내부 버튼의 배경, 테두리, 그림자를 전부 투명하게 압수 */
+.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: auto !important;          /* 가로 꽉 차는 성질 죽이기 */
+    min-width: 0 !important;
+    margin-left: auto !important;     /* 우측 정렬 */
+    padding: 0 8px !important;
+    font-size: 18px !important;
+    }
+
+/* 버튼에 마우스 올리거나 눌렀을 때도 배경이 안 생기게 방어 */
+.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:hover,
+.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:active,
+.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:focus {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    box-shadow: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
