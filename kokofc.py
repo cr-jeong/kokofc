@@ -141,10 +141,10 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (시차 0ms, 완벽 동기화 버전! ⚡)
+# 참여 명단 출력 (시차 및 미작동 버그 원천 차단 버전! ⚡)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 이름과 태그를 브라우저 단에서 동시에 제어하는 CSS
+    # 폰트와 미참석 스타일을 정의하는 깔끔한 CSS
     st.markdown(
         """
         <style>
@@ -154,15 +154,15 @@ if st.session_state.players_dict:
             font-weight: bold !important;
         }
         
-        /* 1. 체크 해제 시 이름 흐리게 */
+        /* 체크 해제 시 이름 흐리게 */
         .stCheckbox [aria-checked="false"] ~ div p {
             opacity: 0.4 !important;
             text-decoration: line-through !important;
             color: #9CA3AF !important;
         }
         
-        /* 2. 체크 해제 시 하단 태그도 시차 없이 '동시에' 흐리게 (핵심!) */
-        .stCheckbox:has([aria-checked="false"]) + div .player-tags {
+        /* 체크 해제 시 태그도 흐리게 만드는 전용 클래스 */
+        .unselected-tag {
             opacity: 0.4 !important;
         }
         </style>
@@ -200,12 +200,14 @@ if st.session_state.players_dict:
                 
                 # 순정 체크박스
                 cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v9_{player}")
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v10_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 파이썬 opacity 조건문을 빼고 CSS 클래스(player-tags)만 부여!
+                # [핵심] 체크 여부(selected)에 따라 클래스를 동적으로 주입하여 시차를 원천 차단합니다!
+                tag_class = "player-tags" if selected else "player-tags unselected-tag"
+                
                 st.write(
-                    f"""<div class='player-tags' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
+                    f"""<div class='{tag_class}' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
