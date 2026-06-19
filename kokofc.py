@@ -109,6 +109,8 @@ st.markdown("""
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
+        position: relative;
+        z-index: 1; /* 일반 헤더는 낮은 레이어 */
     }
     
     .toss-table td {
@@ -125,30 +127,35 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 겹침 해결 포인트: 첫 번째 열 완전 고정 및 확실한 레이어(z-index) 부여 */
+    /* 💥 대폭 수정: 고정열(선수명/쿼터)의 z-index를 20으로 대폭 격상하여 2층 헤더보다 무조건 위에 오도록 고정 */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
         left: 0;
-        z-index: 10 !important; /* 항상 다른 셀들 위에 오도록 설정 */
+        z-index: 20 !important; 
         border-right: none !important;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 💥 라이트/다크 모드별 배경 투명화 100% 제거하여 글자 겹침 투과 현상 해결 */
+    /* 💥 추가 수정: 통계 표의 2번째 줄 헤더(PIVO, ALA_L 등)의 레이어를 5로 낮춰 무조건 고정열 뒤로 숨게 처리 */
+    .toss-table tr:nth-child(2) th {
+        z-index: 5 !important;
+    }
+    
+    /* 라이트/다크 모드별 배경 처리 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23 !important; }
         .toss-table td { background-color: #0e1117; }
-        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } /* 고정열 불투명화 */
-        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } /* 고정헤더 불투명화 */
+        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } 
+        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } 
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
         .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
         .toss-table th { background-color: #f0f2f6 !important; }
         .toss-table td { background-color: #ffffff; }
-        .toss-table td:nth-child(1) { background-color: #ffffff !important; } /* 고정열 불투명화 */
-        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } /* 고정헤더 불투명화 */
+        .toss-table td:nth-child(1) { background-color: #ffffff !important; } 
+        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } 
     }
     </style>
 """, unsafe_allow_html=True)
@@ -411,7 +418,6 @@ function copyToClipboard() {{
         </tr>
         """
 
-    # 💥 수정 포인트: 포지션 헤더 텍스트에 첫 번째 표와 매칭되는 고유 색상(color) 부여
     stats_table_html = f"""
     <div class="toss-table-container">
         <table class="toss-table">
