@@ -88,28 +88,44 @@ st.markdown("""
         font-weight: 600;
         padding: 14px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-right: 1px solid rgba(0, 0, 0, 0.04); /* 은은한 세로선 */
         white-space: nowrap;
     }
     
     .toss-table td {
         padding: 14px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        border-right: 1px solid rgba(0, 0, 0, 0.04); /* 은은한 세로선 */
         white-space: nowrap;
+    }
+    
+    .toss-table th:last-child, .toss-table td:last-child {
+        border-right: none;
     }
     
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 첫 번째 열 고정 효과 (모바일 편의성) */
+    /* 💥 겹침 및 테두리 수정 포인트: 첫 번째 열 고정 및 배경 불투명화 (테두리는 투명하게 제거) */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
         left: 0;
-        background-color: var(--background-color);
-        z-index: 1;
+        z-index: 2;
         border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.02); /* 스크롤 시 입체감만 살짝 부여 */
     }
-    .toss-table th:nth-child(1) { background-color: var(--secondary-background-color); }
+    
+    /* 라이트/다크모드 대응 고정 열 투명도 제거 */
+    @media (prefers-color-scheme: dark) {
+        .toss-table td:nth-child(1) { background-color: #0e1117 !important; }
+        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; }
+        .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
+    }
+    @media (prefers-color-scheme: light) {
+        .toss-table td:nth-child(1) { background-color: #ffffff !important; }
+        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -311,7 +327,6 @@ function copyToClipboard() {{
 </script>"""
     st.components.v1.html(html_button_code, height=55)
     
-    # 🌟 변경 포인트 1: 기존 st.data_editor를 과감히 제거하고 통계 표와 패밀리룩을 이루는 라인업 HTML 표 커스텀 빌드
     lineup_tbody_rows = ""
     for quarter, data in st.session_state.lineups.items():
         lineup_tbody_rows += f"""
@@ -372,7 +387,6 @@ function copyToClipboard() {{
         </tr>
         """
 
-    # 🌟 변경 포인트 2: 상세 통계 표 역시 헤더 계층 구조와 보더라인을 완전히 통일
     stats_table_html = f"""
     <div class="toss-table-container">
         <table class="toss-table">
