@@ -40,10 +40,10 @@ st.markdown("""
         }
     }
     
-    /* 🔥 [디자인 분리] 메인 설정창(Expander) 타이틀 글자 크기 키우기 */
+    /* 🔥 [디자인 세밀 조정] 메인 설정창(Expander) 타이틀 글자 크기 15px로 최적화 */
     [data-testid="stExpander"] details summary p {
-        font-size: 18px !important;
-        font-weight: 800 !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
         color: var(--text-color) !important;
     }
     
