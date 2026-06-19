@@ -18,16 +18,16 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 모바일 화면 흔들림 방지 및 레이아웃 유지 CSS ---
+# --- 모바일 화면 및 폰트 밸런스 CSS 튜닝 ---
 st.markdown("""
     <style>
-    /* 1. 모바일 브라우저에서 화면 전체가 좌우로 흔들리는 현상 원천 차단 */
+    /* 모바일 브라우저 화면 전체 흔들림 차단 */
     html, body, [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
     }
     
-    /* 2. 명단 열(st.columns)이 모바일 화면이 좁아져도 아래로 찢어지지 않고 한 줄 유지 */
+    /* 명단 레이아웃이 화면 좁아져도 한 줄 유지되도록 잠금 */
     [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -36,12 +36,19 @@ st.markdown("""
         width: 100% !important;
     }
     [data-testid="stHorizontalBlock"] > div {
-        min-width: 0 !important; /* 폭 압착 허용 */
+        min-width: 0 !important;
     }
     
-    /* 3. 체크박스 해제 시 흐려짐 효과만 유지 (폰트 크기 조절 삭제) */
+    /* ❗ 요청 반영: 명단 이름 폰트를 좀 더 크고 진하게 강제 고정 */
+    .stCheckbox p {
+        font-size: 17px !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+    }
+    
+    /* 체크박스 해제 시 흐려짐 효과 */
     .stCheckbox [aria-checked="false"] ~ div p {
-        opacity: 0.4 !important;
+        opacity: 0.35 !important;
         text-decoration: line-through !important;
         color: #9CA3AF !important;
     }
@@ -166,14 +173,13 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # --- [순정 대수술] 아래로 찢어지지 않는 최적의 가로 비율 컬럼 분할 ---
-            col_main, col_btn1, col_btn2 = st.columns([5, 1, 1])
+            # --- ❗ [아이콘 치우침 수정] 가로 폭 비율 조정으로 우측 쏠림 해결 ---
+            col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
             
             with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v12_{player}")
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v13_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 태그 노출 (체크 해제 시 연두색/흐려짐 싱크 적용)
                 st.write(
                     f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
@@ -277,7 +283,7 @@ function copyToClipboard() {{
         edited_data.append(row)
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # --- [통계 표 구조 개조] ---
+    # 통계 표 섹션
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -301,16 +307,18 @@ function copyToClipboard() {{
         <style>
             .modern-table {{
                 width: 100%;
-                min-width: 600px; /* 표 압착 한계선을 주어 이름 찢어짐 원천 차단 */
+                min-width: 600px;
                 border-collapse: collapse;
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                /* ❗ 요청 반영: 라인업 뷰어 표와 거의 흡사한 수준의 깔끔하고 정돈된 폰트 크기 매칭 */
+                font-size: 14px;
                 background-color: #ffffff;
             }}
             .modern-table th {{
                 background-color: #f8fafc;
                 color: #475569;
                 font-weight: 600;
-                padding: 10px 4px;
+                padding: 12px 6px;
                 border: 1px solid #e2e8f0;
                 text-align: center !important;
                 white-space: nowrap;
@@ -320,21 +328,20 @@ function copyToClipboard() {{
                 color: #1e293b;
             }}
             .modern-table td {{
-                padding: 12px 4px;
+                padding: 12px 6px;
                 border: 1px solid #f1f5f9;
                 text-align: center !important; 
-                white-space: nowrap; /* ❗ 이름이 제/미/나/이 처럼 세로로 찢어지는 버그 해결 */
+                white-space: nowrap;
             }}
             .modern-table tr:hover {{ background-color: #f8fafc; }}
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
                 color: #0f172a;
-                position: sticky; /* 가로 스크롤을 해도 이름 열은 왼쪽 벽에 착 붙어 고정되게 함 */
+                position: sticky;
                 left: 0;
                 background-color: #ffffff;
                 box-shadow: 2px 0 5px rgba(0,0,0,0.04);
             }}
-            /* 네가 마음에 들어한 🏃 필드 칸 연두색 음영 완벽 고정 */
             .modern-table td:nth-child(3) {{
                 background-color: #F0FDF4 !important;
                 color: #16A34A !important;
