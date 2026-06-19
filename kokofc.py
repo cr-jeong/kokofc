@@ -18,63 +18,46 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 화면 제어 및 반응형 레이아웃 CSS ---
+# --- 깔끔하고 미니멀한 CSS ---
 st.markdown("""
     <style>
-    /* 모바일 브라우저 화면 전체 흔들림 차단 */
     html, body, [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
     }
-    
-    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
-@media (max-width: 768px) {
-    .stExpander [data-testid="stHorizontalBlock"] {
-        flex-direction: column !important;
-        gap: 16px !important;
+    @media (max-width: 768px) {
+        .stExpander [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 16px !important;
+        }
     }
-    .stExpander [data-testid="stHorizontalBlock"] > div {
-        width: 100% !important;
-        max-width: 100% !important;
-        flex: 1 1 auto !important;
+    /* 투명 버튼을 완벽하게 아이콘화 */
+    .edit-ghost-btn button {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        font-size: 18px !important;
+        width: auto !important;
+        height: auto !important;
     }
-}
-
-/* ② [🔥 긴급 수정] 명단 리스트 내부의 가로 정렬을 뼈대째 강제 고정 */
-[data-testid="stMainBlock"] [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] {
-    display: flex !important;
-    flex-direction: row !important; /* 모바일에서도 무조건 가로로 정렬 */
-    flex-wrap: nowrap !important;   /* 줄바꿈 절대 절대 금지 */
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-}
-
-/* 명단 내부 컬럼들이 세로로 찢어지는 현상 최종 방어 */
-[data-testid="stMainBlock"] [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] > div {
-    width: auto !important;
-    max-width: none !important;
-    flex-grow: 1 !important;
-}
-
-/* ③ 명단 이름 폰트 크기 및 색상 */
-.stCheckbox p {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    color: var(--text-color) !important;
-}
-
-/* ④ 체크박스 해제 시 흐려짐 효과 테마 대응 */
-.stCheckbox [aria-checked="false"] ~ div p {
-    opacity: 0.35 !important;
-    text-decoration: line-through !important;
-    color: var(--text-color) !important;
-}
-</style>
+    .edit-ghost-btn button:hover, .edit-ghost-btn button:active {
+        background-color: transparent !important;
+        color: inherit !important;
+    }
+    /* 명단 폰트 디자인 */
+    .stCheckbox p {
+        font-size: 16px !important;
+        font-weight: 800 !important;
+    }
+    .stCheckbox [aria-checked="false"] ~ div p {
+        opacity: 0.35 !important;
+        text-decoration: line-through !important;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
 st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("KOKO 화이팅!! 버그 제보 환영")
 st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 복사] 대기 명단 제외 버전!")
 
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -123,8 +106,6 @@ for p in st.session_state.players_dict.keys():
 @st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
-    st.caption("아무것도 선택하지 않으면 '모든 포지션 가능'으로 설정됩니다.")
-    
     current_wishes = st.session_state.players_dict[player_name]
     new_wishes = st.multiselect(
         "희망 포지션 (복수 선택 가능)",
@@ -140,12 +121,10 @@ def edit_position_dialog(player_name):
             st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
             st.success(f"{player_name} 선수의 정보가 수정되었습니다!")
             st.rerun()
-            
     with d_col2:
         if st.button("🗑️ 선수 삭제하기", use_container_width=True, type="secondary"):
             del st.session_state.players_dict[player_name]
-            if player_name in st.session_state.attendance: 
-                del st.session_state.attendance[player_name]
+            if player_name in st.session_state.attendance: del st.session_state.attendance[player_name]
             save_players_to_db(st.session_state.players_dict)
             st.rerun()
 
@@ -172,15 +151,13 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                 if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
                     name = name_input.strip()
                     if name:
-                        if name in st.session_state.players_dict:
-                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                        if name in st.session_state.players_dict: st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
                         else:
                             st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                             st.session_state.attendance[name] = True
                             save_players_to_db(st.session_state.players_dict)
-                            st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
+                            st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                             st.rerun()
-                    else: st.error("선수 이름을 먼저 입력해 주세요.")
 
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
@@ -205,27 +182,36 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 🌟 3분할 샌드위치 구조로 모바일 1줄 정렬 강제 고정
-            col_main, col_space, col_btn = st.columns([0.65, 0.20, 0.15])
+            # 🌟 [디자이너의 최종 치트키] 
+            # 한 행에 컬럼 2개를 쓰되, 오른쪽 컬럼에 '이름 전용 안보이는 버튼'과 '⚙️'을 양끝 정렬로 배치!
+            col_left, col_right = st.columns([0.1, 0.9])
             
-            with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
+            with col_left:
+                # 1. 왼쪽에는 오직 순수한 체크박스 빈 껍데기만 노출
+                selected = st.checkbox("", value=is_active, key=f"att_v15_{player}", label_visibility="collapsed")
                 st.session_state.attendance[player] = selected
                 
+            with col_right:
+                # 2. 오른쪽 한 칸 안에 이름과 ⚙️ 이모지를 양끝 정렬(Flex)한 텍스트를 구성하고, 
+                # 그 공간 전체를 투명 버튼 클래스(.edit-ghost-btn)로 감싸버림! 
+                button_html = f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left;">
+                    <span style="font-size: 16px; font-weight: 800; color: var(--text-color); opacity: {1.0 if selected else 0.35}; text-decoration: { 'none' if selected else 'line-through' };">🏃 {player}</span>
+                    <span style="font-size: 18px; padding-right: 4px;">⚙️</span>
+                </div>
+                """
+                st.markdown(f'<div class="edit-ghost-btn">', unsafe_allow_html=True)
+                if st.button(button_html, key=f"edit_btn_{player}", use_container_width=True):
+                    edit_position_dialog(player)
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # 태그 노출 영역
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
                     </div>""", 
                     unsafe_allow_html=True
                 )
-                
-            with col_space:
-                pass # 여백 방패막이 역할
-                
-            with col_btn:
-                # use_container_width=False 로 늘어나는 현상 완전 종결
-                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=False):
-                    edit_position_dialog(player)
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
 else:
@@ -233,7 +219,7 @@ else:
     
 st.markdown("---")
 
-# 알고리즘
+# 알고리즘 (동일)
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
@@ -288,7 +274,6 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n🔱 PIVO : {data['starters'][0] or '미지정'}\n◀️ ALA_L : {data['starters'][1] or '미지정'}\n▶️ ALA_R : {data['starters'][2] or '미정'}\n🛡️ FIXO : {data['starters'][3] or '미지정'}\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\n\n"
 
-    # 카카오톡 버튼 최신 플랫 및 라운딩 디자인 적용
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
@@ -302,17 +287,15 @@ function copyToClipboard() {{
 }}
 </script>"""
     st.components.v1.html(html_button_code, height=55)
-    st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
-        for idx, pos in enumerate(ALL_POSITIONS):
-            row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
+        for idx, pos in enumerate(ALL_POSITIONS): row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
         edited_data.append(row)
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 통계 표 섹션 (토스/카카오 스타일 초슬림 격자선 디자인)
+    # 통계 표 섹션 (토스 스타일 고정)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -348,9 +331,7 @@ function copyToClipboard() {{
                 overflow: hidden;
             }}
             @media (prefers-color-scheme: dark) {{
-                .modern-table {{
-                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                }}
+                .modern-table {{ border: 1px solid rgba(255, 255, 255, 0.1) !important; }}
             }}
             .modern-table th {{
                 background-color: var(--secondary-background-color);
@@ -369,12 +350,8 @@ function copyToClipboard() {{
                 text-align: center !important; 
                 white-space: nowrap;
             }}
-            .modern-table th:last-child, .modern-table td:last-child {{
-                border-right: none !important;
-            }}
-            .modern-table tr:last-child td {{
-                border-bottom: none !important;
-            }}
+            .modern-table th:last-child, .modern-table td:last-child {{ border-right: none !important; }}
+            .modern-table tr:last-child td {{ border-bottom: none !important; }}
             .modern-table tr:hover {{ background-color: rgba(0,0,0,0.02); }}
             .modern-table td:nth-child(1) {{
                 font-weight: 600;
@@ -389,7 +366,6 @@ function copyToClipboard() {{
                 font-weight: 700;
             }}
         </style>
-        
         <table class="modern-table">
             <thead>
                 <tr>
@@ -405,9 +381,7 @@ function copyToClipboard() {{
                     <th>🛡️ FIXO</th>
                 </tr>
             </thead>
-            <tbody>
-                {tbody_content}
-            </tbody>
+            <tbody>{tbody_content}</tbody>
         </table>
     </div>
     """
