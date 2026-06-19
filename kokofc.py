@@ -141,16 +141,16 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (세련된 모바일 최적화 버전!)
+# 참여 명단 출력 (최종 정착 버전! 😎)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     # 세련되고 부드러운 파스텔톤 태그 스타일 정의
     TAG_STYLES = {
-        'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', # 부드러운 레드
-        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0284C7;', # 부드러운 블루
-        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #D97706;', # 부드러운 옐로우/오렌지
-        'FIXO (수비)': 'background-color: #DCFCE7; color: #16A34A;', # 부드러운 그린
-        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' # 부드러운 그레이
+        'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', 
+        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0284C7;', 
+        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #D97706;', 
+        'FIXO (수비)': 'background-color: #DCFCE7; color: #16A34A;', 
+        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
     }
 
     with st.container(border=True):
@@ -172,17 +172,12 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 순정 체크박스와 '참석' 텍스트 복구 (글자 크기를 키워 시원하게 노출)
-                # 체크박스 라벨에 이름까지 포함하여 클릭 영역을 넓혔습니다.
-                cb_label = f"🏃 {player} (참석)"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v3_{player}")
+                # (참석) 글자 제외, 원래 순정 폰트 사이즈와 스타일로 래핑
+                cb_label = f"🏃 {player}"
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v4_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 가독성을 높인 스타일 적용
-                color = "#000000" if selected else "#9CA3AF"
-                text_decor = "text-decoration: none;" if selected else "text-decoration: line-through; opacity: 0.5;"
-                
-                # 태그 아래에 margin-bottom을 주어 모바일에서 버튼과 바싹 붙는 현상 완벽 해결!
+                # 태그 아래 여백 및 모바일 밀림 방지 처리 유지
                 st.write(
                     f"""<div style='padding-left: 28px; margin-top: -6px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
@@ -193,7 +188,7 @@ if st.session_state.players_dict:
                 )
                 
             with col_right:
-                # 버튼 세로 정렬 및 간격 조절을 위한 컨테이너 (정렬선 맞추기)
+                # 버튼 세로 정렬선 맞추기
                 st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
@@ -211,7 +206,7 @@ if st.session_state.players_dict:
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
-
+    
 st.markdown("---")
 
 # 공정한 라인업 생성 알고리즘 (기존 로직 유지)
