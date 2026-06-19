@@ -302,7 +302,13 @@ function copyToClipboard() {{
         row = {"쿼터": quarter}
         for idx, pos in enumerate(ALL_POSITIONS): row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
         edited_data.append(row)
-    st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
+    st.data_editor(
+    edited_data, 
+    use_container_width=True, 
+    num_rows="fixed",
+    disabled=["쿼터"], # 쿼터 이름은 수정 못 하게 잠그기!
+    hide_index=True    # 좌측의 의미 없는 숫자(0, 1, 2...) 열 숨기기
+)
     
     # 통계 표 섹션 (토스 스타일 고정)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
