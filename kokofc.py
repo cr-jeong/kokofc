@@ -358,7 +358,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     return lineups_dict
 
 # [🚀 라인업 자동 생성 버튼 영역]
-st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
+st.caption("✨ 모든 인원의 필드 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5: 
