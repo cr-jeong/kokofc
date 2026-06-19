@@ -251,10 +251,11 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            # ⚡ 최적화 포인트: st.session_state.attendance 오브젝트에 직접 바인딩하여 딜레이 전면 해결
-            st.checkbox(f"🏃 {player}", key=f"attendance_{player}")
-            selected = st.session_state[f"attendance_{player}"]
-            st.session_state.attendance[player] = selected
+            # 🔄 기존의 안정적인 검증 방식으로 100% 원복 완료!
+            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
+            if selected != is_active:
+                st.session_state.attendance[player] = selected
+                st.rerun()
             
             st.write(
                 f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
