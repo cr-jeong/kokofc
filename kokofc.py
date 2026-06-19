@@ -100,24 +100,26 @@ st.markdown("""
         min-width: 600px;
         border-collapse: collapse;
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        font-size: 14px; /* 💡 본문 선수명 글씨 크기 14px 유지 */
+        font-size: 14px;
         text-align: center;
         background-color: var(--background-color);
         color: var(--text-color);
     }
     
+    /* ✨ 중복되던 보더 코드를 여기로 합쳐 깔끔하게 다이어트했습니다. */
     .toss-table th, .toss-table td {
-        padding: 11px 8px; /* 여백도 크기에 맞춰 살짝 쫀쫀하게 조율 */
+        padding: 11px 8px;
         white-space: nowrap;
         position: relative;
         z-index: 1;
+        border-right: 1px solid rgba(0, 0, 0, 0.04);
     }
+    .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     
-    /* 💡 첫 행(헤더) 폰트를 요청하신 15px로 세팅 완료! */
     .toss-table th {
         color: var(--text-color);
-        font-size: 15px !important; /* 💡 헤더 폰트 15px */
-        font-weight: 700 !important; /* 💡 굵기도 과하지 않게 700으로 조율 */
+        font-size: 15px !important;
+        font-weight: 700 !important;
         border-bottom: 2px solid rgba(0, 0, 0, 0.06);
     }
     
@@ -133,28 +135,24 @@ st.markdown("""
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
+    /* ✨ 다크/라이트 모드별 폰트/보더 중복 설정을 정리하고 순수 배경색 전환 위주로 압축 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.08); }
-        .toss-table td { background-color: #0e1117; }
+        .toss-table td { background-color: #0e1117; border-right: 1px solid rgba(255, 255, 255, 0.04); }
         th.sticky-col { background-color: #1a1c23 !important; }
         td.sticky-col { background-color: #0e1117 !important; }
-        .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
-        .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
         .toss-table th { background-color: #f0f2f6; }
         .toss-table td { background-color: #ffffff; }
         th.sticky-col { background-color: #f0f2f6 !important; }
         td.sticky-col { background-color: #ffffff !important; }
-        .toss-table th, .toss-table td { border-right: 1px solid rgba(0, 0, 0, 0.04); }
-        .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# [3. 타이틀 디자인 최적화: 사진+제목 가로 정렬]
+# [3. 타이틀 디자인 최적화]
 col1, col2 = st.columns([1, 6])
-
 with col1:
     try:
         img = Image.open("koko_logo.png")
@@ -191,10 +189,9 @@ def load_players_from_db():
         return {}
 
 if 'players_dict' not in st.session_state:
-    st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-    st.session_state.lineups = None  # 다시 원래의 안전한 내부 딕셔너리 구조로 롤백
+    st.session_state.lineups = None
 
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
@@ -268,19 +265,19 @@ if st.session_state.players_dict:
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
+            # ✨ 명단 태그 생성과 출석 체크 뷰의 문자열 바인딩 구조를 깔끔하게 일원화했습니다.
             tag_htmls = [
                 f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; background-color: {POS_CONFIG[p]['bg']}; color: {POS_CONFIG[p]['color']}; border: 1px solid {POS_CONFIG[p]['border']};'>{POS_CONFIG[p]['label']}</span>"
                 for p in positions if p in POS_CONFIG
             ]
-            tags_inline = "".join(tag_htmls)
             
-            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
+            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
             st.session_state.attendance[player] = selected
             
             st.write(
                 f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
-                        {tags_inline}
+                        {"".join(tag_htmls)}
                     </div>
                 </div>""", 
                 unsafe_allow_html=True
@@ -350,7 +347,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     else: 
         st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
-# [9. 📋 안전한 원래 방식의 결과 출력 및 공유 섹션]
+# [9. 📋 결과 출력 및 공유 섹션]
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
     
@@ -372,7 +369,6 @@ if st.session_state.lineups:
         """
         kakao_text += f"-----[{q}쿼터]-----\\n🔱 PIVO : {pivo}\\n◀️ ALA_L : {ala_l}\\n▶️ ALA_R : {ala_r}\\n🛡️ FIXO : {fixo}\\n🧤 GOLEIRO : {gk}\\n\\n"
 
-    # 원래대로 st.html을 사용하여 깔끔하게 표를 출력합니다.
     st.html(f"""
     <div class="toss-table-container">
         <table class="toss-table">
@@ -386,33 +382,21 @@ if st.session_state.lineups:
                     <th><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">🧤 GOLEIRO</span></th>
                 </tr>
             </thead>
-            <tbody>
-                {tbody_rows}
-            </tbody>
+            <tbody>{tbody_rows}</tbody>
         </table>
     </div>
     """)
 
-    # 카카오톡 복사 버튼도 안전한 이전 버전 스크립트로 원복합니다.
     st.components.v1.html(f"""
     <button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin: 0;">💬 카카오톡 공유용 라인업 복사하기</button>
-
     <script>
     function copyToClipboard() {{
         var textToCopy = `{kakao_text}`;
         var textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        textArea.style.position = "fixed";
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {{
-            var successful = document.execCommand('copy');
-            if(successful) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
-        }} catch (err) {{
-            navigator.clipboard.writeText(textToCopy).then(function() {{
-                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
-            }});
-        }}
+        textArea.value = textToCopy; textArea.style.position = "fixed";
+        document.body.appendChild(textArea); textArea.select();
+        try {{ if(document.execCommand('copy')) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }} 
+        catch (err) {{ navigator.clipboard.writeText(textToCopy).then(function() {{ alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }}); }}
         document.body.removeChild(textArea);
     }}
     </script>
@@ -427,22 +411,21 @@ if st.session_state.lineups:
         for name in active_players_current
     }
     
+    pos_mapping = {
+        'PIVO (공격)': 'PIVO', 'ALA_L (좌윙)': 'ALA_L', 
+        'ALA_R (우윙)': 'ALA_R', 'FIXO (수비)': 'FIXO'
+    }
+    
     for q, roster in st.session_state.lineups.items():
-        pivo, ala_l, ala_r, fixo, gk = roster['PIVO (공격)'], roster['ALA_L (좌윙)'], roster['ALA_R (우윙)'], roster['FIXO (수비)'], roster['GOLEIRO (키퍼)']
-        
-        if gk in stats_data: stats_data[gk]["GK"] += 1
-        if pivo in stats_data: 
-            stats_data[pivo]["PIVO"] += 1
-            stats_data[pivo]["필드 합계"] += 1
-        if ala_l in stats_data: 
-            stats_data[ala_l]["ALA_L"] += 1
-            stats_data[ala_l]["필드 합계"] += 1
-        if ala_r in stats_data: 
-            stats_data[ala_r]["ALA_R"] += 1
-            stats_data[ala_r]["필드 합계"] += 1
-        if fixo in stats_data: 
-            stats_data[fixo]["FIXO"] += 1
-            stats_data[fixo]["필드 합계"] += 1
+        gk = roster['GOLEIRO (키퍼)']
+        if gk in stats_data: 
+            stats_data[gk]["GK"] += 1
+            
+        for full_pos, short_pos in pos_mapping.items():
+            player = roster[full_pos]
+            if player in stats_data:
+                stats_data[player][short_pos] += 1
+                stats_data[player]["필드 합계"] += 1
 
     stats_tbody_rows = ""
     for name, s in stats_data.items():
