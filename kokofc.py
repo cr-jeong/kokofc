@@ -257,7 +257,7 @@ st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
     # 🏃 원하셨던 이쁜 토글(st.toggle) 컴포넌트로 원복!
-    hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
+    hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미참석자 숨기기)", value=False)
     
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
