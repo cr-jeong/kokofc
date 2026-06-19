@@ -141,10 +141,10 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (미참석 시 이름까지 완벽하게 흐려지는 최종본! 🌟)
+# 참여 명단 출력 (간격 복구 + 흐림 기능 동기화 완료! 🔱)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 체크박스 해제 시 이름까지 흐려지게 만드는 맞춤형 CSS 주입
+    # 간격 방해 없이, 체크 해제된 항목의 이름(p 태그)만 찾아내서 흐리게 만드는 고난도 CSS
     st.markdown(
         """
         <style>
@@ -155,8 +155,8 @@ if st.session_state.players_dict:
             transition: all 0.2s ease;
         }
         
-        /* 미참석(체크 해제)된 행의 스타일을 제어하기 위한 투명도 처리 */
-        .unselected-player {
+        /* Streamlit에서 체크박스가 해제(False) 상태일 때 라벨을 흐리게 만듦 */
+        .stCheckbox [aria-checked="false"] ~ div p {
             opacity: 0.4 !important;
             text-decoration: line-through !important;
             color: #9CA3AF !important;
@@ -194,22 +194,14 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 미참석 상태일 때 이름에도 흐림 효과+취소선을 주기 위해 별도 컨테이너로 감싸기
-                # markdown 내부에서 class를 동적으로 부여합니다.
-                player_class = "" if is_active else "class='unselected-player'"
-                
-                # 이름 부분 출력 (HTML 스타일과 순정 체크박스의 결합)
+                # 순정 체크박스 그대로 사용 (불필요한 div 감싸기 제거로 원래 간격 복원!)
                 cb_label = f"🏃 {player}"
-                
-                # st.markdown을 통해 div로 감싸서 체크박스 전체 스타일을 제어합니다.
-                st.markdown(f"<div {player_class}>", unsafe_allow_html=True)
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v7_{player}")
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v8_{player}")
                 st.session_state.attendance[player] = selected
-                st.markdown("</div>", unsafe_allow_html=True)
                 
-                # 태그 영역 (이름과 동일하게 활성/비활성 싱크 맞춤)
+                # 태그 영역 (원래의 착 붙는 간격 유지 + 이름 흐려질 때 같이 0.4배 흐려짐)
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4}; transition: opacity 0.2s;'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
