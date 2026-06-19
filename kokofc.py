@@ -3,6 +3,7 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
+# [상수 및 포지션 설정]
 POS_CONFIG = {
     'PIVO (공격)': {'emoji': '🔱', 'label': '🔱 PIVO'},
     'ALA_L (좌윙)': {'emoji': '◀️', 'label': '◀️ ALA_L'},
@@ -16,13 +17,13 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
+# [디자인 유지: 오리지널 CSS]
 st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
     }
-    
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -35,22 +36,18 @@ st.markdown("""
             flex: 1 1 100% !important;
         }
     }
-    
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: var(--text-color) !important;
     }
-    
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
     }
-    
     [data-testid="stMainBlock"] .stElementContainer:has(.stCheckbox) {
         max-width: 500px !important;
     }
-    
     .stExpander details summary p {
         font-size: 15px !important;
         font-weight: 600 !important;
@@ -68,38 +65,36 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 def load_players_from_db():
     try:
         df = conn.read(header=None, ttl=300)
-        if df.empty: return {}
+        if df.empty: 
+            return {}
+        
         players_dict = {}
         for _, row in df.iterrows():
             if len(row) >= 1 and pd.notna(row.iloc[0]):
                 name = str(row.iloc[0]).strip()
-                if not name or name.lower() == 'nan': continue
+                if not name or name.lower() == 'nan': 
+                    continue
+                
                 pos_str = str(row.iloc[1]).strip() if len(row) >= 2 and pd.notna(row.iloc[1]) else ""
                 if pos_str and pos_str.lower() != 'nan':
-                    positions = [p.strip() for p in pos_str.split(',')]
-                    positions = [p for p in positions if p in ALL_POSITIONS]
+                    positions = [p.strip() for p in pos_str.split(',') if p.strip() in ALL_POSITIONS]
                 else:
                     positions = ALL_POSITIONS.copy()
-                if not positions: positions = ALL_POSITIONS.copy()
-                players_dict[name] = positions
+                    
+                players_dict[name] = positions if positions else ALL_POSITIONS.copy()
         return players_dict
     except Exception as e:
         st.error(f"구글 시트 로드 중 에러 발생: {e}")
         return {}
 
-def save_players_to_db(players_dict):
-    st.cache_data.clear()
-
-if 'first_load_done' not in st.session_state:
+# 🛠️ 리팩토링 1: 파편화되어 있던 세션 상태(session_state) 초기화 로직을 깔끔하게 통합
+if 'players_dict' not in st.session_state:
     st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-    st.session_state.first_load_done = True
+    st.session_state.lineups = None
 
-if 'players_dict' not in st.session_state: st.session_state.players_dict = {}
-if 'lineups' not in st.session_state: st.session_state.lineups = None
-if 'attendance' not in st.session_state: st.session_state.attendance = {}
-
+# 신규 진입/새로고침 시 누락된 출석 데이터 바인딩 자동화
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
@@ -125,8 +120,8 @@ def edit_position_dialog(player_name):
     with d_col2:
         if st.button("🗑️ 선수 삭제하기", use_container_width=True, type="secondary"):
             del st.session_state.players_dict[player_name]
-            if player_name in st.session_state.attendance: del st.session_state.attendance[player_name]
-            save_players_to_db(st.session_state.players_dict)
+            st.session_state.attendance.pop(player_name, None) # 안전한 삭제 처리
+            st.cache_data.clear() # 🛠️ 리팩토링 2: 의미 없는 유령 함수 대신 직접 캐시 클리어
             st.rerun()
 
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
@@ -157,7 +152,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                     else:
                         st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                         st.session_state.attendance[name] = True
-                        save_players_to_db(st.session_state.players_dict)
+                        st.cache_data.clear() # 캐시 최신화
                         st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                         st.rerun()
 
@@ -176,11 +171,10 @@ if st.session_state.players_dict:
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
-            tag_htmls = []
-            for p in positions:
-                if p in POS_CONFIG:
-                    label = POS_CONFIG[p]['label']
-                    tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
+            tag_htmls = [
+                f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{POS_CONFIG[p]['label']}</span>"
+                for p in positions if p in POS_CONFIG
+            ]
             tags_inline = "".join(tag_htmls)
             
             selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
@@ -206,31 +200,41 @@ st.markdown("---")
 
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
-    if len(active_players) < 5: return None
+    if len(active_players) < 5: 
+        return None
+        
     lineups = {}
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
     last_quarter_gk = None
+    
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
+        
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates: gk_candidates = remaining.copy()
-        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: gk_candidates.remove(last_quarter_gk)
+        if not gk_candidates: 
+            gk_candidates = remaining.copy()
+        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: 
+            gk_candidates.remove(last_quarter_gk)
+            
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
+        
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         shuffled_positions = FIELD_POSITIONS.copy()
         random.shuffle(shuffled_positions)
+        
         for pos in shuffled_positions:
             wished_candidates = [p for p in remaining if pos in players_pool[p]]
-            if wished_candidates: chosen_player = wished_candidates[0]
+            if wished_candidates: 
+                chosen_player = wished_candidates[0]
             else:
                 remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
                 chosen_player = remaining[0]
@@ -238,6 +242,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             remaining.remove(chosen_player)
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
+            
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
             "subs": remaining,
@@ -245,14 +250,17 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             "gk_snapshot": gk_counts.copy(),
             "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
         }
+        last_quarter_gk = chosen_gk # 쿼터 종료 후 키퍼 기록 업데이트
     return lineups
 
 st.write("")
 st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
-    if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
-    else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
+    if active_count < 5: 
+        st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
+    else: 
+        st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
@@ -277,7 +285,8 @@ function copyToClipboard() {{
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
-        for idx, pos in enumerate(ALL_POSITIONS): row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
+        for idx, pos in enumerate(ALL_POSITIONS): 
+            row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
         edited_data.append(row)
         
     st.data_editor(
@@ -288,14 +297,12 @@ function copyToClipboard() {{
         hide_index=True
     )
     
-    # 💥 [버그 수정 핵심 섹션] HTML 파싱 구조 안정화 및 Key값 매핑 불일치 해결
     st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
     final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
-    # 순수 데이터 리스트 생성 후 수동으로 HTML tbody 행(tr) 조립 (버전 간 간섭 제거)
     tbody_rows = ""
     for name in final_fields.keys():
         player_history = final_history.get(name, {})
