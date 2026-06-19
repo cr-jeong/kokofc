@@ -27,11 +27,16 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
+    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 + 100% 꽉 채우기 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
+        }
+        /* 내부 컨테이너 박스들이 모바일에서 좌측으로 쏠리지 않고 가로로 꽉 차게 방어 */
+        .stExpander [data-testid="stHorizontalBlock"] [data-testid="column"] {
+            width: 100% !important;
+            max-width: 100% !important;
         }
     }
     
