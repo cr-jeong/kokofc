@@ -195,26 +195,27 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 원래 하려던 깔끔한 비율 85:15 샌드위치
-            col_main, col_btn = st.columns([0.85, 0.15])
+            # 1. 체크박스는 순정 그대로 큼직하고 시원하게 출력 (모바일 터치 편함)
+            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
+            st.session_state.attendance[player] = selected
             
-            with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
-                st.session_state.attendance[player] = selected
-                
-                st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
-                    </div>""", 
-                    unsafe_allow_html=True
-                )
-                
-            with col_btn:
-                # 가로로 늘어나지 않게 False로 세팅!
-                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=False):
-                    edit_position_dialog(player)
+            # 2. [디자이너의 최종 제안] 태그들이 나오는 줄 맨 우측 끝에 예쁜 '설정 변경' 버튼을 배치!
+            # st.columns를 쓰지 않으므로 모바일에서 레이아웃이 찌그러질 일이 0%입니다.
+            st.write(
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                    <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
+                        {tags_inline}
+                    </div>
+                </div>""", 
+                unsafe_allow_html=True
+            )
             
-            st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
+            # 3. 뚱뚱한 버튼 대신, 아주 미니멀하고 슬림한 가로형 버튼으로 이름 바로 밑에 배치
+            # 테두리가 없고 컴팩트해서 모바일에서 한 줄 가득 차도 전혀 이상하지 않고 깔끔한 링크처럼 보입니다.
+            if st.button(f"⚙️ {player} 포지션/삭제 설정", key=f"edit_btn_{player}", use_container_width=True):
+                edit_position_dialog(player)
+            
+            st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
             
 else:
     st.info("등록된 선수가 없습니다.")
