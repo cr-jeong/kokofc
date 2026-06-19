@@ -372,10 +372,9 @@ if st.session_state.lineups:
         """
         kakao_text += f"-----[{q}쿼터]-----\\n🔱 PIVO : {pivo}\\n◀️ ALA_L : {ala_l}\\n▶️ ALA_R : {ala_r}\\n🛡️ FIXO : {fixo}\\n🧤 GOLEIRO : {gk}\\n\\n"
 
-    # 🌟 [해결책] 테이블 HTML과 카톡 버튼 스크립트를 하나의 거대한 하나의 HTML 블록으로 합칩니다!
-    # 이 안에서는 margin-top 조절이 100% 칼같이 먹힙니다.
-    combined_html_block = f"""
-    <div class="toss-table-container" style="margin-top: 8px; margin-bottom: 0px;">
+    # 원래대로 st.html을 사용하여 깔끔하게 표를 출력합니다.
+    st.html(f"""
+    <div class="toss-table-container">
         <table class="toss-table">
             <thead>
                 <tr>
@@ -387,31 +386,37 @@ if st.session_state.lineups:
                     <th><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">🧤 GOLEIRO</span></th>
                 </tr>
             </thead>
-            <tbody>{tbody_rows}</tbody>
+            <tbody>
+                {tbody_rows}
+            </tbody>
         </table>
     </div>
+    """)
 
-    <!-- 💡 테이블 바로 밑에 margin-top: 6px로 바짝 붙여서 버튼 배치 -->
-    <button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-top: 6px; margin-bottom: 10px;">💬 카카오톡 공유용 라인업 복사하기</button>
+    # 카카오톡 복사 버튼도 안전한 이전 버전 스크립트로 원복합니다.
+    st.components.v1.html(f"""
+    <button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin: 0;">💬 카카오톡 공유용 라인업 복사하기</button>
 
     <script>
     function copyToClipboard() {{
         var textToCopy = `{kakao_text}`;
         var textArea = document.createElement("textarea");
-        textArea.value = textToCopy; textArea.style.position = "fixed";
-        document.body.appendChild(textArea); textArea.select();
-        try {{ if(document.execCommand('copy')) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }} 
-        catch (err) {{ navigator.clipboard.writeText(textToCopy).then(function() {{ alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }}); }}
+        textArea.value = textToCopy;
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {{
+            var successful = document.execCommand('copy');
+            if(successful) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
+        }} catch (err) {{
+            navigator.clipboard.writeText(textToCopy).then(function() {{
+                alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
+            }});
+        }}
         document.body.removeChild(textArea);
     }}
     </script>
-    """
-    
-    # 🌟 기존의 st.html과 st.components.v1.html을 따로 쓰던 걸 과감히 없애고,
-    # 컴포넌트 높이를 넉넉하게 보장해 주는 st.components.v1.html 하나로 통일하여 한 번에 쏩니다!
-    # (쿼터 수에 따라 늘어날 수 있으므로 height는 넉넉히 주거나 표 크기에 맞춰 최적화)
-    # 7쿼터 기준 표 높이 대략 350px + 버튼 50px = 넉넉하게 460px 설정
-    st.components.v1.html(combined_html_block, height=460)
+    """, height=54)
     
     # [10. 📊 통계 테이블 세션]
     st.markdown("### 📊 포지션별 상세 출전 통계")
