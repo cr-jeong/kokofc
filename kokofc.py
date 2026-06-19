@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 화면 제어 및 반응형 레이아웃 CSS ---
+# --- 🎨 화면 제어 및 UI 최적화 CSS (레거시 코드 제거) ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,45 +27,30 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
+    /* 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
         }
-        .stExpander [data-testid="stHorizontalBlock"] > div {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex: 1 1 auto !important;
-        }
     }
     
-    /* ② [🔥 전 세계 개발자 공인 치트키] 모바일에서 명단 columns가 세로로 찢어지는 현상 원천 차단 */
-    [data-testid="stMainBlock"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important; /* 모바일이든 뭐든 무조건 가로로 나란히! */
-        flex-wrap: nowrap !important;   /* 절대로 줄바꿈 금지! */
-        align-items: center !important;
-    }
-
-    /* 명단 내부의 컬럼 너비가 100%로 늘어나서 한 줄 다 차지하는 것 방어 */
-    [data-testid="stMainBlock"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-        width: auto !important;
-        max-width: none !important;
-    }
-    
-    /* ③ 명단 이름 폰트 크기 및 색상 */
+    /* 명단 이름 폰트 스타일 최적화 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: var(--text-color) !important;
     }
     
-    /* ④ 체크박스 해제 시 흐려짐 효과 테마 대응 */
+    /* 체크박스 해제 시 텍스트 흐려짐 및 취소선 효과 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
-        color: var(--text-color) !important;
+    }
+    
+    /* 데스크톱에서 명단 영역이 지나치게 벌어지는 것 방지 */
+    [data-testid="stMainBlock"] .stElementContainer:has(.stCheckbox) {
+        max-width: 500px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -145,7 +130,6 @@ def edit_position_dialog(player_name):
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
-        # 외곽 테너리는 유지하되 내부 여백을 시원하게
         with st.container(border=True):
             st.write("**① 경기 설정**")
             total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
@@ -159,12 +143,9 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
     with col2:
         with st.container(border=True):
             st.write("**② 선수 등록 (실시간 반영)**")
-            # 🌟 [디테일 튜닝] border=False로 내부 폼의 테두리를 완전히 없애서 '박스 안의 박스' 현상 해결!
             with st.form(key="player_add_form", clear_on_submit=True, border=False):
                 name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
                 wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-                
-                # 버튼 위아래 여백을 위해 살짝 띄워주기
                 st.write("")
                 if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
                     name = name_input.strip()
@@ -201,12 +182,11 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 1. 체크박스는 순정 그대로 큼직하고 시원하게 출력 (모바일 터치 편함)
+            # 1. 순정 체크박스로 체크 처리
             selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
             st.session_state.attendance[player] = selected
             
-            # 2. [디자이너의 최종 제안] 태그들이 나오는 줄 맨 우측 끝에 예쁜 '설정 변경' 버튼을 배치!
-            # st.columns를 쓰지 않으므로 모바일에서 레이아웃이 찌그러질 일이 0%입니다.
+            # 2. 체크박스 하단 태그 배치 영역
             st.write(
                 f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
@@ -216,13 +196,11 @@ if st.session_state.players_dict:
                 unsafe_allow_html=True
             )
             
-            # 3. 뚱뚱한 버튼 대신, 아주 미니멀하고 슬림한 가로형 버튼으로 이름 바로 밑에 배치
-            # 테두리가 없고 컴팩트해서 모바일에서 한 줄 가득 차도 전혀 이상하지 않고 깔끔한 링크처럼 보입니다.
-            if st.button(f"⚙️ 희망 포지션 설정/선수 삭제", key=f"edit_btn_{player}", use_container_width=True):
+            # 3. 미니멀 투명 슬림 버튼 스타일로 이름 하단 배치 (타협안 안착)
+            if st.button(f"⚙️ {player} 포지션/삭제 설정", key=f"edit_btn_{player}", use_container_width=True):
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
-            
 else:
     st.info("등록된 선수가 없습니다.")
     
@@ -272,6 +250,9 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         }
     return lineups
 
+# 버튼 무게감 카피 추가
+st.write("")
+st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려하여 가장 공평한 라인업을 계산합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
@@ -302,15 +283,16 @@ function copyToClipboard() {{
         row = {"쿼터": quarter}
         for idx, pos in enumerate(ALL_POSITIONS): row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
         edited_data.append(row)
+        
     st.data_editor(
-    edited_data, 
-    use_container_width=True, 
-    num_rows="fixed",
-    disabled=["쿼터"], # 쿼터 이름은 수정 못 하게 잠그기!
-    hide_index=True    # 좌측의 의미 없는 숫자(0, 1, 2...) 열 숨기기
-)
+        edited_data, 
+        use_container_width=True, 
+        num_rows="fixed",
+        disabled=["쿼터"],
+        hide_index=True
+    )
     
-    # 통계 표 섹션 (토스 스타일 고정)
+    # 통계 표 섹션 (구조 분리로 인덴트/f-string 버그 원천 해결)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -329,7 +311,6 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
-    # 1. CSS 스타일만 따로 떼어내서 안전하게 선언 (중괄호가 2개씩 들어간 버그 방지용)
     table_css = """
     <style>
         .modern-table {
@@ -383,7 +364,6 @@ function copyToClipboard() {{
     </style>
     """
 
-    # 2. 파이썬 변수가 들어가는 HTML 바디만 따로 조립
     table_body = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); contain: content;">
         <table class="modern-table">
@@ -405,6 +385,4 @@ function copyToClipboard() {{
         </table>
     </div>
     """
-
-    # 3. 두 개를 합쳐서 깨끗하게 출력! (들여쓰기 에러 완벽 차단)
     st.html(table_css + table_body)
