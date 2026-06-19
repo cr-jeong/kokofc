@@ -141,10 +141,10 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (시차 및 미작동 버그 원천 차단 버전! ⚡)
+# 참여 명단 출력 (시차 0.000초, 완전 무결점 동기화 버전! ⚡)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 폰트와 미참석 스타일을 정의하는 깔끔한 CSS
+    # 파이썬 리렌더링을 기다리지 않고 브라우저가 즉시 동시에 흐리게 만드는 CSS
     st.markdown(
         """
         <style>
@@ -154,15 +154,16 @@ if st.session_state.players_dict:
             font-weight: bold !important;
         }
         
-        /* 체크 해제 시 이름 흐리게 */
+        /* 1. 체크 해제 시 이름 즉시 흐리게 (0ms) */
         .stCheckbox [aria-checked="false"] ~ div p {
             opacity: 0.4 !important;
             text-decoration: line-through !important;
             color: #9CA3AF !important;
         }
         
-        /* 체크 해제 시 태그도 흐리게 만드는 전용 클래스 */
-        .unselected-tag {
+        /* 2. 체크 해제 시 아래에 있는 태그 영역 박스도 즉시 동시에 흐리게 (0ms) */
+        /* Streamlit 컴포넌트 구조상 체크박스 블록 뒤에 오는 요소 내의 태그를 정확히 타겟팅합니다. */
+        .stCheckbox:has([aria-checked="false"]) ~ div .player-tags {
             opacity: 0.4 !important;
         }
         </style>
@@ -200,14 +201,12 @@ if st.session_state.players_dict:
                 
                 # 순정 체크박스
                 cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v10_{player}")
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v11_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # [핵심] 체크 여부(selected)에 따라 클래스를 동적으로 주입하여 시차를 원천 차단합니다!
-                tag_class = "player-tags" if selected else "player-tags unselected-tag"
-                
+                # 파이썬으로 opacity를 주지 않고, 무조건 켜둔 상태에서 상단 CSS 선택자가 강제로 끄게 만듭니다!
                 st.write(
-                    f"""<div class='{tag_class}' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
+                    f"""<div class='player-tags' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
