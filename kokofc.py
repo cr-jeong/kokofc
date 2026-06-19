@@ -19,21 +19,28 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# [2. 토스 & 카카오 스타일 최적화 CSS 인젝션 + 🔐 보안 강화 메뉴 숨기기]
+# [2. 토스 & 카카오 스타일 최적화 CSS 인젝션 + 🔐 철통 보안 헤더 폭파]
 st.markdown("""
     <style>
-    /* 🔥 [추가] 스트림릿 순정 메뉴, 상단 헤더 바, 하단 로고 3종 세트 숨기기 */
-    #MainMenu {visibility: hidden !important;}
-    header {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
-    [data-testid="stToolbar"] {visibility: hidden !important;} /* 우측 상단 호버 툴바 완전 제거 */
+    /* 🚨 [최신 무조건 차단] 상단 헤더, 툴바, 점 세 개 버튼 영역을 흔적도 없이 소멸 */
+    header[data-testid="stHeader"] {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    #MainMenu {display: none !important;}
+    footer {display: none !important;}
     
+    /* 화면을 꽉 채우고 상단 빈 여백 없애기 */
     [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
         background-color: var(--background-color);
-        padding-top: 0px !important; /* 헤더가 사라진 공간만큼 상단 여백 압축 */
+        padding-top: 0px !important;
     }
+    
+    /* 맨 위 빈 공간(Block Container) 패딩 강제 제거 */
+    [data-testid="stAppViewBlockContainer"] {
+        padding-top: 2rem !important;
+    }
+    
     [data-testid="stExpander"] {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
