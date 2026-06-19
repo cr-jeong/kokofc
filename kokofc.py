@@ -18,41 +18,54 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 깔끔하고 미니멀한 CSS ---
+# --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
+    /* 모바일 브라우저 화면 전체 흔들림 차단 */
     html, body, [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
     }
+    
+    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
         }
+        .stExpander [data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 1 1 auto !important;
+        }
     }
-    /* 투명 버튼을 완벽하게 아이콘화 */
-    .edit-ghost-btn button {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        font-size: 18px !important;
+    
+    /* ② [🔥 전 세계 개발자 공인 치트키] 모바일에서 명단 columns가 세로로 찢어지는 현상 원천 차단 */
+    [data-testid="stMainBlock"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important; /* 모바일이든 뭐든 무조건 가로로 나란히! */
+        flex-wrap: nowrap !important;   /* 절대로 줄바꿈 금지! */
+        align-items: center !important;
+    }
+
+    /* 명단 내부의 컬럼 너비가 100%로 늘어나서 한 줄 다 차지하는 것 방어 */
+    [data-testid="stMainBlock"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"] + div[data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] > div[data-testid="column"] {
         width: auto !important;
-        height: auto !important;
+        max-width: none !important;
     }
-    .edit-ghost-btn button:hover, .edit-ghost-btn button:active {
-        background-color: transparent !important;
-        color: inherit !important;
-    }
-    /* 명단 폰트 디자인 */
+    
+    /* ③ 명단 이름 폰트 크기 및 색상 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
+        color: var(--text-color) !important;
     }
+    
+    /* ④ 체크박스 해제 시 흐려짐 효과 테마 대응 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
+        color: var(--text-color) !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -182,36 +195,24 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 🌟 [해결사] 이름 옆에 공백을 조금 띄우고 [⚙️] 텍스트를 붙여버립니다.
-            # 텍스트 취급이라 절대 밑줄로 안 떨어집니다!
-            checkbox_label = f"🏃 {player}   [⚙️]"
+            # 원래 하려던 깔끔한 비율 85:15 샌드위치
+            col_main, col_btn = st.columns([0.85, 0.15])
             
-            selected = st.checkbox(checkbox_label, value=is_active, key=f"att_v15_{player}")
-            st.session_state.attendance[player] = selected
-            
-            # [🔥 중요] 만약 유저가 체크박스를 눌렀는데, 방금 누른 게 '⚙️' 부분이라면 설정을 띄워줍니다!
-            # Streamlit 순정 텍스트 링크처럼 작동하는 영리한 트릭
-            if selected != is_active:
-                # 텍스트 변경 없이 상태만 바뀐 거라면 일반 체크/해제지만, 
-                # 다이얼로그를 띄우기 위해 세션에 임시 기록하고 팝업을 엽니다.
-                pass
+            with col_main:
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
+                st.session_state.attendance[player] = selected
                 
-            # ⚙️ 아이콘이나 이름을 누르면 팝업이 뜨도록, 기존 버튼 대신 
-            # 깔끔하게 이름 한 줄 아래에 '설정 변경' 링크를 다는 게 UX상 가장 깔끔합니다.
-            # 모바일 줄바꿈 스트레스를 지우는 가장 트렌디한 토스 스타일 대안!
-            st.write(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
-                    <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
-                        {tags_inline}
-                        <a href="#" id="edit_link_{player}" style="font-size: 11px; color: #888; text-decoration: none; margin-left: auto; padding: 2px 6px; background: rgba(128,128,128,0.1); border-radius: 4px;">설정 ⚙️</a>
-                    </div>
-                </div>""", 
-                unsafe_allow_html=True
-            )
-            
-            # HTML 링크 클릭 감지를 위해 투명 버튼 하나만 바로 밑에 숨겨둡니다 (유저 눈엔 안보임)
-            if st.button("수정", key=f"hid_btn_{player}", label_visibility="collapsed"):
-                edit_position_dialog(player)
+                st.write(
+                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
+                    </div>""", 
+                    unsafe_allow_html=True
+                )
+                
+            with col_btn:
+                # 가로로 늘어나지 않게 False로 세팅!
+                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=False):
+                    edit_position_dialog(player)
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
             
