@@ -293,7 +293,7 @@ if st.session_state.players_dict:
 else:
     st.info("등록된 선수가 없습니다.")
     
-# [8. 균등 분배 알고리즘 핵심 엔진 - 동호회 맞춤형 필드 완벽 균등 버전]
+# [8. 균등 분배 알고리즘 핵심 엔진 - 중복 차출 해결 버전]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
@@ -308,7 +308,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
         
-        # 1. 필드 포지션 '먼저' 선발 (오늘 총 경기 참여 횟수가 적은 사람 위주로)
+        # 1. 필드 포지션 먼저 선발
         shuffled_positions = FIELD_POSITIONS.copy()
         random.shuffle(shuffled_positions)
         
@@ -317,7 +317,6 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             
             if wished_candidates:
                 random.shuffle(wished_candidates)
-                # 💡 [핵심] 필드를 뽑을 때 오늘 '필드 뛴 횟수'가 적은 사람을 무조건 최우선 배치!
                 wished_candidates.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
                 chosen_player = wished_candidates[0]
             else:
@@ -326,20 +325,19 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
                 chosen_player = remaining[0]
                 
             starters[pos] = chosen_player
-            remaining.remove(chosen_player)
+            remaining.remove(chosen_player) # 필드 뽑혔으니 명단에서 제거
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
-        # 2. 골키퍼 배정 (필드 선발에서 탈락하고 '남은 대기 인원' 중에서 선발)
+        # 2. 골키퍼 배정 (★핵심: 필드로 안 뽑히고 '남은 대기 인원' 중에서만 추출)
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates: gk_candidates = remaining.copy()
-        
-        # 직전 쿼터 키퍼는 연속으로 안 보게 제외 (대기 인원이 여유 있을 때만)
+        if not gk_candidates: 
+            gk_candidates = remaining.copy()
+            
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: 
             gk_candidates.remove(last_quarter_gk)
             
         random.shuffle(gk_candidates)
-        # 키퍼 횟수도 그나마 적게 본 사람 순으로 정렬
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
         
