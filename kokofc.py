@@ -367,7 +367,7 @@ if st.session_state.lineups:
             <td>{ala_l}</td>
             <td>{ala_r}</td>
             <td>{fixo}</td>
-            <td style="background-color: rgba(156, 163, 175, 0.03);">{gk}</td>
+            <td>{gk}</td>
         </tr>
         """
         kakao_text += f"-----[{q}쿼터]-----\\n🔱 PIVO : {pivo}\\n◀️ ALA_L : {ala_l}\\n▶️ ALA_R : {ala_r}\\n🛡️ FIXO : {fixo}\\n🧤 GOLEIRO : {gk}\\n\\n"
