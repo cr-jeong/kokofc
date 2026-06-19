@@ -261,7 +261,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 💡 [세계적 디자이너의 한 끗] 참석자만 보기 필터 스위치 추가
+    # 🏃 참석자만 보기 토글 스위치
     hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
     
     with st.container(border=True):
@@ -269,7 +269,7 @@ if st.session_state.players_dict:
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
-            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에 그리지 않고 패스!
+            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에서 제외
             if hide_absent and not is_active:
                 continue
                 
@@ -278,11 +278,15 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
+            # 💡 [버그 해결] 체크박스가 변경되면 그 즉시 상태를 반영하고 화면을 강제 새로고침(rerun) 합니다.
             selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
-            st.session_state.attendance[player] = selected
+            if selected != is_active:
+                st.session_state.attendance[player] = selected
+                st.rerun()
             
+            # 💡 [건의 반영] 체크 해제 시 투명도를 조절하던 opacity 설정을 제거하여 글자를 항상 선명하게 유지합니다.
             st.write(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px;'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
                         {"".join(tag_htmls)}
                     </div>
@@ -294,6 +298,8 @@ if st.session_state.players_dict:
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
+else:
+    st.info("등록된 선수가 없습니다.")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
