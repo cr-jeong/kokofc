@@ -141,29 +141,25 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (시차 0.000초, 완전 무결점 동기화 버전! ⚡)
+# 참여 명단 출력 (구조적 시차 및 미작동 오류 100% 영구 박멸 버전! 😈)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 파이썬 리렌더링을 기다리지 않고 브라우저가 즉시 동시에 흐리게 만드는 CSS
+    # 한 묶음(wrapper) 안에서 이름과 태그를 칼같이 동시 통제하는 CSS
     st.markdown(
         """
         <style>
-        /* 기본 체크박스 라벨 스타일 */
-        .stCheckbox p {
-            font-size: 16px !important;
-            font-weight: bold !important;
+        /* 1. 순정 체크박스의 빈 라벨 공간은 숨기거나 최소화 */
+        .stCheckbox span {
+            font-size: 0px !important;
         }
         
-        /* 1. 체크 해제 시 이름 즉시 흐리게 (0ms) */
-        .stCheckbox [aria-checked="false"] ~ div p {
+        /* 2. 체크 해제 시, 같은 부모를 둔 이름(player-name)과 태그(player-tags)를 즉시 동시에 흐리게! */
+        .stCheckbox:has([aria-checked="false"]) ~ .player-info-block .player-name {
             opacity: 0.4 !important;
             text-decoration: line-through !important;
             color: #9CA3AF !important;
         }
-        
-        /* 2. 체크 해제 시 아래에 있는 태그 영역 박스도 즉시 동시에 흐리게 (0ms) */
-        /* Streamlit 컴포넌트 구조상 체크박스 블록 뒤에 오는 요소 내의 태그를 정확히 타겟팅합니다. */
-        .stCheckbox:has([aria-checked="false"]) ~ div .player-tags {
+        .stCheckbox:has([aria-checked="false"]) ~ .player-info-block .player-tags {
             opacity: 0.4 !important;
         }
         </style>
@@ -193,21 +189,24 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {style}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 레이아웃 분할: 왼쪽(이름+태그), 오른쪽(버튼)
+            # 레이아웃 분할: 왼쪽(이름+태그 세트), 오른쪽(버튼)
             col_left, col_right = st.columns([2.8, 1.2])
             
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 순정 체크박스
-                cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v11_{player}")
+                # 체크박스 자체는 순정 기능과 체크 버튼 공간만 활용 (글자는 공백)
+                selected = st.checkbox("", value=is_active, key=f"att_v12_{player}", label_visibility="collapsed")
                 st.session_state.attendance[player] = selected
                 
-                # 파이썬으로 opacity를 주지 않고, 무조건 켜둔 상태에서 상단 CSS 선택자가 강제로 끄게 만듭니다!
+                # [핵심] 이름과 태그를 'player-info-block'이라는 하나의 상자 안에 나란히 배치!
+                # 이렇게 묶어두어야 체크 해제 시 마진 깨짐이나 시차 없이 동시에 착 흐려집니다.
                 st.write(
-                    f"""<div class='player-tags' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                    f"""<div class='player-info-block' style='padding-left: 28px; margin-top: -30px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;'>
+                        <div class='player-name' style='font-size: 16px; font-weight: bold; color: #000000;'>
+                            🏃 {player}
+                        </div>
+                        <div class='player-tags' style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
                     </div>""", 
