@@ -66,8 +66,8 @@ st.markdown("""
         font-weight: 700 !important;
     }
     
-    /* 💡 [핵심 수정] 오직 .player-list-area 클래스 내부에 있는 미출석 체크박스만 취소선+음영 처리 */
-    .player-list-area [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
+    /* 🔄 순정 복구: 모든 체크박스가 해제(False)되면 음영과 취소선이 정상 작동합니다 */
+    [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
@@ -257,11 +257,8 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 🔍 상단 메뉴 체크박스 (여기는 일반 영역이라 취소선이 절대 안 먹힙니다)
-    hide_absent = st.checkbox("🔍 오늘 참석자만 보기 (미출석자 숨기기)", value=False, key="global_hide_absent_toggle")
-    
-    # 💡 선수 명단 감싸는 타겟 박스 시작
-    st.markdown('<div class="player-list-area">', unsafe_allow_html=True)
+    # 🔄 순정 복구: 기존에 잘 작동하던 체크박스 형태의 메뉴 스위치 유지
+    hide_absent = st.checkbox("🔍 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
     
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
@@ -294,11 +291,9 @@ if st.session_state.players_dict:
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
-            
-    st.markdown('</div>', unsafe_allow_html=True) # 💡 타겟 박스 끝
 else:
     st.info("등록된 선수가 없습니다.")
-
+    
 # [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
