@@ -141,9 +141,23 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (글자 크기 복원 완료! 😎)
+# 참여 명단 출력 (체크박스 오류 완벽 해결 및 폰트 크기 고정 버전!)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
+    # 텍스트 크기를 16px 볼드로 고정하고 스타일을 다듬는 순정 CSS 주입
+    st.markdown(
+        """
+        <style>
+        /* 체크박스 라벨의 글자 크기를 16px bold로 변경 */
+        .stCheckbox p {
+            font-size: 16px !important;
+            font-weight: bold !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     # 세련되고 부드러운 파스텔톤 태그 스타일 정의
     TAG_STYLES = {
         'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', 
@@ -172,21 +186,15 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 체크박스 자체의 텍스트는 숨기고 label로 처리
-                # 맨 처음처럼 굵고 큼직한 폰트 스타일로 이름을 래핑했습니다!
-                color = "#000000" if is_active else "#9CA3AF"
-                text_decor = "text-decoration: none;" if is_active else "text-decoration: line-through; opacity: 0.5;"
-                
-                selected = st.checkbox("", value=is_active, key=f"att_v5_{player}", label_visibility="collapsed")
+                # 순정 체크박스로 기능을 100% 살리고, 이름 크기는 위 CSS가 알아서 16px로 띄워줍니다!
+                cb_label = f"🏃 {player}"
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v6_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 체크박스 우측에 원래 원하셨던 큰 폰트(16px, Bold)로 이름 배치
+                # 미참석 시 태그 투명도 조절 및 모바일 하단 여백 확보
                 st.write(
-                    f"""<div style='display: flex; flex-direction: column; gap: 4px; margin-top: -32px; padding-left: 28px;'>
-                        <div style='font-size: 16px; font-weight: bold; color: {color}; {text_decor}'>
-                            🏃 {player}
-                        </div>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
                     </div>""", 
