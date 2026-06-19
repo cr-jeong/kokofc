@@ -197,7 +197,7 @@ if 'players_dict' not in st.session_state:
     st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-    st.session_state.lineups_df = None  # 변형 가능한 DataFrame 형태로 관리하기 위해 구조 변경
+    st.session_state.lineups = None  # 다시 원래의 안전한 내부 딕셔너리 구조로 롤백
 
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
@@ -239,7 +239,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
             st.cache_data.clear()
             st.session_state.players_dict = load_players_from_db()
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-            st.session_state.lineups_df = None
+            st.session_state.lineups = None
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
@@ -299,11 +299,11 @@ else:
 st.markdown("---")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
-def generate_fair_lineups_df(players_pool, attendance_dict, total_q):
+def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
     
-    rows = []
+    lineups_dict = {}
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
@@ -340,17 +340,10 @@ def generate_fair_lineups_df(players_pool, attendance_dict, total_q):
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
-        rows.append({
-            "쿼터": f"{q}쿼터",
-            "PIVO (공격)": starters['PIVO (공격)'],
-            "ALA_L (좌윙)": starters['ALA_L (좌윙)'],
-            "ALA_R (우윙)": starters['ALA_R (우윙)'],
-            "FIXO (수비)": starters['FIXO (수비)'],
-            "GOLEIRO (키퍼)": starters['GOLEIRO (키퍼)']
-        })
+        lineups_dict[q] = starters
         last_quarter_gk = chosen_gk
         
-    return pd.DataFrame(rows)
+    return lineups_dict
 
 st.write("")
 st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
@@ -358,42 +351,52 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다!")
     else: 
-        st.session_state.lineups_df = generate_fair_lineups_df(st.session_state.players_dict, st.session_state.attendance, total_quarters)
+        st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
-# [9. 🔥 인터랙티브 결과 출력 및 실시간 공유 연동 섹션]
-if st.session_state.lineups_df is not None:
-    st.markdown("### 📋 경기 라인업 결과 (💡 셀을 누르면 선수 교체 가능)")
+# [9. 📋 안전한 원래 방식의 결과 출력 및 공유 섹션]
+if st.session_state.lineups:
+    st.markdown("### 📋 경기 라인업 결과")
     
-    # 현재 출석한 활성 선수들 명단 추출 (드롭다운 옵션용)
-    active_players_list = [p for p, att in st.session_state.attendance.items() if att and p in st.session_state.players_dict]
-    
-    # 🌟 [핵심 대안 적용] st.data_editor를 사용하여 가독성 높은 인터랙티브 테이블 매핑
-    edited_df = st.data_editor(
-        st.session_state.lineups_df,
-        column_config={
-            "쿼터": st.column_config.TextColumn("쿼터", disabled=True), # 쿼터 이름은 수정 불가
-            "PIVO (공격)": st.column_config.SelectboxColumn("🔱 PIVO", options=active_players_list, required=True),
-            "ALA_L (좌윙)": st.column_config.SelectboxColumn("◀️ ALA_L", options=active_players_list, required=True),
-            "ALA_R (우윙)": st.column_config.SelectboxColumn("▶️ ALA_R", options=active_players_list, required=True),
-            "FIXO (수비)": st.column_config.SelectboxColumn("🛡️ FIXO", options=active_players_list, required=True),
-            "GOLEIRO (키퍼)": st.column_config.SelectboxColumn("🧤 GOLEIRO", options=active_players_list, required=True),
-        },
-        disabled=False,
-        hide_index=True,
-        use_container_width=True,
-        key="lineup_editor"
-    )
-    
-    # 사용자가 화면에서 선수를 바꾸면 session_state 데이터를 즉시 동기화
-    if not edited_df.equals(st.session_state.lineups_df):
-        st.session_state.lineups_df = edited_df
-        st.rerun() # 수정 시 하단의 카톡 텍스트 및 상세 통계를 실시간으로 재계산하기 위해 강제 새로고침
-        
-    # 실시간 동기화된 데이터를 기반으로 카카오톡 텍스트 동적 생성
+    tbody_rows = ""
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
-    for _, row in st.session_state.lineups_df.iterrows():
-        kakao_text += f"-----[{row['쿼터']}]-----\\n🔱 PIVO : {row['PIVO (공격)']}\\n◀️ ALA_L : {row['ALA_L (좌윙)']}\\n▶️ ALA_R : {row['ALA_R (우윙)']}\\n🛡️ FIXO : {row['FIXO (수비)']}\\n🧤 GOLEIRO : {row['GOLEIRO (키퍼)']}\\n\\n"
+    
+    for q, roster in st.session_state.lineups.items():
+        pivo, ala_l, ala_r, fixo, gk = roster['PIVO (공격)'], roster['ALA_L (좌윙)'], roster['ALA_R (우윙)'], roster['FIXO (수비)'], roster['GOLEIRO (키퍼)']
+        
+        # HTML 가독성 높은 읽기 전용 테이블 누적
+        tbody_rows += f"""
+        <tr>
+            <td class="sticky-col">{q}쿼터</td>
+            <td>{pivo}</td>
+            <td>{ala_l}</td>
+            <td>{ala_r}</td>
+            <td>{fixo}</td>
+            <td style="font-weight: 600; background-color: rgba(156, 163, 175, 0.03);">{gk}</td>
+        </tr>
+        """
+        # 카톡 복사용 텍스트 포맷 빌드
+        kakao_text += f"-----[{q}쿼터]-----\\n🔱 PIVO : {pivo}\\n◀️ ALA_L : {ala_l}\\n▶️ ALA_R : {ala_r}\\n🛡️ FIXO : {fixo}\\n🧤 GOLEIRO : {gk}\\n\\n"
 
+    main_table_html = f"""
+    <div class="toss-table-container">
+        <table class="toss-table">
+            <thead>
+                <tr>
+                    <th class="sticky-col">쿼터</th>
+                    <th><span style="color:{POS_CONFIG['PIVO (공격)']['color']}">🔱 PIVO</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_L (좌윙)']['color']}">◀️ ALA_L</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_R (우윙)']['color']}">▶️ ALA_R</span></th>
+                    <th><span style="color:{POS_CONFIG['FIXO (수비)']['color']}">🛡️ FIXO</span></th>
+                    <th><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">🧤 GOLEIRO</span></th>
+                </tr>
+            </thead>
+            <tbody>{tbody_rows}</tbody>
+        </table>
+    </div>
+    """
+    st.html(main_table_html)
+
+    # 카카오톡 복사 전용 클립보드 버튼 디자인
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-top: 5px; margin-bottom: 20px;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
@@ -408,18 +411,17 @@ function copyToClipboard() {{
 </script>"""
     st.components.v1.html(html_button_code, height=65)
     
-    # [10. 🔥 실시간 연동 통계 테이블 세션]
-    st.markdown("### 📊 포지션별 상세 출전 통계 (실시간 연동)")
+    # [10. 📊 통계 테이블 세션]
+    st.markdown("### 📊 포지션별 상세 출전 통계")
     
-    # 실시간 수정된 라인업 데이터프레임을 기반으로 통계 데이터 즉시 역계산(Reverse Engineering)
     active_players_current = [p for p, att in st.session_state.attendance.items() if att and p in st.session_state.players_dict]
     stats_data = {
         name: {"GK": 0, "필드 합계": 0, "PIVO": 0, "ALA_L": 0, "ALA_R": 0, "FIXO": 0} 
         for name in active_players_current
     }
     
-    for _, row in st.session_state.lineups_df.iterrows():
-        pivo, ala_l, ala_r, fixo, gk = row['PIVO (공격)'], row['ALA_L (좌윙)'], row['ALA_R (우윙)'], row['FIXO (수비)'], row['GOLEIRO (키퍼)']
+    for q, roster in st.session_state.lineups.items():
+        pivo, ala_l, ala_r, fixo, gk = roster['PIVO (공격)'], roster['ALA_L (좌윙)'], roster['ALA_R (우윙)'], roster['FIXO (수비)'], roster['GOLEIRO (키퍼)']
         
         if gk in stats_data: stats_data[gk]["GK"] += 1
         if pivo in stats_data: 
