@@ -352,7 +352,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 
 # [9. 📋 안전한 원래 방식의 결과 출력 및 공유 섹션]
 if st.session_state.lineups:
-    st.markdown("### 📋 경기 라인업 결과")
+    st.markdown("<h2 style='font-size: 24px; font-weight: 700; margin-bottom: 8px;'>📋 경기 라인업 결과</h2>", unsafe_allow_html=True)
     
     tbody_rows = ""
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
@@ -360,7 +360,6 @@ if st.session_state.lineups:
     for q, roster in st.session_state.lineups.items():
         pivo, ala_l, ala_r, fixo, gk = roster['PIVO (공격)'], roster['ALA_L (좌윙)'], roster['ALA_R (우윙)'], roster['FIXO (수비)'], roster['GOLEIRO (키퍼)']
         
-        # HTML 가독성 높은 읽기 전용 테이블 누적
         tbody_rows += f"""
         <tr>
             <td class="sticky-col">{q}쿼터</td>
@@ -368,14 +367,15 @@ if st.session_state.lineups:
             <td>{ala_l}</td>
             <td>{ala_r}</td>
             <td>{fixo}</td>
-            <td>{gk}</td>
+            <td style="background-color: rgba(156, 163, 175, 0.03);">{gk}</td>
         </tr>
         """
-        # 카톡 복사용 텍스트 포맷 빌드
         kakao_text += f"-----[{q}쿼터]-----\\n🔱 PIVO : {pivo}\\n◀️ ALA_L : {ala_l}\\n▶️ ALA_R : {ala_r}\\n🛡️ FIXO : {fixo}\\n🧤 GOLEIRO : {gk}\\n\\n"
 
-    main_table_html = f"""
-    <div class="toss-table-container">
+    # 🌟 [해결책] 테이블 HTML과 카톡 버튼 스크립트를 하나의 거대한 하나의 HTML 블록으로 합칩니다!
+    # 이 안에서는 margin-top 조절이 100% 칼같이 먹힙니다.
+    combined_html_block = f"""
+    <div class="toss-table-container" style="margin-top: 8px; margin-bottom: 0px;">
         <table class="toss-table">
             <thead>
                 <tr>
@@ -390,23 +390,28 @@ if st.session_state.lineups:
             <tbody>{tbody_rows}</tbody>
         </table>
     </div>
-    """
-    st.html(main_table_html)
 
-    # 카카오톡 복사 전용 클립보드 버튼 디자인
-    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-top: 5px; margin-bottom: 20px;">💬 카카오톡 공유용 라인업 복사하기</button>
-<script>
-function copyToClipboard() {{
-    var textToCopy = `{kakao_text}`;
-    var textArea = document.createElement("textarea");
-    textArea.value = textToCopy; textArea.style.position = "fixed";
-    document.body.appendChild(textArea); textArea.select();
-    try {{ if(document.execCommand('copy')) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }} 
-    catch (err) {{ navigator.clipboard.writeText(textToCopy).then(function() {{ alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }}); }}
-    document.body.removeChild(textArea);
-}}
-</script>"""
-    st.components.v1.html(html_button_code, height=65)
+    <!-- 💡 테이블 바로 밑에 margin-top: 6px로 바짝 붙여서 버튼 배치 -->
+    <button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-top: 6px; margin-bottom: 10px;">💬 카카오톡 공유용 라인업 복사하기</button>
+
+    <script>
+    function copyToClipboard() {{
+        var textToCopy = `{kakao_text}`;
+        var textArea = document.createElement("textarea");
+        textArea.value = textToCopy; textArea.style.position = "fixed";
+        document.body.appendChild(textArea); textArea.select();
+        try {{ if(document.execCommand('copy')) alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }} 
+        catch (err) {{ navigator.clipboard.writeText(textToCopy).then(function() {{ alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }}); }}
+        document.body.removeChild(textArea);
+    }}
+    </script>
+    """
+    
+    # 🌟 기존의 st.html과 st.components.v1.html을 따로 쓰던 걸 과감히 없애고,
+    # 컴포넌트 높이를 넉넉하게 보장해 주는 st.components.v1.html 하나로 통일하여 한 번에 쏩니다!
+    # (쿼터 수에 따라 늘어날 수 있으므로 height는 넉넉히 주거나 표 크기에 맞춰 최적화)
+    # 7쿼터 기준 표 높이 대략 350px + 버튼 50px = 넉넉하게 460px 설정
+    st.components.v1.html(combined_html_block, height=460)
     
     # [10. 📊 통계 테이블 세션]
     st.markdown("### 📊 포지션별 상세 출전 통계")
