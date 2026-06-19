@@ -19,6 +19,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
 # --- 화면 제어 및 반응형 레이아웃 CSS ---
+# --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,9 +28,8 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ❗ [요청 반영] 데스크탑의 st.columns(2) 가로 배치를 유지하되, 모바일에서만 세로로 자동 전환 */
+    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
     @media (max-width: 768px) {
-        /* expander 내부의 컬럼 블록을 찾아 모바일에서 세로 정렬로 강제 전환 */
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
@@ -40,9 +40,10 @@ st.markdown("""
         }
     }
     
-    /* 명단 열(st.columns)이 화면 좁아져도 아래로 찢어지지 않고 한 줄 유지 */
+    /* ② [해결책] 명단 전체 이름+버튼 행은 모바일에서도 절대 세로로 찢어지지 않고 1줄 유지 */
+    [data-testid="dataGridElementContainer"] ~ div [data-testid="stHorizontalBlock"],
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
-    [data-testid="stElementContainer"] + [data-testid="stHorizontalBlock"] {
+    div[data-testid="stBlock"] [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -50,9 +51,19 @@ st.markdown("""
         width: 100% !important;
     }
     
+    /* 명단 내부의 컬럼 비율이 무너지지 않도록 강제 지정 */
+    [data-testid="stHorizontalBlock"] > div:nth-child(1) { flex: 5.5 1 0% !important; min-width: 0 !important; }
+    [data-testid="stHorizontalBlock"] > div:nth-child(2) { flex: 1.2 0 0% !important; min-width: 42px !important; }
+    [data-testid="stHorizontalBlock"] > div:nth-child(3) { flex: 1.2 0 0% !important; min-width: 42px !important; }
+
+    /* 버튼 내부 텍스트 패딩 조정으로 모바일에서 버튼이 찌그러지는 현상 방지 */
+    [data-testid="stHorizontalBlock"] button {
+        padding: 2px 4px !important;
+    }
+    
     /* 명단 이름 폰트 크기 고정 */
     .stCheckbox p {
-        font-size: 17px !important;
+        font-size: 16px !important;
         font-weight: 800 !important;
         color: #0F172A !important;
     }
