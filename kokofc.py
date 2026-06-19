@@ -180,7 +180,7 @@ for p in st.session_state.players_dict.keys():
 # [5. 선수 관리 팝업 다이얼로그]
 @st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
-    st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
+    st.write(f"😈 **{player_name}** 선수의 설정을 변경합니다.")
     current_wishes = st.session_state.players_dict[player_name]
     new_wishes = st.multiselect(
         "희망 포지션 (복수 선택 가능)",
@@ -220,7 +220,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
         with st.form(key="player_add_form", clear_on_submit=True, border=False):
             name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
             wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-            if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
+            if st.form_submit_button("😈 선수 등록하기", use_container_width=True):
                 name = name_input.strip()
                 if name:
                     if name in st.session_state.players_dict: 
@@ -252,7 +252,7 @@ if st.session_state.players_dict:
             ]
             
             # 🔄 기존의 안정적인 검증 방식으로 100% 원복 완료!
-            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
+            selected = st.checkbox(f"😈 {player}", value=is_active, key=f"att_{player}")
             if selected != is_active:
                 st.session_state.attendance[player] = selected
                 st.rerun()
