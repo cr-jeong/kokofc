@@ -3,13 +3,13 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 포지션 및 기본 설정
+# 포지션 및 기본 설정 (새로운 이모지 및 라벨 명칭 반영)
 POS_CONFIG = {
-    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)'},
-    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)'},
-    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ ALA_R (우윙)'},
-    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO (수비)'},
-    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO (키퍼)'}
+    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 창'},
+    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ 좌'},
+    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ 우'},
+    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ 수비'},
+    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 키퍼'}
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
@@ -141,28 +141,41 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (원래 스타일 그대로 완벽 원복!)
+# 참여 명단 출력 (모바일 가로 고정 및 새 이모지 일괄 적용)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
+    st.markdown(
+        """
+        <style>
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
     with st.container(border=True):
-        # 유저가 제거 버튼을 누를 때 딕셔너리 크기가 변해 터지는 버그만 list()로 묶어 안전하게 방어
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
             emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
             
-            col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8])
+            col_att, col_p, col_edit, col_b = st.columns([0.8, 2.7, 0.9, 0.8])
             
             with col_att:
-                st.session_state.attendance[player] = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}")
+                st.session_state.attendance[player] = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}", label_visibility="collapsed")
             with col_p:
                 color = "black" if st.session_state.attendance[player] else "#A0A0A0"
-                text_style = "font-weight:bold;" if st.session_state.attendance[player] else "text-decoration: line-through; opacity: 0.6;"
-                st.write(f"<div style='padding-top: 4px;'><span style='color:{color}; {text_style}'>🏃 {player}</span> <span style='font-size:14px; margin-left:5px;'>{emojis}</span></div>", unsafe_allow_html=True)
+                text_style = "font-weight:bold; white-space: nowrap;" if st.session_state.attendance[player] else "text-decoration: line-through; opacity: 0.6; white-space: nowrap;"
+                st.write(f"<div style='padding-top: 0px; line-height: 1.2;'><span style='color:{color}; {text_style}'>🏃{player}</span> <span style='font-size:13px; margin-left:2px;'>{emojis}</span></div>", unsafe_allow_html=True)
             with col_edit:
-                if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
+                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True, help="포지션 수정"):
                     edit_position_dialog(player)
             with col_b:
-                if st.button("제거", key=f"del_{player}", use_container_width=True):
+                if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
                     del st.session_state.players_dict[player]
                     if player in st.session_state.attendance:
                         del st.session_state.attendance[player]
@@ -254,15 +267,15 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
-    # 카톡 공유용 텍스트 포맷팅
+    # 카톡 공유용 텍스트 포맷팅 (새로운 명칭으로 연동)
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n"
-        kakao_text += f"🔥 PIVO : {data['starters'][0] or '미지정'}\n"
-        kakao_text += f"⚡ ALA_L : {data['starters'][1] or '미지정'}\n"
-        kakao_text += f"✨ ALA_R : {data['starters'][2] or '미정'}\n"
-        kakao_text += f"🛡️ FIXO : {data['starters'][3] or '미지정'}\n"
-        kakao_text += f"🧤 GOLEIRO : {data['starters'][4] or '미정'}\n"
+        kakao_text += f"🔥 창 : {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"⚡ 좌 : {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"✨ 우 : {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🛡️ 수비 : {data['starters'][3] or '미지정'}\n"
+        kakao_text += f"🧤 키퍼 : {data['starters'][4] or '미정'}\n"
         kakao_text += "\n"
 
     # 공유하기 카톡 노란색 버튼 유지
@@ -307,7 +320,7 @@ function copyToClipboard() {{
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 최종 포지션별 상세 출전 통계 표 가공 (개선된 모던 UI 스타일 유지)
+    # 최종 포지션별 상세 출전 통계 표 가공 (새 명칭 매핑 완료)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -319,12 +332,12 @@ function copyToClipboard() {{
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "🧤 GK": f"{final_gks[name]}회", # 순서를 2번째로 이동
-            "🏃 필드": f"{final_fields[name]}회", # 순서를 3번째로 이동
-            "🔥 PIVO": f"{player_history['PIVO (공격)']}회",
-            "⚡ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
-            "✨ ALA_R": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
+            "🧤 키퍼": f"{final_gks[name]}회",
+            "🏃 필드": f"{final_fields[name]}회",
+            "🔥 창": f"{player_history['PIVO (공격)']}회",
+            "⚡ 좌": f"{player_history['ALA_L (좌윙)']}회",
+            "✨ 우": f"{player_history['ALA_R (우윙)']}회",
+            "🛡️ 수비": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
         })
     
     df_stats = pd.DataFrame(stats_data)
@@ -376,15 +389,15 @@ function copyToClipboard() {{
             <thead>
                 <tr>
                     <th rowspan="2" style="vertical-align: middle;">선수명</th>
-                    <th rowspan="2" style="vertical-align: middle;">🧤 GK</th>
+                    <th rowspan="2" style="vertical-align: middle;">🧤 키퍼</th>
                     <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
                     <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
                 </tr>
                 <tr>
-                    <th>🔥 PIVO</th>
-                    <th>⚡ ALA_L</th>
-                    <th>✨ ALA_R</th>
-                    <th>🛡️ FIXO</th>
+                    <th>🔥 창</th>
+                    <th>⚡ 좌</th>
+                    <th>✨ 우</th>
+                    <th>🛡️ 수비</th>
                 </tr>
             </thead>
             <tbody>
