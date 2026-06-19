@@ -102,9 +102,7 @@ st.markdown("""
         color: var(--text-color);
     }
     
-    /* 💥 여백 수정 포인트: 14px -> 10px로 축소하여 단정하게 변경 */
     .toss-table th {
-        background-color: var(--secondary-background-color);
         color: var(--text-color);
         font-weight: 600;
         padding: 10px 8px;
@@ -127,28 +125,30 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 첫 번째 열 고정 설정 및 그림자 효과 */
+    /* 💥 겹침 해결 포인트: 첫 번째 열 완전 고정 및 확실한 레이어(z-index) 부여 */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
         left: 0;
-        z-index: 2;
+        z-index: 10 !important; /* 항상 다른 셀들 위에 오도록 설정 */
         border-right: none !important;
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 💥 음영 완벽 일치 수정 포인트: 일반 헤더 및 바디와 색상을 100% 동일하게 맞춰 튀는 음영 제거 */
+    /* 💥 라이트/다크 모드별 배경 투명화 100% 제거하여 글자 겹침 투과 현상 해결 */
     @media (prefers-color-scheme: dark) {
-        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } /* 다크모드 기본 배경 */
-        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } /* 다크모드 헤더 배경 */
-        .toss-table th { background-color: #1a1c23 !important; }             /* PIVO 등 중복 꼬임 방지 */
+        .toss-table th { background-color: #1a1c23 !important; }
+        .toss-table td { background-color: #0e1117; }
+        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } /* 고정열 불투명화 */
+        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } /* 고정헤더 불투명화 */
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
         .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
-        .toss-table td:nth-child(1) { background-color: #ffffff !important; } /* 라이트모드 기본 배경 */
-        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } /* 라이트모드 헤더 배경 */
-        .toss-table th { background-color: #f0f2f6 !important; }             /* PIVO 등 중복 꼬임 방지 */
+        .toss-table th { background-color: #f0f2f6 !important; }
+        .toss-table td { background-color: #ffffff; }
+        .toss-table td:nth-child(1) { background-color: #ffffff !important; } /* 고정열 불투명화 */
+        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } /* 고정헤더 불투명화 */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -360,7 +360,7 @@ function copyToClipboard() {{
             <td>{data['starters'][1] or '미지정'}</td>
             <td>{data['starters'][2] or '미지정'}</td>
             <td>{data['starters'][3] or '미지정'}</td>
-            <td>{data['starters'][4] or '미지정'}</td>
+            <td><strong>{data['starters'][4] or '미지정'}</strong></td>
         </tr>
         """
         
@@ -411,21 +411,22 @@ function copyToClipboard() {{
         </tr>
         """
 
+    # 💥 수정 포인트: 포지션 헤더 텍스트에 첫 번째 표와 매칭되는 고유 색상(color) 부여
     stats_table_html = f"""
     <div class="toss-table-container">
         <table class="toss-table">
             <thead>
                 <tr>
                     <th rowspan="2" style="vertical-align: middle;">선수명</th>
-                    <th rowspan="2" style="vertical-align: middle;">🧤 GK</th>
+                    <th rowspan="2" style="vertical-align: middle;"><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">🧤 GK</span></th>
                     <th rowspan="2" style="vertical-align: middle;">🏃 필드 합계</th>
                     <th colspan="4" style="border-bottom: 1px solid rgba(0,0,0,0.06);">포지션별 출전 상세</th>
                 </tr>
                 <tr>
-                    <th>🔱 PIVO</th>
-                    <th>◀️ ALA_L</th>
-                    <th>▶️ ALA_R</th>
-                    <th>🛡️ FIXO</th>
+                    <th><span style="color:{POS_CONFIG['PIVO (공격)']['color']}">🔱 PIVO</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_L (좌윙)']['color']}">◀️ ALA_L</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_R (우윙)']['color']}">▶️ ALA_R</span></th>
+                    <th><span style="color:{POS_CONFIG['FIXO (수비)']['color']}">🛡️ FIXO</span></th>
                 </tr>
             </thead>
             <tbody>{stats_tbody_rows}</tbody>
