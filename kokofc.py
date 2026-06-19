@@ -28,32 +28,49 @@ st.markdown("""
     }
     
     /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
-    @media (max-width: 768px) {
-        .stExpander [data-testid="stHorizontalBlock"] {
-            flex-direction: column !important;
-            gap: 16px !important;
-        }
-        .stExpander [data-testid="stHorizontalBlock"] > div {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex: 1 1 auto !important;
-        }
+@media (max-width: 768px) {
+    .stExpander [data-testid="stHorizontalBlock"] {
+        flex-direction: column !important;
+        gap: 16px !important;
     }
-    
-    /* ② 명단 이름 폰트 크기 및 색상 */
-    .stCheckbox p {
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        color: var(--text-color) !important;
+    .stExpander [data-testid="stHorizontalBlock"] > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
     }
-    
-    /* ③ 체크박스 해제 시 흐려짐 효과 테마 대응 */
-    .stCheckbox [aria-checked="false"] ~ div p {
-        opacity: 0.35 !important;
-        text-decoration: line-through !important;
-        color: var(--text-color) !important;
-    }
-    </style>
+}
+
+/* ② [🔥 긴급 수정] 명단 리스트 내부의 가로 정렬을 뼈대째 강제 고정 */
+[data-testid="stMainBlock"] [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] {
+    display: flex !important;
+    flex-direction: row !important; /* 모바일에서도 무조건 가로로 정렬 */
+    flex-wrap: nowrap !important;   /* 줄바꿈 절대 절대 금지 */
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+}
+
+/* 명단 내부 컬럼들이 세로로 찢어지는 현상 최종 방어 */
+[data-testid="stMainBlock"] [data-testid="stElementContainer"] [data-testid="stHorizontalBlock"] > div {
+    width: auto !important;
+    max-width: none !important;
+    flex-grow: 1 !important;
+}
+
+/* ③ 명단 이름 폰트 크기 및 색상 */
+.stCheckbox p {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: var(--text-color) !important;
+}
+
+/* ④ 체크박스 해제 시 흐려짐 효과 테마 대응 */
+.stCheckbox [aria-checked="false"] ~ div p {
+    opacity: 0.35 !important;
+    text-decoration: line-through !important;
+    color: var(--text-color) !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 st.title("⚽ KOKO FC 😈 라인업 매니저")
