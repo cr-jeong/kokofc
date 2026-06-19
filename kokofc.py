@@ -141,52 +141,51 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (UI/UX 대폭 개선 버전!)
+# 참여 명단 출력 (세련된 모바일 최적화 버전!)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 포지션별 고유 색상 태그 스타일 정의
+    # 세련되고 부드러운 파스텔톤 태그 스타일 정의
     TAG_STYLES = {
-        'PIVO (공격)': 'background-color: #FEE2E2; color: #991B1B;', # 연빨강
-        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0369A1;', # 연파랑
-        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #92400E;', # 연노랑
-        'FIXO (수비)': 'background-color: #DCFCE7; color: #166534;', # 연초록
-        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #374151;' # 연회색
+        'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', # 부드러운 레드
+        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0284C7;', # 부드러운 블루
+        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #D97706;', # 부드러운 옐로우/오렌지
+        'FIXO (수비)': 'background-color: #DCFCE7; color: #16A34A;', # 부드러운 그린
+        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' # 부드러운 그레이
     }
 
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
             
-            # 포지션들을 이쁜 태그 HTML로 변환
+            # 포지션 태그 HTML 생성
             tag_htmls = []
             for p in positions:
                 if p in POS_CONFIG:
                     label = POS_CONFIG[p]['label']
-                    style = TAG_STYLES.get(p, 'background-color: #E5E7EB; color: #374151;')
-                    tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 4px; font-size: 11px; font-weight: bold; {style}'>{label}</span>")
+                    style = TAG_STYLES.get(p, 'background-color: #E5E7EB; color: #4B5563;')
+                    tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {style}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 모바일 최적화: 정보 열(left)과 버튼 열(right) 분할
-            col_left, col_right = st.columns([3, 1.2])
+            # 레이아웃 분할: 왼쪽(이름+태그), 오른쪽(버튼)
+            col_left, col_right = st.columns([2.8, 1.2])
             
             with col_left:
-                # 체크박스와 이름을 한 줄에 깔끔하게 배치 (모바일에서 잘 보이게 글자 크기 16px로 변경)
                 is_active = st.session_state.attendance.get(player, True)
-                color = "#000000" if is_active else "#9CA3AF"
-                text_decor = "text-decoration: none;" if is_active else "text-decoration: line-through; opacity: 0.5;"
                 
-                # 체크박스 상태 동기화 및 텍스트 레이아웃
-                cb_key = f"att_v2_{player}"
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=cb_key, label_visibility="collapsed")
+                # 순정 체크박스와 '참석' 텍스트 복구 (글자 크기를 키워 시원하게 노출)
+                # 체크박스 라벨에 이름까지 포함하여 클릭 영역을 넓혔습니다.
+                cb_label = f"🏃 {player} (참석)"
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v3_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 실제 화면에 뿌려지는 이름과 태그 (폰트 크기 업그레이드)
+                # 가독성을 높인 스타일 적용
+                color = "#000000" if selected else "#9CA3AF"
+                text_decor = "text-decoration: none;" if selected else "text-decoration: line-through; opacity: 0.5;"
+                
+                # 태그 아래에 margin-bottom을 주어 모바일에서 버튼과 바싹 붙는 현상 완벽 해결!
                 st.write(
-                    f"""<div style='display: flex; flex-direction: column; gap: 4px; padding-left: 2px;'>
-                        <div style='font-size: 16px; font-weight: bold; color: {color}; {text_decor}'>
-                            {'⬜' if not selected else '✅'} {player}
-                        </div>
-                        <div style='display: flex; flex-wrap: wrap; gap: 2px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='padding-left: 28px; margin-top: -6px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
                     </div>""", 
@@ -194,7 +193,8 @@ if st.session_state.players_dict:
                 )
                 
             with col_right:
-                # 버튼을 나란히 배치하기 위한 미니 컬럼
+                # 버튼 세로 정렬 및 간격 조절을 위한 컨테이너 (정렬선 맞추기)
+                st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
                     if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True, help="포지션 수정"):
@@ -207,8 +207,8 @@ if st.session_state.players_dict:
                         save_players_to_db(st.session_state.players_dict)
                         st.rerun()
             
-            # 선수들 사이에 가볍게 구분선 추가 (마지막 선수는 제외하면 더 깔끔하지만 심플하게 적용)
-            st.write("<div style='margin: 8px 0; border-bottom: 1px dashed #F3F4F6;'></div>", unsafe_allow_html=True)
+            # 선수 간 구분선
+            st.write("<div style='margin: 4px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
 
