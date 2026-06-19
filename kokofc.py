@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 🛠️ 모바일 강제 1줄 잠금 및 데스크탑 분리 CSS ---
+# --- 🛠️ 모바일 설정창 전용 반응형 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,7 +27,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 상단 설정창: 데스크탑은 원래대로 반반 가로 배치, 모바일(768px 이하)만 세로 전환 */
+    /* ① 상단 설정창: 데스크탑은 원래대로 반반 가로 배치, 모바일만 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -40,51 +40,13 @@ st.markdown("""
         }
     }
     
-    /* ② [근본 해결] 명단 박스 내의 가로 정렬 강제 고정 및 Streamlit 기본 모바일 쪼개기 방지 */
-    .player-row-container [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
-        gap: 8px !important; /* 내부 간격 최적화 */
-    }
-    
-    /* 명단 내부의 컬럼 비율이 모바일에서도 억지로 깨지지 않도록 강제 너비 부여 */
-    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
-        flex: 10 1 0% !important; 
-        min-width: 0 !important;
-        max-width: none !important;
-    }
-    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
-        flex: 0 0 45px !important; 
-        min-width: 45px !important; 
-        max-width: 45px !important;
-    }
-    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
-        flex: 0 0 45px !important; 
-        min-width: 45px !important; 
-        max-width: 45px !important;
-    }
-
-    /* 버튼 내부 텍스트 마진을 줄여 모바일에서 짤리거나 밀리지 않게 보정 */
-    .player-row-container button[data-testid="baseButton-secondary"] {
-        padding: 4px 0px !important;
-        width: 100% !important;
-    }
-    
-    /* 명단 이름 폰트 크기 및 두께 고정 */
-    .stCheckbox p {
+    /* 명단 이름 스타일 튜닝 */
+    .player-name-text {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: #0F172A !important;
-    }
-    
-    /* 체크박스 해제 시 흐려짐 효과 */
-    .stCheckbox [aria-checked="false"] ~ div p {
-        opacity: 0.35 !important;
-        text-decoration: line-through !important;
-        color: #9CA3AF !important;
+        display: inline-block;
+        vertical-align: middle;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -151,7 +113,7 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# 설정 및 선수 등록 아코디언 (데스크탑 반반)
+# 설정 및 선수 등록 아코디언 (데스크탑 반반 유지)
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
@@ -195,8 +157,6 @@ if st.session_state.players_dict:
         'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
     }
 
-    # 강제 1줄 타겟팅 박스 시작
-    st.markdown('<div class="player-row-container">', unsafe_allow_html=True)
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
@@ -206,36 +166,42 @@ if st.session_state.players_dict:
             for p in positions:
                 if p in POS_CONFIG:
                     label = POS_CONFIG[p]['label']
-                    tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
+                    tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 3px; border-radius: 4px; font-size: 10px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 비율 대신 고정 픽셀(px) 매칭을 유도하기 위한 컬럼 생성
-            col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
+            # ❗[근본적 해결] st.columns를 완전히 제거하고 강제 HTML Table Row 구조 채택 (절대 줄바꿈 불가)
+            # 왼쪽 영역 (체크박스 + 이름 + 태그) / 오른쪽 영역 (버튼 2개)
+            cell_opacity = "1.0" if is_active else "0.35"
+            text_deco = "none" if is_active else "line-through"
             
-            with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v17_{player}")
+            col_left, col_btn1, col_btn2 = st.columns([6.5, 1.2, 1.2])
+            
+            with col_left:
+                # 체크박스와 이름을 나란히 두고 하단에 포지션 태그 렌더링
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v18_{player}")
                 st.session_state.attendance[player] = selected
-                
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='padding-left: 28px; margin-top: -2px; margin-bottom: 6px; opacity: {cell_opacity}; text-decoration: {text_deco};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
                     </div>""", 
                     unsafe_allow_html=True
                 )
                 
             with col_btn1:
+                # 패딩과 마진을 최소화하여 한 줄 유지 보장
+                st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
                     
             with col_btn2:
+                st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 if st.button("❌", key=f"del_{player}", use_container_width=True):
                     del st.session_state.players_dict[player]
                     if player in st.session_state.attendance: del st.session_state.attendance[player]
                     save_players_to_db(st.session_state.players_dict)
                     st.rerun()
             
-            st.write("<div style='margin: 2px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True) # 명단 컨테이너 닫기
+            st.write("<div style='margin: 1px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다.")
     
