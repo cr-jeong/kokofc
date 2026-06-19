@@ -10,6 +10,7 @@ import pandas as pd
 'ALA_R (우윙)': { 'emoji': '▶️', 'bg': '#ECFDF5', 'color': '#047857', 'text': 'AR' },
 'FIXO (수비)': { 'emoji': '🛡️', 'bg': '#FFF7ED', 'color': '#C2410C', 'text': 'FIX' },
 'GOLEIRO (키퍼)': { 'emoji': '🧤', 'bg': '#F1F5F9', 'color': '#475569', 'text': 'GK' }
+}
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
 ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
