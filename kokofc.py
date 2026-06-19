@@ -36,11 +36,11 @@ st.markdown("""
         .stExpander [data-testid="stHorizontalBlock"] > div {
             width: 100% !important;
             max-width: 100% !important;
-            flex: 1 1 auto !important; /* 모바일에서 꽉 차게 변경 */
+            flex: 1 1 auto !important;
         }
     }
     
-    /* ② 명단 전체 이름+버튼 행은 모바일에서도 절대 세로로 찢어지지 않고 1줄 유지 */
+    /* ② 명단 전체 이름+버튼 행은 모바일에서도 1줄 유지 */
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
     [data-testid="stContainer"] [data-testid="stHorizontalBlock"] {
         display: flex !important;
@@ -50,7 +50,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ❗ [버그 해결] 설정창 내부 컬럼과 완전히 분리하여 '전체 명단 컨테이너' 내부의 컬럼 비율만 조절 */
+    /* 명단 컨테이너 내부 컬럼 비율 조절 */
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
     [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
         flex: 5.5 1 0% !important; 
@@ -67,23 +67,23 @@ st.markdown("""
         min-width: 42px !important; 
     }
 
-    /* 버튼 내부 텍스트 패딩 조정으로 모바일에서 버튼이 찌그러지는 현상 방지 */
+    /* 버튼 내부 텍스트 패딩 조정 */
     [data-testid="stHorizontalBlock"] button {
         padding: 2px 4px !important;
     }
     
-    /* 명단 이름 폰트 크기 고정 */
+    /* 🛠️ [해결] 명단 이름 폰트 크기 및 색상 (Streamlit 테마 변수 사용으로 다크모드 대응) */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
-        color: #0F172A !important;
+        color: var(--text-color) !important;
     }
     
-    /* 체크박스 해제 시 흐려짐 효과 */
+    /* 🛠️ [해결] 체크박스 해제 시 흐려짐 효과 테마 대응 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
-        color: #9CA3AF !important;
+        color: var(--text-color) !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -150,48 +150,16 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# --- ⚙️ 원래 버전의 깔끔한 st.columns 가로 배치 복원 ---
-with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
-    col1, col2 = st.columns(2)
-    with col1:
-        with st.container(border=True):
-            st.write("**① 선수 등록 (실시간 반영)**")
-            with st.form(key="player_add_form", clear_on_submit=True):
-                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
-                wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-                if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
-                    name = name_input.strip()
-                    if name:
-                        if name in st.session_state.players_dict:
-                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
-                        else:
-                            st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
-                            st.session_state.attendance[name] = True
-                            save_players_to_db(st.session_state.players_dict)
-                            st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
-                            st.rerun()
-                    else: st.error("선수 이름을 먼저 입력해 주세요.")
-    with col2:
-        with st.container(border=True):
-            st.write("**② 경기 설정**")
-            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-            st.write("") 
-            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
-                st.cache_data.clear()
-                st.session_state.players_dict = load_players_from_db()
-                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
-                st.rerun()
-
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
+    # 🛠️ [디자인 개선] 다크모드에서도 눈이 아프지 않고 가시성이 좋은 반투명(rgba) 태그 컬러 매핑
     TAG_STYLES = {
-        'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', 
-        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0284C7;', 
-        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #D97706;', 
-        'FIXO (수비)': 'background-color: #DCFCE7; color: #16A34A;', 
-        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
+        'PIVO (공격)': 'background-color: rgba(254, 226, 226, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);', 
+        'ALA_L (좌윙)': 'background-color: rgba(224, 242, 254, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3);', 
+        'ALA_R (우윙)': 'background-color: rgba(254, 243, 199, 0.15); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.3);', 
+        'FIXO (수비)': 'background-color: rgba(220, 252, 231, 0.15); color: #4ADE80; border: 1px solid rgba(74, 222, 128, 0.3);', 
+        'GOLEIRO (키퍼)': 'background-color: rgba(243, 244, 246, 0.15); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.3);' 
     }
 
     with st.container(border=True):
@@ -203,7 +171,7 @@ if st.session_state.players_dict:
             for p in positions:
                 if p in POS_CONFIG:
                     label = POS_CONFIG[p]['label']
-                    tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
+                    tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
             col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
@@ -230,7 +198,8 @@ if st.session_state.players_dict:
                     save_players_to_db(st.session_state.players_dict)
                     st.rerun()
             
-            st.write("<div style='margin: 2px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
+            # 🛠️ 분리선 색상도 시스템 테마의 경계선 변수(--secondary-background-color) 활용
+            st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다.")
     
@@ -334,8 +303,9 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
+    # 🛠️ [UI/UX 해결] HTML 통계 테이블 다크모드 전면 대응
     custom_html = f"""
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); contain: content;">
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid var(--secondary-background-color); contain: content;">
         <style>
             .modern-table {{
                 width: 100%;
@@ -343,39 +313,41 @@ function copyToClipboard() {{
                 border-collapse: collapse;
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
                 font-size: 14px;
-                background-color: #ffffff;
+                background-color: var(--background-color);
+                color: var(--text-color);
             }}
             .modern-table th {{
-                background-color: #f8fafc;
-                color: #475569;
+                background-color: var(--secondary-background-color);
+                color: var(--text-color);
                 font-weight: 600;
                 padding: 12px 6px;
-                border: 1px solid #e2e8f0;
+                border: 1px solid var(--secondary-background-color);
                 text-align: center !important;
                 white-space: nowrap;
             }}
             .modern-table th.main-header {{
-                background-color: #f1f5f9;
-                color: #1e293b;
+                opacity: 0.9;
             }}
             .modern-table td {{
                 padding: 12px 6px;
-                border: 1px solid #f1f5f9;
+                border: 1px solid var(--secondary-background-color);
                 text-align: center !important; 
                 white-space: nowrap;
             }}
-            .modern-table tr:hover {{ background-color: #f8fafc; }}
+            .modern-table tr:hover {{ background-color: var(--secondary-background-color); }}
+            
+            /* 첫 번째 열(선수명) 고정 및 테마 대응 */
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
-                color: #0f172a;
                 position: sticky;
                 left: 0;
-                background-color: #ffffff;
-                box-shadow: 2px 0 5px rgba(0,0,0,0.04);
+                background-color: var(--background-color);
+                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             }}
+            /* 필드 출전 횟수 강조 하이라이트 (다크모드에서도 눈 편안한 알파값 적용) */
             .modern-table td:nth-child(3) {{
-                background-color: #F0FDF4 !important;
-                color: #16A34A !important;
+                background-color: rgba(34, 197, 94, 0.15) !important;
+                color: #4ADE80 !important;
                 font-weight: bold;
             }}
         </style>
