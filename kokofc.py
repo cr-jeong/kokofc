@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 🛠️ 꼬임 방지 고유 타겟팅 반응형 CSS ---
+# --- 🛠️ 모바일 강제 1줄 잠금 및 데스크탑 분리 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -40,32 +40,37 @@ st.markdown("""
         }
     }
     
-    /* ② 하단 명단 목록: 무조건 한 줄 가로 정렬 고정 (고유 마크업 적용) */
+    /* ② [근본 해결] 명단 박스 내의 가로 정렬 강제 고정 및 Streamlit 기본 모바일 쪼개기 방지 */
     .player-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         width: 100% !important;
+        gap: 8px !important; /* 내부 간격 최적화 */
     }
     
-    /* 명단 내부의 비율을 절대 깨지지 않게 강제 지정 */
+    /* 명단 내부의 컬럼 비율이 모바일에서도 억지로 깨지지 않도록 강제 너비 부여 */
     .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
-        flex: 5.5 1 0% !important; 
-        min-width: 0 !important; 
+        flex: 10 1 0% !important; 
+        min-width: 0 !important;
+        max-width: none !important;
     }
     .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
-        flex: 1.2 0 0% !important; 
-        min-width: 44px !important; 
+        flex: 0 0 45px !important; 
+        min-width: 45px !important; 
+        max-width: 45px !important;
     }
     .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
-        flex: 1.2 0 0% !important; 
-        min-width: 44px !important; 
+        flex: 0 0 45px !important; 
+        min-width: 45px !important; 
+        max-width: 45px !important;
     }
 
-    /* 버튼 찌그러짐 및 글자 잘림 방지 */
-    .player-row-container [data-testid="stHorizontalBlock"] button {
-        padding: 4px 2px !important;
+    /* 버튼 내부 텍스트 마진을 줄여 모바일에서 짤리거나 밀리지 않게 보정 */
+    .player-row-container button[data-testid="baseButton-secondary"] {
+        padding: 4px 0px !important;
+        width: 100% !important;
     }
     
     /* 명단 이름 폰트 크기 및 두께 고정 */
@@ -146,7 +151,7 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# 설정 및 선수 등록 아코디언 (데스크탑 반반 복원 완료)
+# 설정 및 선수 등록 아코디언 (데스크탑 반반)
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
@@ -190,7 +195,7 @@ if st.session_state.players_dict:
         'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
     }
 
-    # ❗ 고유 딱지 클래스 주입으로 상단 설정창과 완벽하게 CSS 격리 분리
+    # 강제 1줄 타겟팅 박스 시작
     st.markdown('<div class="player-row-container">', unsafe_allow_html=True)
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
@@ -204,10 +209,11 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
+            # 비율 대신 고정 픽셀(px) 매칭을 유도하기 위한 컬럼 생성
             col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
             
             with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v16_{player}")
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v17_{player}")
                 st.session_state.attendance[player] = selected
                 
                 st.write(
