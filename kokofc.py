@@ -182,38 +182,31 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 🌟 [디자이너의 최종 치트키] 
-            # 한 행에 컬럼 2개를 쓰되, 오른쪽 컬럼에 '이름 전용 안보이는 버튼'과 '⚙️'을 양끝 정렬로 배치!
-            col_left, col_right = st.columns([0.1, 0.9])
+            # 🌟 [순정 컴팩트 정렬] 컬럼 비율을 모바일 화면 한계치까지 좁힙니다.
+            # 이름 칸에 87%를 몰아주고, ⚙️ 버튼 칸은 단 13%만 줍니다.
+            col_checkbox, col_btn = st.columns([0.87, 0.13])
             
-            with col_left:
-                # 1. 왼쪽에는 오직 순수한 체크박스 빈 껍데기만 노출
-                selected = st.checkbox("", value=is_active, key=f"att_v15_{player}", label_visibility="collapsed")
+            with col_checkbox:
+                # 체크박스에 이름을 바로 넣어서 순정 상태로 출력
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
                 st.session_state.attendance[player] = selected
                 
-            with col_right:
-                # 2. 오른쪽 한 칸 안에 이름과 ⚙️ 이모지를 양끝 정렬(Flex)한 텍스트를 구성하고, 
-                # 그 공간 전체를 투명 버튼 클래스(.edit-ghost-btn)로 감싸버림! 
-                button_html = f"""
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left;">
-                    <span style="font-size: 16px; font-weight: 800; color: var(--text-color); opacity: {1.0 if selected else 0.35}; text-decoration: { 'none' if selected else 'line-through' };">🏃 {player}</span>
-                    <span style="font-size: 18px; padding-right: 4px;">⚙️</span>
-                </div>
-                """
-                st.markdown(f'<div class="edit-ghost-btn">', unsafe_allow_html=True)
-                if st.button(button_html, key=f"edit_btn_{player}", use_container_width=True):
-                    edit_position_dialog(player)
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                # 태그 노출 영역
+                # 태그 영역
                 st.write(
-                    f"""<div style='margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
                     </div>""", 
                     unsafe_allow_html=True
                 )
+                
+            with col_btn:
+                # 💡 핵심: use_container_width=True를 주어 13% 크기의 칸을 꽉 채우게 만듭니다.
+                # 이렇게 하면 모바일에서 아래로 안 떨어지고 무조건 이름 오른쪽에 찰떡처럼 붙어있게 돼요!
+                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
+                    edit_position_dialog(player)
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
+            
 else:
     st.info("등록된 선수가 없습니다.")
     
