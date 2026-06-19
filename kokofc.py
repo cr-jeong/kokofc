@@ -55,9 +55,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("카톡 복사 추가, 기능 수정 중")
+st.title("⚽ KOKO FC 😈\n라인업 매니저")
+st.caption("KOKO 화이팅!! 버그 제보 환영\n카톡 복사 추가, 기능 수정 중")
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
