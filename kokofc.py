@@ -54,6 +54,7 @@ st.markdown("""
         color: var(--text-color) !important;
     }
     
+    /* 선수 명단 체크박스 영역 컨테이너 정리 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -61,15 +62,15 @@ st.markdown("""
         padding: 0 !important;
         margin: 0 !important;
     }
-    [data-testid="stCheckbox"] {
-        border: none !important;
-        padding: 4px 0 !important;
-    }
-    .stCheckbox p {
+    
+    /* 오직 선수 명단 체크박스의 글자만 타겟팅 (토글 스위치 글자는 제외) */
+    [data-testid="stCheckbox"] .st-an p {
         font-size: 16px !important;
         font-weight: 700 !important;
     }
-    .stCheckbox [aria-checked="false"] ~ div p {
+    
+    /* 💡 [건의사항 반영] 토글 글자는 무시하고, 오직 미출석 선수 체크박스가 꺼졌을 때만 음영+취소선 적용 */
+    [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
@@ -106,7 +107,7 @@ st.markdown("""
         color: var(--text-color);
     }
     
-    /* ✨ 중복되던 보더 코드를 여기로 합쳐 깔끔하게 다이어트했습니다. */
+    /* 중복 보더 코드를 하나로 깔끔하게 다이어트 */
     .toss-table th, .toss-table td {
         padding: 11px 8px;
         white-space: nowrap;
@@ -135,7 +136,7 @@ st.markdown("""
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* ✨ 다크/라이트 모드별 폰트/보더 중복 설정을 정리하고 순수 배경색 전환 위주로 압축 */
+    /* 다크/라이트 모드별 테이블 배경색 최적화 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.08); }
         .toss-table td { background-color: #0e1117; border-right: 1px solid rgba(255, 255, 255, 0.04); }
