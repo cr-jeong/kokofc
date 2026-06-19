@@ -332,55 +332,56 @@ function copyToClipboard() {{
     custom_html = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); contain: content;">
         <style>
-            .modern-table {{
-                width: 100%;
-                min-width: 600px;
-                border-collapse: separate !important;
-                border-spacing: 0;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                font-size: 14px;
-                background-color: var(--background-color);
-                color: var(--text-color);
-                border: 1px solid rgba(0, 0, 0, 0.08) !important;
-                border-radius: 12px;
-                overflow: hidden;
-            }}
-            @media (prefers-color-scheme: dark) {{
-                .modern-table {{ border: 1px solid rgba(255, 255, 255, 0.1) !important; }}
-            }}
-            .modern-table th {{
-                background-color: var(--secondary-background-color);
-                color: var(--text-color);
-                font-weight: 600;
-                padding: 14px 8px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-                text-align: center !important;
-                white-space: nowrap;
-            }}
-            .modern-table td {{
-                padding: 14px 8px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
-                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-                text-align: center !important; 
-                white-space: nowrap;
-            }}
-            .modern-table th:last-child, .modern-table td:last-child {{ border-right: none !important; }}
-            .modern-table tr:last-child td {{ border-bottom: none !important; }}
-            .modern-table tr:hover {{ background-color: rgba(0,0,0,0.02); }}
-            .modern-table td:nth-child(1) {{
-                font-weight: 600;
-                position: sticky;
-                left: 0;
-                background-color: var(--background-color);
-                border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-            }}
-            .modern-table td:nth-child(3) {{
-                background-color: rgba(34, 197, 94, 0.08) !important;
-                color: #22C55E !important;
-                font-weight: 700;
-            }}
-        </style>
+    .modern-table {
+        width: 100%;
+        min-width: 500px; /* 너무 웅장하게 벌어지지 않도록 미니멀하게 조정 */
+        border-collapse: separate !important;
+        border-spacing: 0;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 13px; /* 폰트 크기를 살짝 줄여서 컴팩트하게 */
+        background-color: var(--background-color);
+        color: var(--text-color);
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+        .modern-table { border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+    }
+    .modern-table th {
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+        font-weight: 600;
+        padding: 10px 4px; /* 위아래, 좌우 패딩을 줄여서 여백 압축 */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+        text-align: center !important;
+        white-space: nowrap;
+    }
+    .modern-table td {
+        padding: 10px 4px; /* 셀 내부 여백도 슬림하게 깎아서 뚱뚱한 느낌 제거 */
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+        text-align: center !important; 
+        white-space: nowrap;
+    }
+    .modern-table th:last-child, .modern-table td:last-child { border-right: none !important; }
+    .modern-table tr:last-child td { border-bottom: none !important; }
+    .modern-table tr:hover { background-color: rgba(0,0,0,0.02); }
+    
+    .modern-table td:nth-child(1) {
+        font-weight: 600;
+        position: sticky;
+        left: 0;
+        background-color: var(--background-color);
+        border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+    .modern-table td:nth-child(3) {
+        background-color: rgba(34, 197, 94, 0.06) !important; /* 초록색 강조 배경도 조금 더 은은하게 */
+        color: #22C55E !important;
+        font-weight: 700;
+    }
+</style>
         <table class="modern-table">
             <thead>
                 <tr>
