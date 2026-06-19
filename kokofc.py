@@ -18,15 +18,6 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-아하, 원인을 바로 알겠다! 코드가 꼬인 이유가 있었네.
-
-내가 새로 준 ⚙️ 고정 CSS 코드 바로 밑에, 예전 버전의 버튼 기본 스타일 패딩 조정 (width: 100% !important) 코드가 그대로 남아 있어서 그래. CSS는 밑에 있는 코드가 위에 있는 코드를 덮어쓰기 때문에 열심히 설정한 38px 고정 값이 풀려버린 거지!
-
-게다가 기존의 복잡한 컬럼 비율 조절용 CSS(flex: 8.2...)가 남아있어서 Streamlit의 버튼 배치와 충돌이 났던 거야.
-
-불필요하고 꼬인 코드를 싹 다 제거하고, 다른 곳에는 절대 영향 주지 않으면서 오직 명단 톱니바퀴 버튼만 38px 정사각형으로 예쁘게 깎아주는 초강력 다이어트 버전 CSS야. 이걸로 기존 CSS 블록을 통째로 교체해 줘!
-
-Python
 # --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
