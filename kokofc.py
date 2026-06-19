@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 화면 제어 및 반응형 레이아웃 CSS ---
+# --- 🛠️ 꼬임 방지 고유 타겟팅 반응형 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,7 +27,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
+    /* ① 상단 설정창: 데스크탑은 원래대로 반반 가로 배치, 모바일(768px 이하)만 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -36,13 +36,12 @@ st.markdown("""
         .stExpander [data-testid="stHorizontalBlock"] > div {
             width: 100% !important;
             max-width: 100% !important;
-            flex: 1 1 auto !important; /* 모바일에서 꽉 차게 변경 */
+            flex: 1 1 auto !important;
         }
     }
     
-    /* ② 명단 전체 이름+버튼 행은 모바일에서도 절대 세로로 찢어지지 않고 1줄 유지 */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] {
+    /* ② 하단 명단 목록: 무조건 한 줄 가로 정렬 고정 (고유 마크업 적용) */
+    .player-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -50,29 +49,26 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ❗ [버그 해결] 설정창 내부 컬럼과 완전히 분리하여 '전체 명단 컨테이너' 내부의 컬럼 비율만 조절 */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
+    /* 명단 내부의 비율을 절대 깨지지 않게 강제 지정 */
+    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
         flex: 5.5 1 0% !important; 
         min-width: 0 !important; 
     }
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(2),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
+    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
         flex: 1.2 0 0% !important; 
-        min-width: 42px !important; 
+        min-width: 44px !important; 
     }
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(3),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
+    .player-row-container [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
         flex: 1.2 0 0% !important; 
-        min-width: 42px !important; 
+        min-width: 44px !important; 
     }
 
-    /* 버튼 내부 텍스트 패딩 조정으로 모바일에서 버튼이 찌그러지는 현상 방지 */
-    [data-testid="stHorizontalBlock"] button {
-        padding: 2px 4px !important;
+    /* 버튼 찌그러짐 및 글자 잘림 방지 */
+    .player-row-container [data-testid="stHorizontalBlock"] button {
+        padding: 4px 2px !important;
     }
     
-    /* 명단 이름 폰트 크기 고정 */
+    /* 명단 이름 폰트 크기 및 두께 고정 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
@@ -150,7 +146,7 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# --- ⚙️ 원래 버전의 깔끔한 st.columns 가로 배치 복원 ---
+# 설정 및 선수 등록 아코디언 (데스크탑 반반 복원 완료)
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
@@ -194,6 +190,8 @@ if st.session_state.players_dict:
         'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
     }
 
+    # ❗ 고유 딱지 클래스 주입으로 상단 설정창과 완벽하게 CSS 격리 분리
+    st.markdown('<div class="player-row-container">', unsafe_allow_html=True)
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
@@ -209,7 +207,7 @@ if st.session_state.players_dict:
             col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
             
             with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v16_{player}")
                 st.session_state.attendance[player] = selected
                 
                 st.write(
@@ -231,6 +229,7 @@ if st.session_state.players_dict:
                     st.rerun()
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True) # 명단 컨테이너 닫기
 else:
     st.info("등록된 선수가 없습니다.")
     
