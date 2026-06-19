@@ -151,7 +151,7 @@ col1, col2 = st.columns([1, 6])
 with col1:
     try:
         img = Image.open("koko_logo.png")
-        st.image(img, width=130) 
+        st.image(img, width=100) 
     except FileNotFoundError:
         st.title("⚽")
 
