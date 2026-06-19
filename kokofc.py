@@ -40,7 +40,7 @@ st.markdown("""
         }
     }
     
-    /* 선수 명단 체크박스의 '동그란 테두리/박스' 원천 박멸 */
+    /* 명단 체크박스 테두리 박멸 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -77,7 +77,7 @@ st.markdown("""
         text-decoration: line-through !important;
     }
     
-    /* 테이블 공통 모던 디자인 CSS */
+    /* 테이블 공통 디자인 */
     .toss-table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -109,8 +109,6 @@ st.markdown("""
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
-        position: relative;
-        z-index: 1; /* 일반 헤더는 낮은 레이어 */
     }
     
     .toss-table td {
@@ -127,7 +125,7 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 대폭 수정: 고정열(선수명/쿼터)의 z-index를 20으로 대폭 격상하여 2층 헤더보다 무조건 위에 오도록 고정 */
+    /* 💥 수정 포인트: 첫 번째 열(선수명/쿼터)만 강력하게 고정하고 z-index를 최상위로 설정 */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
@@ -137,25 +135,26 @@ st.markdown("""
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 💥 추가 수정: 통계 표의 2번째 줄 헤더(PIVO, ALA_L 등)의 레이어를 5로 낮춰 무조건 고정열 뒤로 숨게 처리 */
-    .toss-table tr:nth-child(2) th {
-        z-index: 5 !important;
+    /* 💥 수정 포인트: 포지션 헤더들이 서로를 덮지 않도록 일반 헤더의 z-index와 배경색 관계 정리 */
+    .toss-table tr th:not(:nth-child(1)) {
+        position: relative;
+        z-index: 1 !important;
     }
     
-    /* 라이트/다크 모드별 배경 처리 */
+    /* 라이트/다크 모드별 배경 처리 (고정 벽에만 불투명 배경 지정, 일반 칸들은 자연스럽게 흐르도록 설정) */
     @media (prefers-color-scheme: dark) {
-        .toss-table th { background-color: #1a1c23 !important; }
+        .toss-table th { background-color: #1a1c23; }
         .toss-table td { background-color: #0e1117; }
-        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } 
-        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } 
+        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } /* 고정 벽 */
+        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } /* 고정 벽 헤더 */
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
         .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
-        .toss-table th { background-color: #f0f2f6 !important; }
+        .toss-table th { background-color: #f0f2f6; }
         .toss-table td { background-color: #ffffff; }
-        .toss-table td:nth-child(1) { background-color: #ffffff !important; } 
-        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } 
+        .toss-table td:nth-child(1) { background-color: #ffffff !important; } /* 고정 벽 */
+        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } /* 고정 벽 헤더 */
     }
     </style>
 """, unsafe_allow_html=True)
