@@ -161,7 +161,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                             st.rerun()
 
 # 참여 명단 출력
-st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
+st.markdown("### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     TAG_STYLES = {
         'PIVO (공격)': 'background-color: rgba(254, 226, 226, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);', 
@@ -260,7 +260,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
 if st.session_state.lineups:
-    st.write("## 📋 경기 라인업 결과")
+    st.markdown("### 📋 경기 라인업 결과")
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n🔱 PIVO : {data['starters'][0] or '미지정'}\n◀️ ALA_L : {data['starters'][1] or '미지정'}\n▶️ ALA_R : {data['starters'][2] or '미정'}\n🛡️ FIXO : {data['starters'][3] or '미지정'}\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\n\n"
@@ -294,7 +294,7 @@ function copyToClipboard() {{
     )
     
     # 통계 표 섹션 (구조 분리로 인덴트/f-string 버그 원천 해결)
-    st.write("### 📊 최종 포지션별 상세 출전 통계")
+    st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
