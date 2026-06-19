@@ -37,11 +37,10 @@ st.markdown("""
     @media (prefers-color-scheme: dark) {
         [data-testid="stExpander"] {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
         }
     }
     
-    /* 선수 등록 Form의 기본 테두리 및 그림자 흔적 완전 박멸 */
     .stForm {
         border: none !important;
         box-shadow: none !important;
@@ -49,14 +48,12 @@ st.markdown("""
         padding: 0 !important;
     }
     
-    /* 메인 설정창(Expander) 타이틀 글자 크기 15px로 최적화 */
     [data-testid="stExpander"] details summary p {
         font-size: 15px !important;
         font-weight: 700 !important;
         color: var(--text-color) !important;
     }
     
-    /* 명단 체크박스 테두리 UI 정리 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -103,41 +100,41 @@ st.markdown("""
         min-width: 600px;
         border-collapse: collapse;
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        font-size: 13px;
+        font-size: 14px; /* 💡 기본 선수명 글씨 크기 13px -> 14px로 약간 업 */
         text-align: center;
         background-color: var(--background-color);
         color: var(--text-color);
     }
     
     .toss-table th, .toss-table td {
-        padding: 10px 8px;
+        padding: 12px 8px; /* 💡 위아래 패딩을 조금 더 줘서 시원하게 변경 */
         white-space: nowrap;
         position: relative;
         z-index: 1;
     }
     
+    /* 💡 [핵심 요청사항] 첫 행(헤더) 폰트 크기 대폭 상향 및 강조 */
     .toss-table th {
         color: var(--text-color);
-        font-weight: 600;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        font-size: 16px !important; /* 💡 헤더 폰트를 16px로 묵직하게 키움 */
+        font-weight: 800 !important; /* 💡 더 두껍게 강조 */
+        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
     }
     
     .toss-table td { border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 클래스 기반 첫 번째 열 절대 방어벽 */
     .sticky-col {
         position: sticky !important;
         left: 0 !important;
         z-index: 99999 !important;
-        font-weight: 600;
+        font-weight: 700;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 테마별 테이블 라인 및 스티키 열 불투명 배경색 지정 */
     @media (prefers-color-scheme: dark) {
-        .toss-table th { background-color: #1a1c23; }
+        .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.1); }
         .toss-table td { background-color: #0e1117; }
         th.sticky-col { background-color: #1a1c23 !important; }
         td.sticky-col { background-color: #0e1117 !important; }
