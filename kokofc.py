@@ -53,8 +53,8 @@ st.markdown("""
         max-width: 500px !important;
     }
     
-    /* 일반 스트림릿 버튼(라인업 자동 생성) 폰트 크기 통일 */
-    .stButton button p {
+    /* 익스팬더(설정창) 제목 폰트 크기 통일 */
+    .stExpander details summary p {
         font-size: 15px !important;
         font-weight: 600 !important;
     }
