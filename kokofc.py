@@ -52,6 +52,17 @@ st.markdown("""
     [data-testid="stMainBlock"] .stElementContainer:has(.stCheckbox) {
         max-width: 500px !important;
     }
+    /* 익스팬더(설정창) 제목 폰트 크기 통일 */
+    .stExpander details summary p {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* 일반 스트림릿 버튼(라인업 자동 생성) 폰트 크기 통일 */
+    .stButton button p {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -265,7 +276,7 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n🔱 PIVO : {data['starters'][0] or '미지정'}\n◀️ ALA_L : {data['starters'][1] or '미지정'}\n▶️ ALA_R : {data['starters'][2] or '미정'}\n🛡️ FIXO : {data['starters'][3] or '미지정'}\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\n\n"
 
-    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
+    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
     var textToCopy = `{kakao_text}`;
