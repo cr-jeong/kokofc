@@ -149,47 +149,47 @@ with col2:
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    with st.container(border=True):
-        for player, positions in st.session_state.players_dict.items():
-            # 1. 이전 세션 상태 확인
-            prev_status = st.session_state.attendance.get(player, True)
+    for player, positions in st.session_state.players_dict.items():
+        prev_status = st.session_state.attendance.get(player, True)
+        
+        # 각 선수를 하나의 깔끔한 카드(테두리) 형태로 분리하여 모바일 가독성 향상
+        with st.container(border=True):
+            # 구조 단순화: [좌측: 체크박스 & 이름 & 태그] | [우측: 관리 버튼]
+            col_content, col_actions = st.columns([3, 1])
             
-            # 레이아웃 구성을 위해 뼈대 먼저 생성
-            col_att, col_name, col_badge, col_edit, col_b = st.columns([0.8, 1.5, 3.2, 1, 0.8])
-            
-            # 체크박스를 가장 먼저 렌더링하여 데이터 엇박자 완벽 해결
-            with col_att:
-                is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
-                if is_attended != prev_status:
-                    st.session_state.attendance[player] = is_attended
-                    st.rerun()
-            
-            # 확정된 최신 'is_attended' 상태를 기반으로 배지 HTML 생성 (한 줄 압축으로 코드 노출 완전 방지)
-            badge_html = ""
-            for p in positions:
-                if p in POS_CONFIG:
-                    cfg = POS_CONFIG[p]
-                    bg_color = "#E2E8F0" if not is_attended else cfg['bg']
-                    text_color = "#94A3B8" if not is_attended else cfg['color']
-                    badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 2px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
-            
-            # 2. 선수 이름 출력 (출석이면 선명하게, 해제(불출석)되면 흐려지고 취소선)
-            with col_name:
-                color = "#1E293B" if is_attended else "#94A3B8"
-                text_style = "font-weight:bold;" if is_attended else "text-decoration: line-through; opacity: 0.4;"
-                st.markdown(f"<div style='padding-top: 3px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
+            with col_content:
+                # 이름과 참석 체크박스를 한 줄로 밀착 배치
+                col_chk, col_txt = st.columns([0.4, 2.6])
+                with col_chk:
+                    is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
+                    if is_attended != prev_status:
+                        st.session_state.attendance[player] = is_attended
+                        st.rerun()
                 
-            # 3. 배지 출력 (출석이면 선명하게, 해제(불출석)되면 흐려짐)
-            with col_badge:
-                badge_opacity = "1.0" if is_attended else "0.3"
-                st.markdown(f"<div style='padding-top: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
+                with col_txt:
+                    color = "#1E293B" if is_attended else "#94A3B8"
+                    text_style = "font-weight:bold; font-size:16px;" if is_attended else "text-decoration: line-through; opacity: 0.4; font-size:16px;"
+                    st.markdown(f"<div style='padding-top: 1px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
-            with col_edit:
+                # 포지션 배지는 이름 아래 공간에 자연스럽게 Wrap 되도록 배치 (줄바꿈 현상 역이용)
+                badge_html = ""
+                for p in positions:
+                    if p in POS_CONFIG:
+                        cfg = POS_CONFIG[p]
+                        bg_color = "#E2E8F0" if not is_attended else cfg['bg']
+                        text_color = "#94A3B8" if not is_attended else cfg['color']
+                        badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
+                
+                badge_opacity = "1.0" if is_attended else "0.4"
+                st.markdown(f"<div style='margin-top: 6px; margin-left: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
+            
+            with col_actions:
+                # 우측 정렬된 관리 버튼 (모바일에서도 찌그러지지 않고 세로로 이쁘게 스택됨)
+                st.write("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True) # 약간의 상단 패딩
                 if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
-                    
-            with col_b:
-                if st.button("제거", key=f"del_{player}", use_container_width=True):
+                
+                if st.button("제거", key=f"del_{player}", use_container_width=True, type="secondary"):
                     del st.session_state.players_dict[player]
                     if player in st.session_state.attendance:
                         del st.session_state.attendance[player]
