@@ -346,44 +346,62 @@ function copyToClipboard() {{
             .modern-table {{
                 width: 100%;
                 min-width: 600px;
-                border-collapse: collapse !important;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                border-collapse: separate !important; /* 부드러운 라운딩을 위해 separate로 변경 */
+                border-spacing: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 font-size: 14px;
                 background-color: var(--background-color);
                 color: var(--text-color);
-                border: 1px solid rgba(128, 128, 128, 0.4) !important;
+                border: 1px solid rgba(0, 0, 0, 0.08) !important; /* 토스풍 초슬림 외곽선 */
+                border-radius: 12px; /* 전체 테이블 모서리 곡률 */
+                overflow: hidden;
+            }}
+            /* 다크모드 대응을 위한 미세 조정 */
+            @media (prefers-color-scheme: dark) {{
+                .modern-table {{
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                }}
             }}
             .modern-table th {{
                 background-color: var(--secondary-background-color);
                 color: var(--text-color);
                 font-weight: 600;
-                padding: 12px 6px;
-                border: 1px solid rgba(128, 128, 128, 0.4) !important;
+                padding: 14px 8px; /* 위아래 여백을 주어 더 시원하게 변경 */
+                border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
                 text-align: center !important;
                 white-space: nowrap;
             }}
-            .modern-table th.main-header {{
-                opacity: 0.9;
-            }}
             .modern-table td {{
-                padding: 12px 6px;
-                border: 1px solid rgba(128, 128, 128, 0.2) !important;
+                padding: 14px 8px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important; /* 아주 부드러운 가로 구분선 */
+                border-right: 1px solid rgba(0, 0, 0, 0.04) !important; /* 아주 부드러운 세로 구분선 */
                 text-align: center !important; 
                 white-space: nowrap;
             }}
-            .modern-table tr:hover {{ background-color: var(--secondary-background-color); }}
+            /* 가장 우측과 하단 테두리 중복 제거로 깔끔하게 정리 */
+            .modern-table th:last-child, .modern-table td:last-child {{
+                border-right: none !important;
+            }}
+            .modern-table tr:last-child td {{
+                border-bottom: none !important;
+            }}
+            .modern-table tr:hover {{ 
+                background-color: rgba(0, 0, 0, 0.02); 
+            }}
+            /* 첫 번째 열(선수명) 고정 및 토스 스타일 그림자 제거 후 깔끔하게 */
             .modern-table td:nth-child(1) {{
-                font-weight: bold;
+                font-weight: 600;
                 position: sticky;
                 left: 0;
                 background-color: var(--background-color);
-                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-                border-right: 1px solid rgba(128, 128, 128, 0.4) !important;
+                border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
             }}
+            /* 필드 출전 횟수 하이라이트 투명도 및 색상 세련되게 다듬기 */
             .modern-table td:nth-child(3) {{
-                background-color: rgba(34, 197, 94, 0.15) !important;
-                color: #4ADE80 !important;
-                font-weight: bold;
+                background-color: rgba(34, 197, 94, 0.08) !important;
+                color: #22C55E !important;
+                font-weight: 700;
             }}
         </style>
         
