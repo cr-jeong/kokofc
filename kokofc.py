@@ -3,13 +3,13 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 포지션 및 기본 설정 (새로운 이모지 및 라벨 명칭 반영)
+# 포지션 및 기본 설정 (영어 이름 유지 + 요청하신 이모지로 변경)
 POS_CONFIG = {
-    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 창'},
-    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ 좌'},
-    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ 우'},
-    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ 수비'},
-    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 키퍼'}
+    'PIVO (공격)': {'emoji': '🔱', 'label': '🔱 PIVO'},
+    'ALA_L (좌윙)': {'emoji': '◀️', 'label': '◀️ ALA_L'},
+    'ALA_R (우윙)': {'emoji': '▶️', 'label': '▶️ ALA_R'},
+    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO'},
+    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO'}
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
@@ -267,15 +267,15 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
-    # 카톡 공유용 텍스트 포맷팅 (새로운 명칭으로 연동)
+    # 카톡 공유용 텍스트 포맷팅 (원래 이름 + 새 이모지 연동)
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n"
-        kakao_text += f"🔥 창 : {data['starters'][0] or '미지정'}\n"
-        kakao_text += f"⚡ 좌 : {data['starters'][1] or '미지정'}\n"
-        kakao_text += f"✨ 우 : {data['starters'][2] or '미정'}\n"
-        kakao_text += f"🛡️ 수비 : {data['starters'][3] or '미지정'}\n"
-        kakao_text += f"🧤 키퍼 : {data['starters'][4] or '미정'}\n"
+        kakao_text += f"🔱 PIVO : {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"◀️ ALA_L : {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"▶️ ALA_R : {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🛡️ FIXO : {data['starters'][3] or '미지정'}\n"
+        kakao_text += f"🧤 GOLEIRO : {data['starters'][4] or '미정'}\n"
         kakao_text += "\n"
 
     # 공유하기 카톡 노란색 버튼 유지
@@ -320,7 +320,7 @@ function copyToClipboard() {{
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 최종 포지션별 상세 출전 통계 표 가공 (새 명칭 매핑 완료)
+    # 최종 포지션별 상세 출전 통계 표 가공 (요청하신 형태로 완벽 수정)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -332,12 +332,12 @@ function copyToClipboard() {{
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "🧤 키퍼": f"{final_gks[name]}회",
+            "🧤 GOLEIRO": f"{final_gks[name]}회",
             "🏃 필드": f"{final_fields[name]}회",
-            "🔥 창": f"{player_history['PIVO (공격)']}회",
-            "⚡ 좌": f"{player_history['ALA_L (좌윙)']}회",
-            "✨ 우": f"{player_history['ALA_R (우윙)']}회",
-            "🛡️ 수비": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
+            "🔱 PIVO": f"{player_history['PIVO (공격)']}회",
+            "◀️ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
+            "▶️ ALA_R": f"{player_history['ALA_R (우윙)']}회",
+            "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
         })
     
     df_stats = pd.DataFrame(stats_data)
@@ -389,15 +389,15 @@ function copyToClipboard() {{
             <thead>
                 <tr>
                     <th rowspan="2" style="vertical-align: middle;">선수명</th>
-                    <th rowspan="2" style="vertical-align: middle;">🧤 키퍼</th>
+                    <th rowspan="2" style="vertical-align: middle;">🧤 GOLEIRO</th>
                     <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
                     <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
                 </tr>
                 <tr>
-                    <th>🔥 창</th>
-                    <th>⚡ 좌</th>
-                    <th>✨ 우</th>
-                    <th>🛡️ 수비</th>
+                    <th>🔱 PIVO</th>
+                    <th>◀️ ALA_L</th>
+                    <th>▶️ ALA_R</th>
+                    <th>🛡️ FIXO</th>
                 </tr>
             </thead>
             <tbody>
