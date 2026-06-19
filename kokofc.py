@@ -50,29 +50,26 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* 명단 컨테이너 내부 컬럼 비율 조절 */
+    /* 명단 컨테이너 내부 컬럼 비율 조절 (이름 영역 확대 및 버튼 안정화) */
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
     [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
-        flex: 5.5 1 0% !important; 
+        flex: 8.2 1 0% !important; 
         min-width: 0 !important; 
     }
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(2),
     [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
-        flex: 1.2 0 0% !important; 
-        min-width: 42px !important; 
-    }
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(3),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
-        flex: 1.2 0 0% !important; 
-        min-width: 42px !important; 
+        flex: 1.8 0 0% !important; 
+        min-width: 50px !important; 
     }
 
-    /* 버튼 내부 텍스트 패딩 조정 */
-    [data-testid="stHorizontalBlock"] button {
-        padding: 2px 4px !important;
+    /* 버튼 기본 스타일 패딩 조정 */
+    [data-testid="stHorizontalBlock"] div[data-testid="column"] button {
+        min-width: 0 !important;
+        padding: 4px 2px !important;
+        width: 100% !important;
     }
     
-    /* 명단 이름 폰트 크기 및 색상 (Streamlit 테마 변수 사용으로 다크모드 대응) */
+    /* 명단 이름 폰트 크기 및 색상 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
@@ -134,10 +131,12 @@ for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
-@st.dialog("🎯 희망 포지션 수정")
+# --- 🎯 희망 포지션 관리 및 삭제 다이얼로그 (통합본) ---
+@st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
-    st.write(f"🏃 **{player_name}** 선수의 희망 포지션을 선택하세요.")
+    st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
     st.caption("아무것도 선택하지 않으면 '모든 포지션 가능'으로 설정됩니다.")
+    
     current_wishes = st.session_state.players_dict[player_name]
     new_wishes = st.multiselect(
         "희망 포지션 (복수 선택 가능)",
@@ -145,12 +144,25 @@ def edit_position_dialog(player_name):
         default=[p for p in current_wishes if p in ALL_POSITIONS],
         format_func=lambda x: POS_CONFIG[x]['label']
     )
-    if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
-        st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
-        st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
-        st.rerun()
+    
+    st.write("")
+    # 변경사항 저장과 선수 삭제 버튼 분할 배치
+    d_col1, d_col2 = st.columns(2)
+    with d_col1:
+        if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
+            st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
+            st.success(f"{player_name} 선수의 정보가 수정되었습니다!")
+            st.rerun()
+            
+    with d_col2:
+        if st.button("🗑️ 선수 삭제하기", use_container_width=True, type="secondary"):
+            del st.session_state.players_dict[player_name]
+            if player_name in st.session_state.attendance: 
+                del st.session_state.attendance[player_name]
+            save_players_to_db(st.session_state.players_dict)
+            st.rerun()
 
-# --- ⚙️ 설정창 및 선수 등록 섹션 복원 완료 ---
+# --- ⚙️ 설정창 및 선수 등록 섹션 ---
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
@@ -206,7 +218,8 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
+            # 버튼 통합으로 인해 컬럼을 2개로 축소 (가로 깨짐 원천 차단)
+            col_main, col_btn = st.columns([8.2, 1.8])
             
             with col_main:
                 selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
@@ -219,16 +232,9 @@ if st.session_state.players_dict:
                     unsafe_allow_html=True
                 )
                 
-            with col_btn1:
+            with col_btn:
                 if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
-                    
-            with col_btn2:
-                if st.button("❌", key=f"del_{player}", use_container_width=True):
-                    del st.session_state.players_dict[player]
-                    if player in st.session_state.attendance: del st.session_state.attendance[player]
-                    save_players_to_db(st.session_state.players_dict)
-                    st.rerun()
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
 else:
@@ -257,7 +263,6 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
-        last_quarter_gk = chosen_gk
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         shuffled_positions = FIELD_POSITIONS.copy()
