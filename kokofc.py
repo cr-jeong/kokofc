@@ -329,58 +329,63 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
-    custom_html = f"""
+    # 1. CSS 스타일만 따로 떼어내서 안전하게 선언 (중괄호가 2개씩 들어간 버그 방지용)
+    table_css = """
+    <style>
+        .modern-table {
+            width: 100%;
+            min-width: 500px;
+            border-collapse: separate !important;
+            border-spacing: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 13px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        @media (prefers-color-scheme: dark) {
+            .modern-table { border: 1px solid rgba(255, 255, 255, 0.1) !important; }
+        }
+        .modern-table th {
+            background-color: var(--secondary-background-color);
+            color: var(--text-color);
+            font-weight: 600;
+            padding: 10px 4px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+            text-align: center !important;
+            white-space: nowrap;
+        }
+        .modern-table td {
+            padding: 10px 4px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
+            text-align: center !important; 
+            white-space: nowrap;
+        }
+        .modern-table th:last-child, .modern-table td:last-child { border-right: none !important; }
+        .modern-table tr:last-child td { border-bottom: none !important; }
+        .modern-table tr:hover { background-color: rgba(0,0,0,0.02); }
+        .modern-table td:nth-child(1) {
+            font-weight: 600;
+            position: sticky;
+            left: 0;
+            background-color: var(--background-color);
+            border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+        }
+        .modern-table td:nth-child(3) {
+            background-color: rgba(34, 197, 94, 0.06) !important;
+            color: #22C55E !important;
+            font-weight: 700;
+        }
+    </style>
+    """
+
+    # 2. 파이썬 변수가 들어가는 HTML 바디만 따로 조립
+    table_body = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); contain: content;">
-        <style>
-            .modern-table {{
-                width: 100%;
-                min-width: 500px;
-                border-collapse: separate !important;
-                border-spacing: 0;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                font-size: 13px;
-                background-color: var(--background-color);
-                color: var(--text-color);
-                border: 1px solid rgba(0, 0, 0, 0.08) !important;
-                border-radius: 12px;
-                overflow: hidden;
-            }}
-            @media (prefers-color-scheme: dark) {{
-                .modern-table {{ border: 1px solid rgba(255, 255, 255, 0.1) !important; }}
-            }}
-            .modern-table th {{
-                background-color: var(--secondary-background-color);
-                color: var(--text-color);
-                font-weight: 600;
-                padding: 10px 4px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-                text-align: center !important;
-                white-space: nowrap;
-            }}
-            .modern-table td {{
-                padding: 10px 4px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
-                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-                text-align: center !important; 
-                white-space: nowrap;
-            }}
-            .modern-table th:last-child, .modern-table td:last-child {{ border-right: none !important; }}
-            .modern-table tr:last-child td {{ border-bottom: none !important; }}
-            .modern-table tr:hover {{ background-color: rgba(0,0,0,0.02); }}
-            .modern-table td:nth-child(1) {{
-                font-weight: 600;
-                position: sticky;
-                left: 0;
-                background-color: var(--background-color);
-                border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-            }}
-            .modern-table td:nth-child(3) {{
-                background-color: rgba(34, 197, 94, 0.06) !important;
-                color: #22C55E !important;
-                font-weight: 700;
-            }}
-        </style>
         <table class="modern-table">
             <thead>
                 <tr>
@@ -400,23 +405,6 @@ function copyToClipboard() {{
         </table>
     </div>
     """
-        <table class="modern-table">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="vertical-align: middle;">선수명</th>
-                    <th rowspan="2" style="vertical-align: middle;">🧤 GOLEIRO</th>
-                    <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
-                    <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
-                </tr>
-                <tr>
-                    <th>🔱 PIVO</th>
-                    <th>◀️ ALA_L</th>
-                    <th>▶️ ALA_R</th>
-                    <th>🛡️ FIXO</th>
-                </tr>
-            </thead>
-            <tbody>{tbody_content}</tbody>
-        </table>
-    </div>
-    """
-    st.html(custom_html)
+
+    # 3. 두 개를 합쳐서 깨끗하게 출력! (들여쓰기 에러 완벽 차단)
+    st.html(table_css + table_body)
