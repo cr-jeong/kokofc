@@ -63,14 +63,22 @@ st.markdown("""
         margin: 0 !important;
     }
     
-    /* 오직 선수 명단 체크박스의 글자만 타겟팅 (토글 스위치 글자는 제외) */
-    [data-testid="stCheckbox"] .st-an p {
+    /* 1. 토글(st.toggle) 글자 스타일 절대 보존 (취소선, 음영 강제 해제) */
+    [data-testid="stCheckbox"]:has(input[type="checkbox"][role="switch"]) p {
+        opacity: 1.0 !important;
+        text-decoration: none !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+    }
+    
+    /* 2. 일반 체크박스(선수 명단) 기본 글자 스타일 */
+    [data-testid="stCheckbox"]:not(:has(input[type="checkbox"][role="switch"])) p {
         font-size: 16px !important;
         font-weight: 700 !important;
     }
     
-    /* 💡 [건의사항 반영] 토글 글자는 무시하고, 오직 미출석 선수 체크박스가 꺼졌을 때만 음영+취소선 적용 */
-    [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
+    /* 3. 💡 오직 일반 체크박스가 '해제(False)' 되었을 때만 선수 이름에 음영+취소선 정밀 타겟팅 */
+    [data-testid="stCheckbox"]:not(:has(input[type="checkbox"][role="switch"])) [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
