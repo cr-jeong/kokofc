@@ -352,7 +352,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 
 # [9. 📋 안전한 원래 방식의 결과 출력 및 공유 섹션]
 if st.session_state.lineups:
-    st.markdown("###📋 경기 라인업 결과")
+    st.markdown("### 📋 경기 라인업 결과")
     
     tbody_rows = ""
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
