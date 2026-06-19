@@ -256,9 +256,9 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
 
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
-    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
+    kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
     for quarter, data in st.session_state.lineups.items():
-        kakao_text += f"-----[{quarter}]-----\n🔱 PIVO : {data['starters'][0] or '미지정'}\n◀️ ALA_L : {data['starters'][1] or '미지정'}\n▶️ ALA_R : {data['starters'][2] or '미정'}\n🛡️ FIXO : {data['starters'][3] or '미지정'}\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\n\n"
+        kakao_text += f"-----[{quarter}]-----\\n🔱 PIVO : {data['starters'][0] or '미지정'}\\n◀️ ALA_L : {data['starters'][1] or '미지정'}\\n▶️ ALA_R : {data['starters'][2] or '미정'}\\n🛡️ FIXO : {data['starters'][3] or '미지정'}\\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\\n\\n"
 
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
@@ -288,24 +288,36 @@ function copyToClipboard() {{
         hide_index=True
     )
     
+    # 💥 [버그 수정 핵심 섹션] HTML 파싱 구조 안정화 및 Key값 매핑 불일치 해결
     st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
     final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
-    stats_data = []
+    # 순수 데이터 리스트 생성 후 수동으로 HTML tbody 행(tr) 조립 (버전 간 간섭 제거)
+    tbody_rows = ""
     for name in final_fields.keys():
-        player_history = final_history[name]
-        stats_data.append({
-            "선수명": name, "🧤 GOLEIRO": f"{final_gks[name]}회", "🏃 필드": f"{final_fields[name]}회",
-            "🔱 PIVO": f"{player_history['PIVO (공격)']}회", "◀️ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
-            "▶️ ALA_R": f"{player_history['ALA_R (우윙)']}회", "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
-        })
-    df_stats = pd.DataFrame(stats_data)
-    html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
-    tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
-    
+        player_history = final_history.get(name, {})
+        goleiro = f"{final_gks.get(name, 0)}회"
+        field = f"{final_fields.get(name, 0)}회"
+        pivo = f"{player_history.get('PIVO (공격)', 0)}회"
+        ala_l = f"{player_history.get('ALA_L (좌윙)', 0)}회"
+        ala_r = f"{player_history.get('ALA_R (우윙)', 0)}회"
+        fixo = f"{player_history.get('FIXO (수비)', 0)}회"
+        
+        tbody_rows += f"""
+        <tr>
+            <td>{name}</td>
+            <td>{goleiro}</td>
+            <td>{field}</td>
+            <td>{pivo}</td>
+            <td>{ala_l}</td>
+            <td>{ala_r}</td>
+            <td>{fixo}</td>
+        </tr>
+        """
+
     table_css = """
     <style>
         .modern-table {
@@ -376,7 +388,7 @@ function copyToClipboard() {{
                     <th>🛡️ FIXO</th>
                 </tr>
             </thead>
-            <tbody>{tbody_content}</tbody>
+            <tbody>{tbody_rows}</tbody>
         </table>
     </div>
     """
