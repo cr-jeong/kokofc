@@ -360,7 +360,7 @@ function copyToClipboard() {{
             <td>{data['starters'][1] or '미지정'}</td>
             <td>{data['starters'][2] or '미지정'}</td>
             <td>{data['starters'][3] or '미지정'}</td>
-            <td><strong>{data['starters'][4] or '미지정'}</strong></td>
+            <td>{data['starters'][4] or '미지정'}</td>
         </tr>
         """
         
