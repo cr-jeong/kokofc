@@ -1,8 +1,9 @@
-import streamlit as st
+import itertools
 import random
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd
 from PIL import Image
+import pandas as pd
+import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 
 # [1. 기본 설정 및 포지션 딕셔너리]
 POS_CONFIG = {
@@ -26,8 +27,6 @@ st.markdown("""
         width: 100% !important;
         background-color: var(--background-color);
     }
-    
-    /* 컴포넌트 라운딩 및 카드 스타일 디자인 */
     [data-testid="stExpander"] {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -40,20 +39,17 @@ st.markdown("""
             box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
         }
     }
-    
     .stForm {
         border: none !important;
         box-shadow: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
-    
     [data-testid="stExpander"] details summary p {
         font-size: 15px !important;
         font-weight: 700 !important;
         color: var(--text-color) !important;
     }
-    
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -65,20 +61,15 @@ st.markdown("""
         font-size: 16px !important;
         font-weight: 700 !important;
     }
-    
-    /* 💡 [수정 포인트] 취소선을 완전히 삭제하고, 미출석 선수는 은은한 음영(opacity)만 적용합니다. */
     [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
     }
-    
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
         }
     }
-    
-    /* 가로 스크롤 반응형 테이블 최적화 */
     .toss-table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -91,7 +82,6 @@ st.markdown("""
     @media (prefers-color-scheme: dark) {
         .toss-table-container { border: 1px solid rgba(255, 255, 255, 0.08); }
     }
-    
     .toss-table {
         width: 100%;
         min-width: 600px;
@@ -102,7 +92,6 @@ st.markdown("""
         background-color: var(--background-color);
         color: var(--text-color);
     }
-    
     .toss-table th, .toss-table td {
         padding: 11px 8px;
         white-space: nowrap;
@@ -111,18 +100,15 @@ st.markdown("""
         border-right: 1px solid rgba(0, 0, 0, 0.04);
     }
     .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
-    
     .toss-table th {
         color: var(--text-color);
         font-size: 15px !important;
         font-weight: 700 !important;
         border-bottom: 2px solid rgba(0, 0, 0, 0.06);
     }
-    
     .toss-table td { border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
-    
     .sticky-col {
         position: sticky !important;
         left: 0 !important;
@@ -130,7 +116,6 @@ st.markdown("""
         font-weight: 700;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
-    
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.08); }
         .toss-table td { background-color: #0e1117; border-right: 1px solid rgba(255, 255, 255, 0.04); }
@@ -146,7 +131,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# [3. 타이틀 디자인 최적화]
+# [3. 타이틀 디자인 영역]
 col1, col2 = st.columns([1, 6])
 with col1:
     try:
@@ -204,7 +189,6 @@ def edit_position_dialog(player_name):
         format_func=lambda x: POS_CONFIG[x]['label']
     )
     
-    st.write("")
     d_col1, d_col2 = st.columns(2)
     with d_col1:
         if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
@@ -223,7 +207,6 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
     with st.container(border=True):
         st.write("**① 경기 설정**")
         total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-        st.write("") 
         if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
             st.cache_data.clear()
             st.session_state.players_dict = load_players_from_db()
@@ -232,14 +215,11 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-    st.write("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True)
-
     with st.container(border=True):
         st.write("**② 선수 등록 (실시간 반영)**")
         with st.form(key="player_add_form", clear_on_submit=True, border=False):
             name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
             wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-            st.write("")
             if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
                 name = name_input.strip()
                 if name:
@@ -256,7 +236,6 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 🏃 원하셨던 이쁜 토글(st.toggle) 컴포넌트로 원복!
     hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미참석자 숨기기)", value=False)
     
     with st.container(border=True):
@@ -272,10 +251,10 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
-            if selected != is_active:
-                st.session_state.attendance[player] = selected
-                st.rerun()
+            # ⚡ 최적화 포인트: st.session_state.attendance 오브젝트에 직접 바인딩하여 딜레이 전면 해결
+            st.checkbox(f"🏃 {player}", key=f"attendance_{player}")
+            selected = st.session_state[f"attendance_{player}"]
+            st.session_state.attendance[player] = selected
             
             st.write(
                 f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
@@ -300,69 +279,50 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         return None
     
     lineups_dict = {}
-    
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in ALL_POSITIONS} for name in active_players}
     consecutive_rests = {name: 0 for name in active_players}
     
     last_quarter_gk = None
-    # 🔥 [추가] 직전 쿼터 필드 플레이어 명단 트래킹
     last_quarter_field = set()
 
     for q in range(1, total_q + 1):
         starters = {}
         
-        # ---------------------------------------------------------
-        # 단계 A: 이번 쿼터 골레이로(GK) 먼저 선발
-        # ---------------------------------------------------------
+        # 단계 A: 골레이로(GK) 선발
         gk_candidates = [p for p in active_players if GK_POSITION in players_pool[p]]
         if not gk_candidates:
             gk_candidates = active_players.copy()
             
         random.shuffle(gk_candidates)
-        
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
             gk_candidates.remove(last_quarter_gk)
             
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
-        
         starters[GK_POSITION] = chosen_gk
         
-        # ---------------------------------------------------------
-        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발
-        # ---------------------------------------------------------
+        # 단계 B: 필드 플레이어 4명 선발
         field_candidates = [p for p in active_players if p != chosen_gk]
         random.shuffle(field_candidates)
-        
-        # 💡 정렬 기준 (우선순위 대폭 정교화):
-        # 1순위: 오직 필드 출전 횟수(field_counts)가 적은 사람 (최우선 요건)
-        # 2순위: 연속 휴식 횟수가 많은 사람 (-consecutive_rests)
-        # 3순위: 직전 쿼터에 필드를 뛰었던 사람은 뒤로 밀기 (1 if name in last_quarter_field else 0) 🔥연속출전 방지!
         field_candidates.sort(key=lambda name: (
             field_counts[name], 
             -consecutive_rests[name],
             1 if name in last_quarter_field else 0
         ))
-        
         quarter_field_players = field_candidates[:4]
         
-        # ---------------------------------------------------------
-        # 단계 C: 확정된 4명을 선호 포지션에 최적 매칭
-        # ---------------------------------------------------------
+        # 단계 C: 포지션 최적 매칭
         best_match = None
         max_match_score = -999999
         
-        import itertools
         for perm in itertools.permutations(quarter_field_players):
             current_score = 0
             for idx, pos in enumerate(FIELD_POSITIONS):
                 p_name = perm[idx]
-                
                 if pos in players_pool[p_name]:
                     current_score += 100
-                
                 current_score -= player_pos_history[p_name][pos] * 15
                 current_score += random.uniform(0, 1)
                 
@@ -373,9 +333,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         for idx, pos in enumerate(FIELD_POSITIONS):
             starters[pos] = best_match[idx]
             
-        # ---------------------------------------------------------
-        # 단계 D: 전역 변수 트래킹 정보 및 휴식 카운트 업데이트
-        # ---------------------------------------------------------
+        # 단계 D: 트래킹 정보 및 휴식 카운트 업데이트
         players_playing_this_quarter = set(list(best_match) + [chosen_gk])
         
         for name in active_players:
@@ -387,8 +345,6 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         gk_counts[chosen_gk] += 1
         player_pos_history[chosen_gk][GK_POSITION] += 1
         last_quarter_gk = chosen_gk
-        
-        # 다음 쿼터 연속 출전 방지를 위해 기억해두기 🔥
         last_quarter_field = set(best_match) 
         
         for pos in FIELD_POSITIONS:
@@ -401,7 +357,6 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     return lineups_dict
 
 # [🚀 라인업 자동 생성 버튼 영역]
-st.write("")
 st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
@@ -469,15 +424,8 @@ if st.session_state.lineups:
     st.markdown("### 📊 포지션별 상세 출전 통계")
     
     active_players_current = [p for p, att in st.session_state.attendance.items() if att and p in st.session_state.players_dict]
-    stats_data = {
-        name: {"GK": 0, "필드 합계": 0, "PIVO": 0, "ALA_L": 0, "ALA_R": 0, "FIXO": 0} 
-        for name in active_players_current
-    }
-    
-    pos_mapping = {
-        'PIVO (공격)': 'PIVO', 'ALA_L (좌윙)': 'ALA_L', 
-        'ALA_R (우윙)': 'ALA_R', 'FIXO (수비)': 'FIXO'
-    }
+    stats_data = {name: {"GK": 0, "필드 합계": 0, "PIVO": 0, "ALA_L": 0, "ALA_R": 0, "FIXO": 0} for name in active_players_current}
+    pos_mapping = {'PIVO (공격)': 'PIVO', 'ALA_L (좌윙)': 'ALA_L', 'ALA_R (우윙)': 'ALA_R', 'FIXO (수비)': 'FIXO'}
     
     for q, roster in st.session_state.lineups.items():
         gk = roster['GOLEIRO (키퍼)']
