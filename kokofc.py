@@ -72,14 +72,14 @@ st.markdown("""
         padding: 2px 4px !important;
     }
     
-    /* 🛠️ [해결] 명단 이름 폰트 크기 및 색상 (Streamlit 테마 변수 사용으로 다크모드 대응) */
+    /* 명단 이름 폰트 크기 및 색상 (Streamlit 테마 변수 사용으로 다크모드 대응) */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: var(--text-color) !important;
     }
     
-    /* 🛠️ [해결] 체크박스 해제 시 흐려짐 효과 테마 대응 */
+    /* 체크박스 해제 시 흐려짐 효과 테마 대응 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
@@ -150,10 +150,42 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
+# --- ⚙️ 설정창 및 선수 등록 섹션 복원 완료 ---
+with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.container(border=True):
+            st.write("**① 선수 등록 (실시간 반영)**")
+            with st.form(key="player_add_form", clear_on_submit=True):
+                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
+                wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
+                if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
+                    name = name_input.strip()
+                    if name:
+                        if name in st.session_state.players_dict:
+                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                        else:
+                            st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
+                            st.session_state.attendance[name] = True
+                            save_players_to_db(st.session_state.players_dict)
+                            st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
+                            st.rerun()
+                    else: st.error("선수 이름을 먼저 입력해 주세요.")
+    with col2:
+        with st.container(border=True):
+            st.write("**② 경기 설정**")
+            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
+            st.write("") 
+            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
+                st.cache_data.clear()
+                st.session_state.players_dict = load_players_from_db()
+                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
+                st.rerun()
+
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 🛠️ [디자인 개선] 다크모드에서도 눈이 아프지 않고 가시성이 좋은 반투명(rgba) 태그 컬러 매핑
     TAG_STYLES = {
         'PIVO (공격)': 'background-color: rgba(254, 226, 226, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);', 
         'ALA_L (좌윙)': 'background-color: rgba(224, 242, 254, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3);', 
@@ -198,7 +230,6 @@ if st.session_state.players_dict:
                     save_players_to_db(st.session_state.players_dict)
                     st.rerun()
             
-            # 🛠️ 분리선 색상도 시스템 테마의 경계선 변수(--secondary-background-color) 활용
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다.")
@@ -303,7 +334,6 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
-    # 🛠️ [UI/UX 해결] HTML 통계 테이블 다크모드 전면 대응
     custom_html = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid var(--secondary-background-color); contain: content;">
         <style>
@@ -335,8 +365,6 @@ function copyToClipboard() {{
                 white-space: nowrap;
             }}
             .modern-table tr:hover {{ background-color: var(--secondary-background-color); }}
-            
-            /* 첫 번째 열(선수명) 고정 및 테마 대응 */
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
                 position: sticky;
@@ -344,7 +372,6 @@ function copyToClipboard() {{
                 background-color: var(--background-color);
                 box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             }}
-            /* 필드 출전 횟수 강조 하이라이트 (다크모드에서도 눈 편안한 알파값 적용) */
             .modern-table td:nth-child(3) {{
                 background-color: rgba(34, 197, 94, 0.15) !important;
                 color: #4ADE80 !important;
