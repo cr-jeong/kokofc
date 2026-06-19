@@ -141,25 +141,29 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (간격 복구 + 흐림 기능 동기화 완료! 🔱)
+# 참여 명단 출력 (시차 0ms, 완벽 동기화 버전! ⚡)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 간격 방해 없이, 체크 해제된 항목의 이름(p 태그)만 찾아내서 흐리게 만드는 고난도 CSS
+    # 이름과 태그를 브라우저 단에서 동시에 제어하는 CSS
     st.markdown(
         """
         <style>
-        /* 기본 체크박스 라벨 스타일 (16px bold) */
+        /* 기본 체크박스 라벨 스타일 */
         .stCheckbox p {
             font-size: 16px !important;
             font-weight: bold !important;
-            transition: all 0.2s ease;
         }
         
-        /* Streamlit에서 체크박스가 해제(False) 상태일 때 라벨을 흐리게 만듦 */
+        /* 1. 체크 해제 시 이름 흐리게 */
         .stCheckbox [aria-checked="false"] ~ div p {
             opacity: 0.4 !important;
             text-decoration: line-through !important;
             color: #9CA3AF !important;
+        }
+        
+        /* 2. 체크 해제 시 하단 태그도 시차 없이 '동시에' 흐리게 (핵심!) */
+        .stCheckbox:has([aria-checked="false"]) + div .player-tags {
+            opacity: 0.4 !important;
         }
         </style>
         """,
@@ -194,14 +198,14 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 순정 체크박스 그대로 사용 (불필요한 div 감싸기 제거로 원래 간격 복원!)
+                # 순정 체크박스
                 cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v8_{player}")
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v9_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # 태그 영역 (원래의 착 붙는 간격 유지 + 이름 흐려질 때 같이 0.4배 흐려짐)
+                # 파이썬 opacity 조건문을 빼고 CSS 클래스(player-tags)만 부여!
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                    f"""<div class='player-tags' style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px;'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
@@ -210,7 +214,6 @@ if st.session_state.players_dict:
                 )
                 
             with col_right:
-                # 버튼 세로 정렬선 맞추기
                 st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
@@ -224,7 +227,6 @@ if st.session_state.players_dict:
                         save_players_to_db(st.session_state.players_dict)
                         st.rerun()
             
-            # 선수 간 구분선
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
