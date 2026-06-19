@@ -100,25 +100,25 @@ st.markdown("""
         min-width: 600px;
         border-collapse: collapse;
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        font-size: 14px; /* 💡 기본 선수명 글씨 크기 13px -> 14px로 약간 업 */
+        font-size: 14px; /* 💡 본문 선수명 글씨 크기 14px 유지 */
         text-align: center;
         background-color: var(--background-color);
         color: var(--text-color);
     }
     
     .toss-table th, .toss-table td {
-        padding: 12px 8px; /* 💡 위아래 패딩을 조금 더 줘서 시원하게 변경 */
+        padding: 11px 8px; /* 여백도 크기에 맞춰 살짝 쫀쫀하게 조율 */
         white-space: nowrap;
         position: relative;
         z-index: 1;
     }
     
-    /* 💡 [핵심 요청사항] 첫 행(헤더) 폰트 크기 대폭 상향 및 강조 */
+    /* 💡 첫 행(헤더) 폰트를 요청하신 15px로 세팅 완료! */
     .toss-table th {
         color: var(--text-color);
-        font-size: 16px !important; /* 💡 헤더 폰트를 16px로 묵직하게 키움 */
-        font-weight: 800 !important; /* 💡 더 두껍게 강조 */
-        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+        font-size: 15px !important; /* 💡 헤더 폰트 15px */
+        font-weight: 700 !important; /* 💡 굵기도 과하지 않게 700으로 조율 */
+        border-bottom: 2px solid rgba(0, 0, 0, 0.06);
     }
     
     .toss-table td { border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
@@ -134,7 +134,7 @@ st.markdown("""
     }
     
     @media (prefers-color-scheme: dark) {
-        .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.1); }
+        .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.08); }
         .toss-table td { background-color: #0e1117; }
         th.sticky-col { background-color: #1a1c23 !important; }
         td.sticky-col { background-color: #0e1117 !important; }
