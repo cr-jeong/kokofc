@@ -141,7 +141,7 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (최종 정착 버전! 😎)
+# 참여 명단 출력 (글자 크기 복원 완료! 😎)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     # 세련되고 부드러운 파스텔톤 태그 스타일 정의
@@ -172,15 +172,21 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # (참석) 글자 제외, 원래 순정 폰트 사이즈와 스타일로 래핑
-                cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v4_{player}")
+                # 체크박스 자체의 텍스트는 숨기고 label로 처리
+                # 맨 처음처럼 굵고 큼직한 폰트 스타일로 이름을 래핑했습니다!
+                color = "#000000" if is_active else "#9CA3AF"
+                text_decor = "text-decoration: none;" if is_active else "text-decoration: line-through; opacity: 0.5;"
+                
+                selected = st.checkbox("", value=is_active, key=f"att_v5_{player}", label_visibility="collapsed")
                 st.session_state.attendance[player] = selected
                 
-                # 태그 아래 여백 및 모바일 밀림 방지 처리 유지
+                # 체크박스 우측에 원래 원하셨던 큰 폰트(16px, Bold)로 이름 배치
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: -6px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                    f"""<div style='display: flex; flex-direction: column; gap: 4px; margin-top: -32px; padding-left: 28px;'>
+                        <div style='font-size: 16px; font-weight: bold; color: {color}; {text_decor}'>
+                            🏃 {player}
+                        </div>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
                             {tags_inline}
                         </div>
                     </div>""", 
