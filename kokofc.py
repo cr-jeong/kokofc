@@ -19,13 +19,20 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# [2. 토스 & 카카오 스타일 최적화 CSS 인젝션]
+# [2. 토스 & 카카오 스타일 최적화 CSS 인젝션 + 🔐 보안 강화 메뉴 숨기기]
 st.markdown("""
     <style>
+    /* 🔥 [추가] 스트림릿 순정 메뉴, 상단 헤더 바, 하단 로고 3종 세트 숨기기 */
+    #MainMenu {visibility: hidden !important;}
+    header {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important;} /* 우측 상단 호버 툴바 완전 제거 */
+    
     [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
         background-color: var(--background-color);
+        padding-top: 0px !important; /* 헤더가 사라진 공간만큼 상단 여백 압축 */
     }
     [data-testid="stExpander"] {
         border-radius: 16px !important;
@@ -251,7 +258,6 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            # 🔄 기존의 안정적인 검증 방식으로 100% 원복 완료!
             selected = st.checkbox(f"😈 {player}", value=is_active, key=f"att_{player}")
             if selected != is_active:
                 st.session_state.attendance[player] = selected
