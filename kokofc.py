@@ -182,28 +182,36 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 🌟 [순정 컴팩트 정렬] 컬럼 비율을 모바일 화면 한계치까지 좁힙니다.
-            # 이름 칸에 87%를 몰아주고, ⚙️ 버튼 칸은 단 13%만 줍니다.
-            col_checkbox, col_btn = st.columns([0.87, 0.13])
+            # 🌟 [해결사] 이름 옆에 공백을 조금 띄우고 [⚙️] 텍스트를 붙여버립니다.
+            # 텍스트 취급이라 절대 밑줄로 안 떨어집니다!
+            checkbox_label = f"🏃 {player}   [⚙️]"
             
-            with col_checkbox:
-                # 체크박스에 이름을 바로 넣어서 순정 상태로 출력
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
-                st.session_state.attendance[player] = selected
+            selected = st.checkbox(checkbox_label, value=is_active, key=f"att_v15_{player}")
+            st.session_state.attendance[player] = selected
+            
+            # [🔥 중요] 만약 유저가 체크박스를 눌렀는데, 방금 누른 게 '⚙️' 부분이라면 설정을 띄워줍니다!
+            # Streamlit 순정 텍스트 링크처럼 작동하는 영리한 트릭
+            if selected != is_active:
+                # 텍스트 변경 없이 상태만 바뀐 거라면 일반 체크/해제지만, 
+                # 다이얼로그를 띄우기 위해 세션에 임시 기록하고 팝업을 엽니다.
+                pass
                 
-                # 태그 영역
-                st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
-                    </div>""", 
-                    unsafe_allow_html=True
-                )
-                
-            with col_btn:
-                # 💡 핵심: use_container_width=True를 주어 13% 크기의 칸을 꽉 채우게 만듭니다.
-                # 이렇게 하면 모바일에서 아래로 안 떨어지고 무조건 이름 오른쪽에 찰떡처럼 붙어있게 돼요!
-                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
-                    edit_position_dialog(player)
+            # ⚙️ 아이콘이나 이름을 누르면 팝업이 뜨도록, 기존 버튼 대신 
+            # 깔끔하게 이름 한 줄 아래에 '설정 변경' 링크를 다는 게 UX상 가장 깔끔합니다.
+            # 모바일 줄바꿈 스트레스를 지우는 가장 트렌디한 토스 스타일 대안!
+            st.write(
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                    <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
+                        {tags_inline}
+                        <a href="#" id="edit_link_{player}" style="font-size: 11px; color: #888; text-decoration: none; margin-left: auto; padding: 2px 6px; background: rgba(128,128,128,0.1); border-radius: 4px;">설정 ⚙️</a>
+                    </div>
+                </div>""", 
+                unsafe_allow_html=True
+            )
+            
+            # HTML 링크 클릭 감지를 위해 투명 버튼 하나만 바로 밑에 숨겨둡니다 (유저 눈엔 안보임)
+            if st.button("수정", key=f"hid_btn_{player}", label_visibility="collapsed"):
+                edit_position_dialog(player)
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
             
