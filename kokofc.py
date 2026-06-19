@@ -27,17 +27,37 @@ st.markdown("""
     }
     
     /* 카드 컨테이너 토스풍 라운딩 및 그림자 */
-    [data-testid="stExpander"], .stForm, div:has(> .stCheckbox) {
+    [data-testid="stExpander"], .stForm {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
         background-color: var(--background-color) !important;
     }
     @media (prefers-color-scheme: dark) {
-        [data-testid="stExpander"], .stForm, div:has(> .stCheckbox) {
+        [data-testid="stExpander"], .stForm {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
         }
+    }
+    
+    /* 💥 선수 명단 체크박스의 '동그란 테두리/박스' 원천 박멸 */
+    div:has(> [data-testid="stCheckbox"]) {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    [data-testid="stCheckbox"] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 4px 0 !important;
+    }
+    [data-testid="stCheckbox"] > label {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }
     
     @media (max-width: 768px) {
@@ -88,14 +108,14 @@ st.markdown("""
         font-weight: 600;
         padding: 14px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        border-right: 1px solid rgba(0, 0, 0, 0.04); /* 은은한 세로선 */
+        border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
     }
     
     .toss-table td {
         padding: 14px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-        border-right: 1px solid rgba(0, 0, 0, 0.04); /* 은은한 세로선 */
+        border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
     }
     
@@ -106,17 +126,17 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 겹침 및 테두리 수정 완료: 첫 번째 열 고정 및 배경 불투명화 (테두리는 완전 투명하게 제거) */
+    /* 표 내부 첫 번째 열 고정 및 배경 불투명화 (세로 테두리 제거) */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
         left: 0;
         z-index: 2;
-        border-right: none !important; /* 이름 칸 오른쪽 테두리 완전 삭제 */
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04); /* 스크롤할 때 살짝 입체감만 주는 그림자 */
+        border-right: none !important;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
     }
     
-    /* 라이트/다크모드 대응 고정 열 투명도 완벽 제거 (배경 100% 덮어쓰기) */
+    /* 라이트/다크모드 대응 고정 열 투명도 완벽 제거 */
     @media (prefers-color-scheme: dark) {
         .toss-table td:nth-child(1) { background-color: #0e1117 !important; }
         .toss-table th:nth-child(1) { background-color: #1a1c23 !important; }
