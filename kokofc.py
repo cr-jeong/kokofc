@@ -145,38 +145,40 @@ def edit_position_dialog(player_name):
             save_players_to_db(st.session_state.players_dict)
             st.rerun()
 
-# --- ⚙️ 설정창 및 선수 등록 섹션 ---
+# --- ⚙️ 설정창 및 선수 등록 섹션 (모바일 쏠림 원천 차단 버전) ---
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
-    col1, col2 = st.columns(2)
-    with col1:
-        with st.container(border=True):
-            st.write("**① 경기 설정**")
-            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-            st.write("") 
-            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
-                st.cache_data.clear()
-                st.session_state.players_dict = load_players_from_db()
-                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
-                st.rerun()
-    with col2:
-        with st.container(border=True):
-            st.write("**② 선수 등록 (실시간 반영)**")
-            with st.form(key="player_add_form", clear_on_submit=True, border=False):
-                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
-                wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-                st.write("")
-                if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
-                    name = name_input.strip()
-                    if name:
-                        if name in st.session_state.players_dict: 
-                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
-                        else:
-                            st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
-                            st.session_state.attendance[name] = True
-                            save_players_to_db(st.session_state.players_dict)
-                            st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
-                            st.rerun()
+    # ① 경기 설정 박스
+    with st.container(border=True):
+        st.write("**① 경기 설정**")
+        total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
+        st.write("") 
+        if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
+            st.cache_data.clear()
+            st.session_state.players_dict = load_players_from_db()
+            st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+            st.success("구글 시트에서 명단을 다시 불러왔습니다!")
+            st.rerun()
+
+    st.write("<div style='margin: 8px 0;'></div>", unsafe_allow_html=True) # 박스 사이 간격 살짝 주기
+
+    # ② 선수 등록 박스
+    with st.container(border=True):
+        st.write("**② 선수 등록 (실시간 반영)**")
+        with st.form(key="player_add_form", clear_on_submit=True, border=False):
+            name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
+            wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
+            st.write("")
+            if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
+                name = name_input.strip()
+                if name:
+                    if name in st.session_state.players_dict: 
+                        st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                    else:
+                        st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
+                        st.session_state.attendance[name] = True
+                        save_players_to_db(st.session_state.players_dict)
+                        st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
+                        st.rerun()
 
 # 참여 명단 출력
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
