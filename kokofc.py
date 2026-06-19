@@ -5,11 +5,41 @@ import pandas as pd
 
 # [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 가독성 최적화 컬러 매칭
 POS_CONFIG = {
-'PIVO (공격)': { 'emoji': '🔱', 'bg': '#FEE2E2', 'color': '#B91C1C', 'text': 'PIV' },
-'ALA_L (좌윙)': { 'emoji': '◀️', 'bg': '#EFF6FF', 'color': '#1D4ED8', 'text': 'AL' },
-'ALA_R (우윙)': { 'emoji': '▶️', 'bg': '#ECFDF5', 'color': '#047857', 'text': 'AR' },
-'FIXO (수비)': { 'emoji': '🛡️', 'bg': '#FFF7ED', 'color': '#C2410C', 'text': 'FIX' },
-'GOLEIRO (키퍼)': { 'emoji': '🧤', 'bg': '#F1F5F9', 'color': '#475569', 'text': 'GK' }
+    'PIVO (공격)': {
+        'emoji': '🔱', 
+        'label': '🔱 PIVO (공격)', 
+        'bg': '#FEE2E2',     # 연한 레드 (공격적, 열정)
+        'color': '#B91C1C',  # 딥 레드
+        'text': 'PIVO'
+    },
+    'ALA_L (좌윙)': {
+        'emoji': '◀️', 
+        'label': '◀️ ALA_L (좌윙)', 
+        'bg': '#EFF6FF',     # 연한 블루 (신속, 시원한 돌파)
+        'color': '#1D4ED8',  # 딥 블루
+        'text': 'ALA_L'
+    },
+    'ALA_R (우윙)': {
+        'emoji': '▶️', 
+        'label': '▶️ ALA_R (우윙)', 
+        'bg': '#ECFDF5',     # 연한 에메랄드 (안정감 있는 전진)
+        'color': '#047857',  # 딥 에메랄드
+        'text': 'ALA_R'
+    },
+    'FIXO (수비)': {
+        'emoji': '🛡️', 
+        'label': '🛡️ FIXO (수비)', 
+        'bg': '#FFF7ED',     # 연한 오렌지/앰버 (든든하고 무게감 있는 수비)
+        'color': '#C2410C',  # 딥 오렌지
+        'text': 'FIXO'
+    },
+    'GOLEIRO (키퍼)': {
+        'emoji': '🧤', 
+        'label': '🧤 GOLEIRO (키퍼)', 
+        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이 (최후방의 차분함)
+        'color': '#475569',  # 묵직한 그레이
+        'text': 'GK'
+    }
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
@@ -21,7 +51,7 @@ st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
 st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 복사] 대기 명단 제외 버전!")
 
-# 구글 스프레딧시트 연결 초기화
+# 구글 스프레드시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
@@ -119,16 +149,19 @@ with col2:
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    for player, positions in st.session_state.players_dict.items():
+    # 딕셔너리 루프 도중 요소가 삭제(제거 버튼 클릭)되어 발생하는 에러 방지를 위해 list()로 감싸서 안전하게 복사본으로 처리
+    for player in list(st.session_state.players_dict.keys()):
+        positions = st.session_state.players_dict[player]
         prev_status = st.session_state.attendance.get(player, True)
         
-        # 각 선수를 하나의 깔끔한 카드(테두리) 형태로 분리하여 모바일 가독성 향상
+        # [UX 업그레이드 1] 각 선수를 테두리가 있는 개별 카드로 묶어 모바일 가독성 극대화
         with st.container(border=True):
-            # 구조 단순화: [좌측: 체크박스 & 이름 & 태그] | [우측: 관리 버튼]
-            col_content, col_actions = st.columns([3, 1])
+            # [UX 업그레이드 2] 모바일 가로 찌그러짐을 완벽하게 방지하기 위해 2분할 구조 사용
+            # 좌측(콘텐츠 영역: 체크박스 + 이름 + 하단 태그) | 우측(액션 영역: 수정 및 삭제 버튼)
+            col_content, col_actions = st.columns([3.2, 1])
             
             with col_content:
-                # 이름과 참석 체크박스를 한 줄로 밀착 배치
+                # 체크박스와 이름을 같은 줄에 컴팩트하게 배치
                 col_chk, col_txt = st.columns([0.4, 2.6])
                 with col_chk:
                     is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
@@ -138,24 +171,24 @@ if st.session_state.players_dict:
                 
                 with col_txt:
                     color = "#1E293B" if is_attended else "#94A3B8"
-                    text_style = "font-weight:bold; font-size:16px;" if is_attended else "text-decoration: line-through; opacity: 0.4; font-size:16px;"
+                    text_style = "font-weight:bold; font-size:15px;" if is_attended else "text-decoration: line-through; opacity: 0.4; font-size:15px;"
                     st.markdown(f"<div style='padding-top: 1px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
-                # 포지션 배지는 이름 아래 공간에 자연스럽게 Wrap 되도록 배치 (줄바꿈 현상 역이용)
+                # [UX 업그레이드 3] 포지션 태그는 이름 하단 공간에 자연스럽게 채워지도록 유도 (모바일 줄바꿈 현상 해소)
                 badge_html = ""
                 for p in positions:
                     if p in POS_CONFIG:
                         cfg = POS_CONFIG[p]
                         bg_color = "#E2E8F0" if not is_attended else cfg['bg']
                         text_color = "#94A3B8" if not is_attended else cfg['color']
-                        badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
+                        badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
                 
                 badge_opacity = "1.0" if is_attended else "0.4"
                 st.markdown(f"<div style='margin-top: 6px; margin-left: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
             
             with col_actions:
-                # 우측 정렬된 관리 버튼 (모바일에서도 찌그러지지 않고 세로로 이쁘게 스택됨)
-                st.write("<div style='margin-top: 2px;'></div>", unsafe_allow_html=True) # 약간의 상단 패딩
+                # 우측 정렬된 수정/제거 버튼 세트
+                st.write("<div style='margin-top: 1px;'></div>", unsafe_allow_html=True)
                 if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
                 
