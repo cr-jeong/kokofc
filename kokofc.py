@@ -293,60 +293,100 @@ if st.session_state.players_dict:
 else:
     st.info("등록된 선수가 없습니다.")
     
-# [8. 균등 분배 알고리즘 핵심 엔진 - 중복 차출 해결 버전]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
+    # 1. 활성 선수 명단 추출 및 셔플 (초기 랜덤성 보장)
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
-    if len(active_players) < 5: return None
+    if len(active_players) < 5: 
+        return None
     
     lineups_dict = {}
+    
+    # 2. 전역 출전 통계 트래킹 데이터 구조
+    # '필드 출전 횟수'를 정확하게 맞추기 위해 field_counts 가 핵심 기준이 됩니다.
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in ALL_POSITIONS} for name in active_players}
-    last_quarter_gk = None
     
+    last_quarter_gk = None
+
     for q in range(1, total_q + 1):
-        starters = {pos: None for pos in ALL_POSITIONS}
-        remaining = active_players.copy()
+        starters = {}
         
-        # 1. 필드 포지션 먼저 선발
-        shuffled_positions = FIELD_POSITIONS.copy()
-        random.shuffle(shuffled_positions)
+        # ---------------------------------------------------------
+        # 단계 A: 이번 쿼터 골레이로(GK) 먼저 선발
+        # ---------------------------------------------------------
+        # 원칙: 골레이로 출전 횟수가 가장 적은 사람 중, 
+        # 직전 쿼터에 연속으로 보지 않은 사람을 우선 선발
+        gk_candidates = active_players.copy()
+        random.shuffle(gk_candidates)
         
-        for pos in shuffled_positions:
-            wished_candidates = [p for p in remaining if pos in players_pool[p]]
-            
-            if wished_candidates:
-                random.shuffle(wished_candidates)
-                wished_candidates.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
-                chosen_player = wished_candidates[0]
-            else:
-                random.shuffle(remaining)
-                remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
-                chosen_player = remaining[0]
-                
-            starters[pos] = chosen_player
-            remaining.remove(chosen_player) # 필드 뽑혔으니 명단에서 제거
-            field_counts[chosen_player] += 1
-            player_pos_history[chosen_player][pos] += 1
-            
-        # 2. 골키퍼 배정 (★핵심: 필드로 안 뽑히고 '남은 대기 인원' 중에서만 추출)
-        gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates: 
-            gk_candidates = remaining.copy()
-            
-        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: 
+        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
             gk_candidates.remove(last_quarter_gk)
             
-        random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
         
         starters[GK_POSITION] = chosen_gk
-        gk_counts[chosen_gk] += 1  
-        player_pos_history[chosen_gk][GK_POSITION] += 1
         
-        lineups_dict[q] = starters
+        # ---------------------------------------------------------
+        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (균등 분배 조건 적용)
+        # ---------------------------------------------------------
+        # 키퍼로 뽑힌 사람을 제외하고 필드 출전 횟수가 가장 적은 순으로 정렬
+        field_candidates = [p for p in active_players if p != chosen_gk]
+        random.shuffle(field_candidates)
+        field_candidates.sort(key=lambda name: field_counts[name])
+        
+        # 이번 쿼터 필드를 뛸 최종 4명 확정!
+        quarter_field_players = field_candidates[:4]
+        
+        # ---------------------------------------------------------
+        # 단계 C: 확정된 4명을 선호 포지션에 최적 매칭 (가중치 점수 방식)
+        # ---------------------------------------------------------
+        best_match = None
+        max_match_score = -999999
+        
+        # 필드 4인의 가능한 포지션 순열(24가지 조합)을 전부 평가하는 브루트포스 
+        # (4! = 24가지 밖에 안 되므로 연산 속도가 극도로 빠름 -> 중복 차출 원천 차단)
+        import itertools
+        for perm in itertools.permutations(quarter_field_players):
+            current_score = 0
+            # perm[0]->PIVO, perm[1]->ALA_L, perm[2]->ALA_R, perm[3]->FIXO
+            for idx, pos in enumerate(FIELD_POSITIONS):
+                p_name = perm[idx]
+                
+                # 조건 1: 선호 포지션 부합 여부 (+100점)
+                if pos in players_pool[p_name]:
+                    current_score += 100
+                
+                # 조건 2: 포지션 쏠림 방지 (이 포지션에 많이 섰던 사람일수록 페널티)
+                current_score -= player_pos_history[p_name][pos] * 15
+                
+                # 조건 3: 미세한 랜덤성 부여 (똑같은 점수일 때 고착화 방지)
+                current_score += random.uniform(0, 1)
+                
+            if current_score > max_match_score:
+                max_match_score = current_score
+                best_match = perm
+
+        # 최적의 매칭 결과를 스타팅 라인업에 주입
+        for idx, pos in enumerate(FIELD_POSITIONS):
+            starters[pos] = best_match[idx]
+            
+        # ---------------------------------------------------------
+        # 단계 D: 전역 변수 트래킹 정보 업데이트
+        # ---------------------------------------------------------
+        # 골레이로 카운트 업데이트
+        gk_counts[chosen_gk] += 1
+        player_pos_history[chosen_gk][GK_POSITION] += 1
         last_quarter_gk = chosen_gk
+        
+        # 필드 카운트 업데이트
+        for pos in FIELD_POSITIONS:
+            p_name = starters[pos]
+            field_counts[p_name] += 1
+            player_pos_history[p_name][pos] += 1
+            
+        lineups_dict[q] = starters
         
     return lineups_dict
 
