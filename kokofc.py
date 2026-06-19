@@ -5,11 +5,11 @@ import pandas as pd
 
 # [상수 및 포지션 설정]
 POS_CONFIG = {
-    'PIVO (공격)': {'emoji': '🔱', 'label': '🔱 PIVO'},
-    'ALA_L (좌윙)': {'emoji': '◀️', 'label': '◀️ ALA_L'},
-    'ALA_R (우윙)': {'emoji': '▶️', 'label': '▶️ ALA_R'},
-    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO'},
-    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO'}
+    'PIVO (공격)': {'emoji': '🔱', 'label': '🔱 PIVO', 'color': '#EF4444', 'bg': 'rgba(254, 226, 226, 0.15)', 'border': 'rgba(239, 68, 68, 0.3)'},
+    'ALA_L (좌윙)': {'emoji': '◀️', 'label': '◀️ ALA_L', 'color': '#38BDF8', 'bg': 'rgba(224, 242, 254, 0.15)', 'border': 'rgba(56, 189, 248, 0.3)'},
+    'ALA_R (우윙)': {'emoji': '▶️', 'label': '▶️ ALA_R', 'color': '#FBBF24', 'bg': 'rgba(254, 243, 199, 0.15)', 'border': 'rgba(251, 191, 36, 0.3)'},
+    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO', 'color': '#4ADE80', 'bg': 'rgba(220, 252, 231, 0.15)', 'border': 'rgba(74, 222, 128, 0.3)'},
+    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO', 'color': '#9CA3AF', 'bg': 'rgba(243, 244, 246, 0.15)', 'border': 'rgba(156, 163, 175, 0.3)'}
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
@@ -17,47 +17,104 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# [디자인 유지: 오리지널 CSS]
+# [토스 & 카카오 스타일 최신 트렌드 CSS 인터페이스]
 st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
+        background-color: var(--background-color);
     }
+    
+    /* 카드 컨테이너 토스풍 라운딩 및 그림자 */
+    [data-testid="stExpander"], .stForm, div:has(> .stCheckbox) {
+        border-radius: 16px !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+        background-color: var(--background-color) !important;
+    }
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stExpander"], .stForm, div:has(> .stCheckbox) {
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        }
+    }
+    
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
             gap: 16px !important;
         }
-        .stExpander [data-testid="stHorizontalBlock"] [data-testid="column"],
-        .stExpander [data-testid="stHorizontalBlock"] [data-testid="column"] [data-testid="stVerticalBlockBorderWrapper"] {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex: 1 1 100% !important;
-        }
     }
+    
     .stCheckbox p {
         font-size: 16px !important;
-        font-weight: 800 !important;
-        color: var(--text-color) !important;
+        font-weight: 700 !important;
     }
+    
     .stCheckbox [aria-checked="false"] ~ div p {
-        opacity: 0.35 !important;
+        opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
-    [data-testid="stMainBlock"] .stElementContainer:has(.stCheckbox) {
-        max-width: 500px !important;
+    
+    /* 테이블 공통 모던 디자인 CSS */
+    .toss-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        margin: 16px 0;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
     }
-    .stExpander details summary p {
-        font-size: 15px !important;
-        font-weight: 600 !important;
+    @media (prefers-color-scheme: dark) {
+        .toss-table-container { border: 1px solid rgba(255, 255, 255, 0.08); }
     }
+    
+    .toss-table {
+        width: 100%;
+        min-width: 600px;
+        border-collapse: collapse;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 13px;
+        text-align: center;
+        background-color: var(--background-color);
+        color: var(--text-color);
+    }
+    
+    .toss-table th {
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+        font-weight: 600;
+        padding: 14px 8px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        white-space: nowrap;
+    }
+    
+    .toss-table td {
+        padding: 14px 8px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        white-space: nowrap;
+    }
+    
+    .toss-table tr:last-child td { border-bottom: none; }
+    .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
+    
+    /* 첫 번째 열 고정 효과 (모바일 편의성) */
+    .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
+        font-weight: 600;
+        position: sticky;
+        left: 0;
+        background-color: var(--background-color);
+        z-index: 1;
+        border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    }
+    .toss-table th:nth-child(1) { background-color: var(--secondary-background-color); }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
-st.caption("카톡 복사 추가, 기능 수정 중")
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -65,36 +122,29 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 def load_players_from_db():
     try:
         df = conn.read(header=None, ttl=300)
-        if df.empty: 
-            return {}
-        
+        if df.empty: return {}
         players_dict = {}
         for _, row in df.iterrows():
             if len(row) >= 1 and pd.notna(row.iloc[0]):
                 name = str(row.iloc[0]).strip()
-                if not name or name.lower() == 'nan': 
-                    continue
-                
+                if not name or name.lower() == 'nan': continue
                 pos_str = str(row.iloc[1]).strip() if len(row) >= 2 and pd.notna(row.iloc[1]) else ""
                 if pos_str and pos_str.lower() != 'nan':
                     positions = [p.strip() for p in pos_str.split(',') if p.strip() in ALL_POSITIONS]
                 else:
                     positions = ALL_POSITIONS.copy()
-                    
                 players_dict[name] = positions if positions else ALL_POSITIONS.copy()
         return players_dict
     except Exception as e:
         st.error(f"구글 시트 로드 중 에러 발생: {e}")
         return {}
 
-# 🛠️ 리팩토링 1: 파편화되어 있던 세션 상태(session_state) 초기화 로직을 깔끔하게 통합
 if 'players_dict' not in st.session_state:
     st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
     st.session_state.lineups = None
 
-# 신규 진입/새로고침 시 누락된 출석 데이터 바인딩 자동화
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
@@ -120,8 +170,8 @@ def edit_position_dialog(player_name):
     with d_col2:
         if st.button("🗑️ 선수 삭제하기", use_container_width=True, type="secondary"):
             del st.session_state.players_dict[player_name]
-            st.session_state.attendance.pop(player_name, None) # 안전한 삭제 처리
-            st.cache_data.clear() # 🛠️ 리팩토링 2: 의미 없는 유령 함수 대신 직접 캐시 클리어
+            st.session_state.attendance.pop(player_name, None)
+            st.cache_data.clear()
             st.rerun()
 
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
@@ -152,27 +202,19 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                     else:
                         st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                         st.session_state.attendance[name] = True
-                        st.cache_data.clear() # 캐시 최신화
+                        st.cache_data.clear()
                         st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                         st.rerun()
 
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    TAG_STYLES = {
-        'PIVO (공격)': 'background-color: rgba(254, 226, 226, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3);', 
-        'ALA_L (좌윙)': 'background-color: rgba(224, 242, 254, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3);', 
-        'ALA_R (우윙)': 'background-color: rgba(254, 243, 199, 0.15); color: #FBBF24; border: 1px solid rgba(251, 191, 36, 0.3);', 
-        'FIXO (수비)': 'background-color: rgba(220, 252, 231, 0.15); color: #4ADE80; border: 1px solid rgba(74, 222, 128, 0.3);', 
-        'GOLEIRO (키퍼)': 'background-color: rgba(243, 244, 246, 0.15); color: #9CA3AF; border: 1px solid rgba(156, 163, 175, 0.3);' 
-    }
-
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
             tag_htmls = [
-                f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{POS_CONFIG[p]['label']}</span>"
+                f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; background-color: {POS_CONFIG[p]['bg']}; color: {POS_CONFIG[p]['color']}; border: 1px solid {POS_CONFIG[p]['border']};'>{POS_CONFIG[p]['label']}</span>"
                 for p in positions if p in POS_CONFIG
             ]
             tags_inline = "".join(tag_htmls)
@@ -181,7 +223,7 @@ if st.session_state.players_dict:
             st.session_state.attendance[player] = selected
             
             st.write(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
                         {tags_inline}
                     </div>
@@ -200,41 +242,31 @@ st.markdown("---")
 
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
-    if len(active_players) < 5: 
-        return None
-        
+    if len(active_players) < 5: return None
     lineups = {}
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
     last_quarter_gk = None
-    
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
-        
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates: 
-            gk_candidates = remaining.copy()
-        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: 
-            gk_candidates.remove(last_quarter_gk)
-            
+        if not gk_candidates: gk_candidates = remaining.copy()
+        if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: gk_candidates.remove(last_quarter_gk)
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
-        
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         shuffled_positions = FIELD_POSITIONS.copy()
         random.shuffle(shuffled_positions)
-        
         for pos in shuffled_positions:
             wished_candidates = [p for p in remaining if pos in players_pool[p]]
-            if wished_candidates: 
-                chosen_player = wished_candidates[0]
+            if wished_candidates: chosen_player = wished_candidates[0]
             else:
                 remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
                 chosen_player = remaining[0]
@@ -242,7 +274,6 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             remaining.remove(chosen_player)
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
-            
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
             "subs": remaining,
@@ -250,17 +281,15 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             "gk_snapshot": gk_counts.copy(),
             "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
         }
-        last_quarter_gk = chosen_gk # 쿼터 종료 후 키퍼 기록 업데이트
+        last_quarter_gk = chosen_gk
     return lineups
 
 st.write("")
 st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
-    if active_count < 5: 
-        st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
-    else: 
-        st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
+    if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다!")
+    else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
@@ -268,7 +297,7 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\\n🔱 PIVO : {data['starters'][0] or '미지정'}\\n◀️ ALA_L : {data['starters'][1] or '미지정'}\\n▶️ ALA_R : {data['starters'][2] or '미정'}\\n🛡️ FIXO : {data['starters'][3] or '미지정'}\\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\\n\\n"
 
-    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
+    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-bottom: 10px;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
     var textToCopy = `{kakao_text}`;
@@ -282,20 +311,38 @@ function copyToClipboard() {{
 </script>"""
     st.components.v1.html(html_button_code, height=55)
     
-    edited_data = []
+    # 🌟 변경 포인트 1: 기존 st.data_editor를 과감히 제거하고 통계 표와 패밀리룩을 이루는 라인업 HTML 표 커스텀 빌드
+    lineup_tbody_rows = ""
     for quarter, data in st.session_state.lineups.items():
-        row = {"쿼터": quarter}
-        for idx, pos in enumerate(ALL_POSITIONS): 
-            row[POS_CONFIG[pos]['label']] = data["starters"][idx] or "미지정"
-        edited_data.append(row)
+        lineup_tbody_rows += f"""
+        <tr>
+            <td>{quarter}</td>
+            <td>{data['starters'][0] or '미지정'}</td>
+            <td>{data['starters'][1] or '미지정'}</td>
+            <td>{data['starters'][2] or '미지정'}</td>
+            <td>{data['starters'][3] or '미지정'}</td>
+            <td><strong>{data['starters'][4] or '미지정'}</strong></td>
+        </tr>
+        """
         
-    st.data_editor(
-        edited_data, 
-        use_container_width=True, 
-        num_rows="fixed",
-        disabled=["쿼터"],
-        hide_index=True
-    )
+    lineup_table_html = f"""
+    <div class="toss-table-container">
+        <table class="toss-table">
+            <thead>
+                <tr>
+                    <th>쿼터</th>
+                    <th><span style="color:{POS_CONFIG['PIVO (공격)']['color']}">{POS_CONFIG['PIVO (공격)']['emoji']} PIVO</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_L (좌윙)']['color']}">{POS_CONFIG['ALA_L (좌윙)']['emoji']} ALA_L</span></th>
+                    <th><span style="color:{POS_CONFIG['ALA_R (우윙)']['color']}">{POS_CONFIG['ALA_R (우윙)']['emoji']} ALA_R</span></th>
+                    <th><span style="color:{POS_CONFIG['FIXO (수비)']['color']}">{POS_CONFIG['FIXO (수비)']['emoji']} FIXO</span></th>
+                    <th><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">{POS_CONFIG['GOLEIRO (키퍼)']['emoji']} GK</span></th>
+                </tr>
+            </thead>
+            <tbody>{lineup_tbody_rows}</tbody>
+        </table>
+    </div>
+    """
+    st.html(lineup_table_html)
     
     st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
@@ -303,7 +350,7 @@ function copyToClipboard() {{
     final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
     final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
     
-    tbody_rows = ""
+    stats_tbody_rows = ""
     for name in final_fields.keys():
         player_history = final_history.get(name, {})
         goleiro = f"{final_gks.get(name, 0)}회"
@@ -313,11 +360,11 @@ function copyToClipboard() {{
         ala_r = f"{player_history.get('ALA_R (우윙)', 0)}회"
         fixo = f"{player_history.get('FIXO (수비)', 0)}회"
         
-        tbody_rows += f"""
+        stats_tbody_rows += f"""
         <tr>
             <td>{name}</td>
             <td>{goleiro}</td>
-            <td>{field}</td>
+            <td style="background-color: rgba(34, 197, 94, 0.05); color: #22C55E; font-weight: 700;">{field}</td>
             <td>{pivo}</td>
             <td>{ala_l}</td>
             <td>{ala_r}</td>
@@ -325,68 +372,16 @@ function copyToClipboard() {{
         </tr>
         """
 
-    table_css = """
-    <style>
-        .modern-table {
-            width: 100%;
-            min-width: 500px;
-            border-collapse: separate !important;
-            border-spacing: 0;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 13px;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            border: 1px solid rgba(0, 0, 0, 0.08) !important;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        @media (prefers-color-scheme: dark) {
-            .modern-table { border: 1px solid rgba(255, 255, 255, 0.1) !important; }
-        }
-        .modern-table th {
-            background-color: var(--secondary-background-color);
-            color: var(--text-color);
-            font-weight: 600;
-            padding: 10px 4px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-            border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-            text-align: center !important;
-            white-space: nowrap;
-        }
-        .modern-table td {
-            padding: 10px 4px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
-            border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
-            text-align: center !important; 
-            white-space: nowrap;
-        }
-        .modern-table th:last-child, .modern-table td:last-child { border-right: none !important; }
-        .modern-table tr:last-child td { border-bottom: none !important; }
-        .modern-table tr:hover { background-color: rgba(0,0,0,0.02); }
-        .modern-table td:nth-child(1) {
-            font-weight: 600;
-            position: sticky;
-            left: 0;
-            background-color: var(--background-color);
-            border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-        }
-        .modern-table td:nth-child(3) {
-            background-color: rgba(34, 197, 94, 0.06) !important;
-            color: #22C55E !important;
-            font-weight: 700;
-        }
-    </style>
-    """
-
-    table_body = f"""
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); contain: content;">
-        <table class="modern-table">
+    # 🌟 변경 포인트 2: 상세 통계 표 역시 헤더 계층 구조와 보더라인을 완전히 통일
+    stats_table_html = f"""
+    <div class="toss-table-container">
+        <table class="toss-table">
             <thead>
                 <tr>
                     <th rowspan="2" style="vertical-align: middle;">선수명</th>
-                    <th rowspan="2" style="vertical-align: middle;">🧤 GOLEIRO</th>
-                    <th rowspan="2" style="vertical-align: middle;">🏃 필드</th>
-                    <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
+                    <th rowspan="2" style="vertical-align: middle;">🧤 GK</th>
+                    <th rowspan="2" style="vertical-align: middle;">🏃 필드 합계</th>
+                    <th colspan="4" style="border-bottom: 1px solid rgba(0,0,0,0.06);">포지션별 출전 상세</th>
                 </tr>
                 <tr>
                     <th>🔱 PIVO</th>
@@ -395,8 +390,8 @@ function copyToClipboard() {{
                     <th>🛡️ FIXO</th>
                 </tr>
             </thead>
-            <tbody>{tbody_rows}</tbody>
+            <tbody>{stats_tbody_rows}</tbody>
         </table>
     </div>
     """
-    st.html(table_css + table_body)
+    st.html(stats_table_html)
