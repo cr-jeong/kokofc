@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 🛠️ 초강력 모바일 1줄 가둠 전용 CSS ---
+# --- 🛠️ 깔끔하고 안전한 반응형 CSS (설정창 전용) ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,7 +27,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 상단 설정창: 데스크탑은 원래대로 반반 가로 배치, 모바일만 세로 전환 */
+    /* 상단 설정창: 데스크탑 반반, 모바일 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -40,39 +40,7 @@ st.markdown("""
         }
     }
     
-    /* ② [초강력 치트키] 명단을 감싸는 '가로 줄(Block)' 자체를 모바일 화면 무관하게 강제 가로 한 줄 고정 */
-    .koko-flex-row {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        width: 100% !important;
-        gap: 6px !important;
-        margin-bottom: 4px;
-    }
-    
-    /* 이름과 태그가 들어가는 왼쪽 영역 폭 지정 */
-    .koko-flex-left {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-    }
-    
-    /* 오른쪽 버튼들이 들어가는 영역 고정 폭 지정 */
-    .koko-flex-btn {
-        flex: 0 0 44px !important;
-        min-width: 44px !important;
-        max-width: 44px !important;
-        text-align: center !important;
-    }
-
-    /* 버튼 내부 여백 축소로 모바일 짤림 절대 방지 */
-    .koko-flex-btn button {
-        padding: 4px 0px !important;
-        width: 100% !important;
-    }
-    
-    /* 명단 이름 폰트 크기 및 두께 아주 굵게 고정 */
+    /* 명단 이름 폰트 스타일 강화 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important; 
@@ -150,7 +118,7 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# 설정 및 선수 등록 아코디언 (데스크탑 반반 확실하게 고정)
+# 설정 및 선수 등록 아코디언 (데스크탑 반반 유지)
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
@@ -206,37 +174,31 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # ❗[구조 대혁신] 오차 없는 HTML Flex Grid 구조로 이름과 버튼을 단단히 고정
-            st.markdown('<div class="koko-flex-row">', unsafe_allow_html=True)
+            # ❗[최종 해결] 극단적인 비율 분배(7:1:1)로 데스크탑/모바일 모두 한 줄 안정화
+            col_main, col_btn1, col_btn2 = st.columns([7.0, 1.0, 1.0])
             
-            # 1. 왼쪽 (체크박스 + 이름 + 하단 태그)
-            st.markdown('<div class="koko-flex-left">', unsafe_allow_html=True)
-            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_final_{player}")
-            st.session_state.attendance[player] = selected
-            st.write(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
-                    <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
-                </div>""", 
-                unsafe_allow_html=True
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+            with col_main:
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v20_{player}")
+                st.session_state.attendance[player] = selected
+                
+                st.write(
+                    f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 6px; opacity: {1.0 if selected else 0.4};'>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>{tags_inline}</div>
+                    </div>""", 
+                    unsafe_allow_html=True
+                )
+                
+            with col_btn1:
+                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
+                    edit_position_dialog(player)
+                    
+            with col_btn2:
+                if st.button("❌", key=f"del_{player}", use_container_width=True):
+                    del st.session_state.players_dict[player]
+                    if player in st.session_state.attendance: del st.session_state.attendance[player]
+                    save_players_to_db(st.session_state.players_dict)
+                    st.rerun()
             
-            # 2. 중간 (⚙️ 버튼)
-            st.markdown('<div class="koko-flex-btn">', unsafe_allow_html=True)
-            if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
-                edit_position_dialog(player)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # 3. 오른쪽 (❌ 버튼)
-            st.markdown('<div class="koko-flex-btn">', unsafe_allow_html=True)
-            if st.button("❌", key=f"del_{player}", use_container_width=True):
-                del st.session_state.players_dict[player]
-                if player in st.session_state.attendance: del st.session_state.attendance[player]
-                save_players_to_db(st.session_state.players_dict)
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True) # 한 줄 닫기
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다.")
