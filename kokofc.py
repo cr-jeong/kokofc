@@ -141,71 +141,85 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (유저님이 극찬하신 완벽 원복 버전! 🔱)
-st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
-if st.session_state.players_dict:
+# 참여 명단 출력 (체크박스 오류 완벽 해결 및 폰트 크기 고정 버전!)
+st.write(f### 👥 전체 명단 ({len(st.session_state.players_dict)}명))
+if st.session_state.players_dict
+    # 텍스트 크기를 16px 볼드로 고정하고 스타일을 다듬는 순정 CSS 주입
+    st.markdown(
+        
+        style
+         체크박스 라벨의 글자 크기를 16px bold로 변경 
+        .stCheckbox p {
+            font-size 16px !important;
+            font-weight bold !important;
+        }
+        style
+        ,
+        unsafe_allow_html=True
+    )
+
     # 세련되고 부드러운 파스텔톤 태그 스타일 정의
     TAG_STYLES = {
-        'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', 
-        'ALA_L (좌윙)': 'background-color: #E0F2FE; color: #0284C7;', 
-        'ALA_R (우윙)': 'background-color: #FEF3C7; color: #D97706;', 
-        'FIXO (수비)': 'background-color: #DCFCE7; color: #16A34A;', 
-        'GOLEIRO (키퍼)': 'background-color: #F3F4F6; color: #4B5563;' 
+        'PIVO (공격)' 'background-color #FEE2E2; color #EF4444;', 
+        'ALA_L (좌윙)' 'background-color #E0F2FE; color #0284C7;', 
+        'ALA_R (우윙)' 'background-color #FEF3C7; color #D97706;', 
+        'FIXO (수비)' 'background-color #DCFCE7; color #16A34A;', 
+        'GOLEIRO (키퍼)' 'background-color #F3F4F6; color #4B5563;' 
     }
 
-    with st.container(border=True):
-        for player in list(st.session_state.players_dict.keys()):
+    with st.container(border=True)
+        for player in list(st.session_state.players_dict.keys())
             positions = st.session_state.players_dict[player]
             
             # 포지션 태그 HTML 생성
             tag_htmls = []
-            for p in positions:
-                if p in POS_CONFIG:
+            for p in positions
+                if p in POS_CONFIG
                     label = POS_CONFIG[p]['label']
-                    style = TAG_STYLES.get(p, 'background-color: #E5E7EB; color: #4B5563;')
-                    tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {style}'>{label}</span>")
-            tags_inline = "".join(tag_htmls)
+                    style = TAG_STYLES.get(p, 'background-color #E5E7EB; color #4B5563;')
+                    tag_htmls.append(fspan style='padding 3px 8px; margin-right 4px; border-radius 6px; font-size 11px; font-weight 600; {style}'{label}span)
+            tags_inline = .join(tag_htmls)
             
-            # 레이아웃 분할: 왼쪽(이름+태그), 오른쪽(버튼)
+            # 레이아웃 분할 왼쪽(이름+태그), 오른쪽(버튼)
             col_left, col_right = st.columns([2.8, 1.2])
             
-            with col_left:
+            with col_left
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 순정 체크박스 기반 오작동 없는 안전한 구조
-                cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v4_fixed_{player}")
+                # 순정 체크박스로 기능을 100% 살리고, 이름 크기는 위 CSS가 알아서 16px로 띄워줍니다!
+                cb_label = f🏃 {player}
+                selected = st.checkbox(cb_label, value=is_active, key=fatt_v6_{player})
                 st.session_state.attendance[player] = selected
                 
-                # 태그 아래 여백 및 모바일 밀림 방지 처리 (미참석 시 태그만 흐려짐)
+                # 미참석 시 태그 투명도 조절 및 모바일 하단 여백 확보
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
-                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                    fdiv style='padding-left 28px; margin-top 4px; margin-bottom 12px; opacity {1.0 if selected else 0.4};'
+                        div style='display flex; flex-wrap wrap; gap 4px;'
                             {tags_inline}
-                        </div>
-                    </div>""", 
+                        div
+                    div, 
                     unsafe_allow_html=True
                 )
                 
-            with col_right:
+            with col_right
                 # 버튼 세로 정렬선 맞추기
-                st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
+                st.write(div style='margin-top 4px;'div, unsafe_allow_html=True)
                 btn_col1, btn_col2 = st.columns(2)
-                with btn_col1:
-                    if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True, help="포지션 수정"):
+                with btn_col1
+                    if st.button(⚙️, key=fedit_btn_{player}, use_container_width=True, help=포지션 수정)
                         edit_position_dialog(player)
-                with btn_col2:
-                    if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
+                with btn_col2
+                    if st.button(❌, key=fdel_{player}, use_container_width=True, help=선수 제거)
                         del st.session_state.players_dict[player]
-                        if player in st.session_state.attendance:
+                        if player in st.session_state.attendance
                             del st.session_state.attendance[player]
                         save_players_to_db(st.session_state.players_dict)
                         st.rerun()
             
             # 선수 간 구분선
-            st.write("<div style='margin: 4px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
-else:
-    st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
+            st.write(div style='margin 4px 0; border-bottom 1px dashed #E5E7EB;'div, unsafe_allow_html=True)
+else
+    st.info(등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.)
     
 st.markdown("---")
 
