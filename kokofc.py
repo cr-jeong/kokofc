@@ -269,7 +269,7 @@ if st.session_state.players_dict:
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
-            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에서 제외
+            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에서 즉시 제외
             if hide_absent and not is_active:
                 continue
                 
@@ -278,15 +278,15 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            # 💡 [버그 해결] 체크박스가 변경되면 그 즉시 상태를 반영하고 화면을 강제 새로고침(rerun) 합니다.
+            # 💡 체크박스가 바뀌면 그 즉시 세션 상태를 바꾸고 즉시 새로고침(rerun)합니다.
             selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
             if selected != is_active:
                 st.session_state.attendance[player] = selected
-                st.rerun()
+                st.rerun() # 👈 이 녀석 덕분에 토글이 켜져 있을 땐 취소선 보일 새도 없이 즉시 사라집니다!
             
-            # 💡 [건의 반영] 체크 해제 시 투명도를 조절하던 opacity 설정을 제거하여 글자를 항상 선명하게 유지합니다.
+            # 토글을 껐을 때는 기존 CSS 디자인(취소선/흐려짐)이 정상 작동하도록 원래 스타일 유지!
             st.write(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px;'>
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
                         {"".join(tag_htmls)}
                     </div>
