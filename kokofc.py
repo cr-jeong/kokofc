@@ -210,7 +210,7 @@ def edit_position_dialog(player_name):
             st.rerun()
 
 # [5. 경기 설정 및 신규 등록]
-with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
+with st.expander("⚙️ 쿼터 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     with st.container(border=True):
         st.write("**① 경기 설정**")
         total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
