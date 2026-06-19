@@ -141,32 +141,9 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (구조적 시차 및 미작동 오류 100% 영구 박멸 버전! 😈)
+# 참여 명단 출력 (유저님이 극찬하신 완벽 원복 버전! 🔱)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 한 묶음(wrapper) 안에서 이름과 태그를 칼같이 동시 통제하는 CSS
-    st.markdown(
-        """
-        <style>
-        /* 1. 순정 체크박스의 빈 라벨 공간은 숨기거나 최소화 */
-        .stCheckbox span {
-            font-size: 0px !important;
-        }
-        
-        /* 2. 체크 해제 시, 같은 부모를 둔 이름(player-name)과 태그(player-tags)를 즉시 동시에 흐리게! */
-        .stCheckbox:has([aria-checked="false"]) ~ .player-info-block .player-name {
-            opacity: 0.4 !important;
-            text-decoration: line-through !important;
-            color: #9CA3AF !important;
-        }
-        .stCheckbox:has([aria-checked="false"]) ~ .player-info-block .player-tags {
-            opacity: 0.4 !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     # 세련되고 부드러운 파스텔톤 태그 스타일 정의
     TAG_STYLES = {
         'PIVO (공격)': 'background-color: #FEE2E2; color: #EF4444;', 
@@ -189,24 +166,21 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; {style}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 레이아웃 분할: 왼쪽(이름+태그 세트), 오른쪽(버튼)
+            # 레이아웃 분할: 왼쪽(이름+태그), 오른쪽(버튼)
             col_left, col_right = st.columns([2.8, 1.2])
             
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 체크박스 자체는 순정 기능과 체크 버튼 공간만 활용 (글자는 공백)
-                selected = st.checkbox("", value=is_active, key=f"att_v12_{player}", label_visibility="collapsed")
+                # 순정 체크박스 기반 오작동 없는 안전한 구조
+                cb_label = f"🏃 {player}"
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v4_fixed_{player}")
                 st.session_state.attendance[player] = selected
                 
-                # [핵심] 이름과 태그를 'player-info-block'이라는 하나의 상자 안에 나란히 배치!
-                # 이렇게 묶어두어야 체크 해제 시 마진 깨짐이나 시차 없이 동시에 착 흐려집니다.
+                # 태그 아래 여백 및 모바일 밀림 방지 처리 (미참석 시 태그만 흐려짐)
                 st.write(
-                    f"""<div class='player-info-block' style='padding-left: 28px; margin-top: -30px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;'>
-                        <div class='player-name' style='font-size: 16px; font-weight: bold; color: #000000;'>
-                            🏃 {player}
-                        </div>
-                        <div class='player-tags' style='display: flex; flex-wrap: wrap; gap: 4px;'>
+                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
+                        <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
                     </div>""", 
@@ -214,6 +188,7 @@ if st.session_state.players_dict:
                 )
                 
             with col_right:
+                # 버튼 세로 정렬선 맞추기
                 st.write("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
@@ -227,6 +202,7 @@ if st.session_state.players_dict:
                         save_players_to_db(st.session_state.players_dict)
                         st.rerun()
             
+            # 선수 간 구분선
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed #E5E7EB;'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
