@@ -201,7 +201,7 @@ if st.session_state.players_dict:
                 
                 # 태그 영역 (원래의 착 붙는 간격 유지 + 이름 흐려질 때 같이 0.4배 흐려짐)
                 st.write(
-                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4}; transition: opacity 0.2s;'>
+                    f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
                             {tags_inline}
                         </div>
