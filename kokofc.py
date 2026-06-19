@@ -166,7 +166,7 @@ with col1:
         st.title("⚽")
 
 with col2:
-    st.markdown("<h1 style='margin: 0; padding-top: 5px; font-size: 32px;'>KOKO FC 😈 라인업 매니저</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin: 0; padding-top: 5px; font-size: 32px;'>⚽ KOKO FC 😈 라인업 매니저</h1>", unsafe_allow_html=True)
     st.caption("KOKO 화이팅!! 버그 제보 환영")
 
 # [4. 구글 시트 연동 및 데이터 로드]
