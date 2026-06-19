@@ -131,9 +131,13 @@ if 'players_dict' not in st.session_state:
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
     st.session_state.lineups = None
 
+# 세션 상태 기반 출석 데이터 역연동 보완
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
+    # 체크박스 상태 관리를 위해 세션 상태에 개별 키값 선행 동기화
+    if f"att_{p}" not in st.session_state:
+        st.session_state[f"att_{p}"] = st.session_state.attendance[p]
 
 # [5. 포지션 설정 및 선수 삭제 관리 창]
 @st.dialog("🎯 선수 설정 및 포지션 관리")
@@ -158,6 +162,7 @@ def edit_position_dialog(player_name):
         if st.button("🗑️ 선수 삭제하기", use_container_width=True, type="secondary"):
             del st.session_state.players_dict[player_name]
             st.session_state.attendance.pop(player_name, None)
+            st.session_state.pop(f"att_{player_name}", None)
             st.cache_data.clear()
             st.rerun()
 
@@ -171,6 +176,8 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
             st.cache_data.clear()
             st.session_state.players_dict = load_players_from_db()
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+            for p in st.session_state.players_dict.keys():
+                st.session_state[f"att_{p}"] = True
             st.session_state.lineups = None
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
@@ -191,6 +198,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                     else:
                         st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                         st.session_state.attendance[name] = True
+                        st.session_state[f"att_{name}"] = True
                         st.cache_data.clear()
                         st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                         st.rerun()
@@ -201,6 +209,10 @@ st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미참석자 숨기기)", value=False)
     
+    # ⚡ [무한 루프 방지 핵심 콜백 정의]: 사용자가 클릭 시에만 상태를 안전하게 반영
+    def on_attendance_change(p_name):
+        st.session_state.attendance[p_name] = st.session_state[f"att_{p_name}"]
+
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
@@ -214,12 +226,16 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
-            if selected != is_active:
-                st.session_state.attendance[player] = selected
+            # 콜백 구조 바인딩으로 타다닥 연타 시 딜레이 전면 해소
+            st.checkbox(
+                f"🏃 {player}", 
+                key=f"att_{player}", 
+                on_change=on_attendance_change, 
+                args=(player,)
+            )
             
             st.markdown(
-                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
+                f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if is_active else 0.35};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
                         {"".join(tag_htmls)}
                     </div>
