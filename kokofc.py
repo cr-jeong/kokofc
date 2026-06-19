@@ -102,12 +102,11 @@ st.markdown("""
         color: var(--text-color);
     }
     
-    /* 기본 모든 헤더와 셀들은 무조건 z-index를 1로 낮춰 바닥에 깝니다. */
     .toss-table th, .toss-table td {
         padding: 10px 8px;
         white-space: nowrap;
         position: relative;
-        z-index: 1 !important;
+        z-index: 1; /* 일반 셀들은 완전 바닥 */
     }
     
     .toss-table th {
@@ -129,30 +128,29 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 대대적 수정: 첫 번째 열(선수명/쿼터)을 z-index: 9999로 압도적으로 격상시켜 무조건 모든 요소 위에 오도록 강제 */
-    .toss-table th:nth-child(1), .toss-table td:nth-child(1) {
-        font-weight: 600;
+    /* 💥 클래스 기반 절대 고정 열 방어막: 브라우저 기본 우선순위를 완전히 짓밟는 구조 선언 */
+    .sticky-col {
         position: sticky !important;
         left: 0 !important;
-        z-index: 9999 !important; 
+        z-index: 99999 !important; /* 그 어떤 요소보다 무조건 위 */
         border-right: none !important;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 라이트/다크 모드별 불투명 배경색 강제 지정 (선수명 뒤로 완벽히 숨도록 처리) */
+    /* 테마별 완전 불투명 배경색 강제 할당 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; }
         .toss-table td { background-color: #0e1117; }
-        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } 
-        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } 
+        th.sticky-col { background-color: #1a1c23 !important; }
+        td.sticky-col { background-color: #0e1117 !important; }
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
         .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
         .toss-table th { background-color: #f0f2f6; }
         .toss-table td { background-color: #ffffff; }
-        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } 
-        .toss-table td:nth-child(1) { background-color: #ffffff !important; } 
+        th.sticky-col { background-color: #f0f2f6 !important; }
+        td.sticky-col { background-color: #ffffff !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -359,7 +357,7 @@ function copyToClipboard() {{
     for quarter, data in st.session_state.lineups.items():
         lineup_tbody_rows += f"""
         <tr>
-            <td>{quarter}</td>
+            <td class="sticky-col">{quarter}</td>
             <td>{data['starters'][0] or '미지정'}</td>
             <td>{data['starters'][1] or '미지정'}</td>
             <td>{data['starters'][2] or '미지정'}</td>
@@ -373,7 +371,7 @@ function copyToClipboard() {{
         <table class="toss-table">
             <thead>
                 <tr>
-                    <th>쿼터</th>
+                    <th class="sticky-col">쿼터</th>
                     <th><span style="color:{POS_CONFIG['PIVO (공격)']['color']}">{POS_CONFIG['PIVO (공격)']['emoji']} PIVO</span></th>
                     <th><span style="color:{POS_CONFIG['ALA_L (좌윙)']['color']}">{POS_CONFIG['ALA_L (좌윙)']['emoji']} ALA_L</span></th>
                     <th><span style="color:{POS_CONFIG['ALA_R (우윙)']['color']}">{POS_CONFIG['ALA_R (우윙)']['emoji']} ALA_R</span></th>
@@ -405,7 +403,7 @@ function copyToClipboard() {{
         
         stats_tbody_rows += f"""
         <tr>
-            <td>{name}</td>
+            <td class="sticky-col">{name}</td>
             <td>{goleiro}</td>
             <td style="background-color: rgba(34, 197, 94, 0.05); color: #22C55E; font-weight: 700;">{field}</td>
             <td>{pivo}</td>
@@ -420,7 +418,7 @@ function copyToClipboard() {{
         <table class="toss-table">
             <thead>
                 <tr>
-                    <th rowspan="2" style="vertical-align: middle;">선수명</th>
+                    <th rowspan="2" class="sticky-col" style="vertical-align: middle;">선수명</th>
                     <th rowspan="2" style="vertical-align: middle;"><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">🧤 GK</span></th>
                     <th rowspan="2" style="vertical-align: middle;">🏃 필드 합계</th>
                     <th colspan="4" style="border-bottom: 1px solid rgba(0,0,0,0.06);">포지션별 출전 상세</th>
