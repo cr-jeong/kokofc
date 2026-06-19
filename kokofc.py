@@ -145,6 +145,7 @@ def edit_position_dialog(player_name):
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
     with col1:
+        # 외곽 테너리는 유지하되 내부 여백을 시원하게
         with st.container(border=True):
             st.write("**① 경기 설정**")
             total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
@@ -158,13 +159,18 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
     with col2:
         with st.container(border=True):
             st.write("**② 선수 등록 (실시간 반영)**")
-            with st.form(key="player_add_form", clear_on_submit=True):
-                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
+            # 🌟 [디테일 튜닝] border=False로 내부 폼의 테두리를 완전히 없애서 '박스 안의 박스' 현상 해결!
+            with st.form(key="player_add_form", clear_on_submit=True, border=False):
+                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
                 wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
+                
+                # 버튼 위아래 여백을 위해 살짝 띄워주기
+                st.write("")
                 if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
                     name = name_input.strip()
                     if name:
-                        if name in st.session_state.players_dict: st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                        if name in st.session_state.players_dict: 
+                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
                         else:
                             st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                             st.session_state.attendance[name] = True
