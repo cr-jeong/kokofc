@@ -3,74 +3,53 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 가독성 최적화 컬러 매칭
+# 포지션 및 기본 설정
 POS_CONFIG = {
-    'PIVO (공격)': {
-        'emoji': '🔱', 
-        'label': '🔱 PIVO (공격)', 
-        'bg': '#FEE2E2',     # 연한 레드 (공격적, 열정)
-        'color': '#B91C1C',  # 딥 레드
-        'text': 'PIVO'
-    },
-    'ALA_L (좌윙)': {
-        'emoji': '◀️', 
-        'label': '◀️ ALA_L (좌윙)', 
-        'bg': '#EFF6FF',     # 연한 블루 (신속, 시원한 돌파)
-        'color': '#1D4ED8',  # 딥 블루
-        'text': 'ALA_L'
-    },
-    'ALA_R (우윙)': {
-        'emoji': '▶️', 
-        'label': '▶️ ALA_R (우윙)', 
-        'bg': '#ECFDF5',     # 연한 에메랄드 (안정감 있는 전진)
-        'color': '#047857',  # 딥 에메랄드
-        'text': 'ALA_R'
-    },
-    'FIXO (수비)': {
-        'emoji': '🛡️', 
-        'label': '🛡️ FIXO (수비)', 
-        'bg': '#FFF7ED',     # 연한 오렌지/앰버 (든든하고 무게감 있는 수비)
-        'color': '#C2410C',  # 딥 오렌지
-        'text': 'FIXO'
-    },
-    'GOLEIRO (키퍼)': {
-        'emoji': '🧤', 
-        'label': '🧤 GOLEIRO (키퍼)', 
-        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이 (최후방의 차분함)
-        'color': '#475569',  # 묵직한 그레이
-        'text': 'GK'
-    }
+    'PIVO (공격)': {'emoji': '🔥', 'label': '🔥 PIVO (공격)'},
+    'ALA_L (좌윙)': {'emoji': '⚡', 'label': '⚡ ALA_L (좌윙)'},
+    'ALA_R (우윙)': {'emoji': '✨', 'label': '✨ ALA_R (우윙)'},
+    'FIXO (수비)': {'emoji': '🛡️', 'label': '🛡️ FIXO (수비)'},
+    'GOLEIRO (키퍼)': {'emoji': '🧤', 'label': '🧤 GOLEIRO (키퍼)'}
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
 ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
-# 페이지 설정
+# 페이지 설정 (원래대로)
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
 st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 복사] 대기 명단 제외 버전!")
 
-# 구글 스프레드시트 연결 초기화
+# 구글 스프레딧시트 연결 초기화
 conn = st.connection("gsheets", type=GSheetsConnection)
 
+# 구글 시트 로딩 속도 향상 (TTL 5분 설정)
 @st.cache_data(ttl=300)
 def load_players_from_db():
     try:
         df = conn.read(header=None, ttl=300)
-        if df.empty: return {}
+        if df.empty:
+            return {}
+            
         players_dict = {}
         for _, row in df.iterrows():
             if len(row) >= 1 and pd.notna(row.iloc[0]):
                 name = str(row.iloc[0]).strip()
-                if not name or name.lower() == 'nan': continue
+                if not name or name.lower() == 'nan':
+                    continue
+                
                 pos_str = str(row.iloc[1]).strip() if len(row) >= 2 and pd.notna(row.iloc[1]) else ""
+                
                 if pos_str and pos_str.lower() != 'nan':
                     positions = [p.strip() for p in pos_str.split(',')]
                     positions = [p for p in positions if p in ALL_POSITIONS]
                 else:
                     positions = ALL_POSITIONS.copy()
-                if not positions: positions = ALL_POSITIONS.copy()
+                
+                if not positions:
+                    positions = ALL_POSITIONS.copy()
+                    
                 players_dict[name] = positions
         return players_dict
     except Exception as e:
@@ -80,36 +59,47 @@ def load_players_from_db():
 def save_players_to_db(players_dict):
     st.cache_data.clear()
 
+# 앱 시작 시 구글 시트 원본 자동 로드 로직
 if 'first_load_done' not in st.session_state:
     st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
     st.session_state.first_load_done = True
 
-if 'players_dict' not in st.session_state: st.session_state.players_dict = {}
-if 'lineups' not in st.session_state: st.session_state.lineups = None
-if 'attendance' not in st.session_state: st.session_state.attendance = {}
+# 세션 상태 기본 변수 안전장치
+if 'players_dict' not in st.session_state:
+    st.session_state.players_dict = {}
+if 'lineups' not in st.session_state:
+    st.session_state.lineups = None
+if 'attendance' not in st.session_state:
+    st.session_state.attendance = {}
 
+# 명단이 바뀔 때 출석부 상태 동기화
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
+# 희망 포지션 수정을 위한 팝업창(Dialog) 정의
 @st.dialog("🎯 희망 포지션 수정")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 희망 포지션을 선택하세요.")
+    st.caption("아무것도 선택하지 않으면 '모든 포지션 가능'으로 설정됩니다.")
+    
     current_wishes = st.session_state.players_dict[player_name]
+    
     new_wishes = st.multiselect(
         "희망 포지션 (복수 선택 가능)",
         options=ALL_POSITIONS,
         default=[p for p in current_wishes if p in ALL_POSITIONS],
         format_func=lambda x: POS_CONFIG[x]['label']
     )
+    
     if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
         st.session_state.players_dict[player_name] = new_wishes if new_wishes else ALL_POSITIONS.copy()
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# 설정 및 선수 등록 섹션
+# 설정 및 선수 등록 섹션 (박스 테두리 유지)
 st.subheader("⚙️ 설정 및 선수 등록")
 col1, col2 = st.columns(2)
 
@@ -124,6 +114,7 @@ with col1:
                 format_func=lambda x: POS_CONFIG[x]['label']
             )
             submit_button = st.form_submit_button("🏃 선수 등록하기", use_container_width=True)
+            
             if submit_button:
                 name = name_input.strip()
                 if name:
@@ -133,117 +124,124 @@ with col1:
                         st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
                         st.session_state.attendance[name] = True
                         save_players_to_db(st.session_state.players_dict)
+                        st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
                         st.rerun()
+                else:
+                    st.error("선수 이름을 먼저 입력해 주세요.")
 
 with col2:
     with st.container(border=True):
         st.write("**② 경기 설정**")
         total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-        st.write("") 
+        st.write("") # 간격 맞추기용
         if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
             st.cache_data.clear()
             st.session_state.players_dict = load_players_from_db()
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+            st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력
+# 참여 명단 출력 (모바일 반응형 레이아웃 적용 및 에러 케어 완료)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 딕셔너리 루프 도중 요소가 삭제(제거 버튼 클릭)되어 발생하는 에러 방지를 위해 list()로 감싸서 안전하게 복사본으로 처리
+    # 반복문 도중 유저가 명단을 삭제(제거)할 때 크기 변경 에러 방지를 위해 list()로 래핑
     for player in list(st.session_state.players_dict.keys()):
         positions = st.session_state.players_dict[player]
-        prev_status = st.session_state.attendance.get(player, True)
+        emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
         
-        # [UX 업그레이드 1] 각 선수를 테두리가 있는 개별 카드로 묶어 모바일 가독성 극대화
+        # 선수를 개별 테두리 카드로 분리하여 정렬 엇박자 완벽 해결
         with st.container(border=True):
-            # [UX 업그레이드 2] 모바일 가로 찌그러짐을 완벽하게 방지하기 위해 2분할 구조 사용
-            # 좌측(콘텐츠 영역: 체크박스 + 이름 + 하단 태그) | 우측(액션 영역: 수정 및 삭제 버튼)
+            # [UX 레이아웃 핵심]: 정보를 담은 왼쪽(3.2)과 관리용 버튼이 있는 오른쪽(1) 대분할 구조
             col_content, col_actions = st.columns([3.2, 1])
             
             with col_content:
-                # 체크박스와 이름을 같은 줄에 컴팩트하게 배치
+                # 체크박스와 이름을 강제로 한 행에 가로 밀착 배치
                 col_chk, col_txt = st.columns([0.4, 2.6])
                 with col_chk:
-                    is_attended = st.checkbox("참석", value=prev_status, key=f"att_{player}", label_visibility="collapsed")
-                    if is_attended != prev_status:
+                    is_attended = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}", label_visibility="collapsed")
+                    if is_attended != st.session_state.attendance.get(player, True):
                         st.session_state.attendance[player] = is_attended
                         st.rerun()
                 
                 with col_txt:
-                    color = "#1E293B" if is_attended else "#94A3B8"
-                    text_style = "font-weight:bold; font-size:15px;" if is_attended else "text-decoration: line-through; opacity: 0.4; font-size:15px;"
+                    color = "black" if is_attended else "#A0A0A0"
+                    text_style = "font-weight:bold; font-size:16px;" if is_attended else "text-decoration: line-through; opacity: 0.6; font-size:16px;"
                     st.markdown(f"<div style='padding-top: 1px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
                 
-                # [UX 업그레이드 3] 포지션 태그는 이름 하단 공간에 자연스럽게 채워지도록 유도 (모바일 줄바꿈 현상 해소)
-                badge_html = ""
-                for p in positions:
-                    if p in POS_CONFIG:
-                        cfg = POS_CONFIG[p]
-                        bg_color = "#E2E8F0" if not is_attended else cfg['bg']
-                        text_color = "#94A3B8" if not is_attended else cfg['color']
-                        badge_html += f'<span style="background-color: {bg_color}; color: {text_color}; padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; display: inline-block;">{cfg["emoji"]} {cfg["text"]}</span>'
-                
+                # 포지션 이모지 배지는 이름 아랫줄에 넉넉하게 자동 줄바꿈되도록 흐름 분리 (모바일 가로 찌그러짐 해소)
                 badge_opacity = "1.0" if is_attended else "0.4"
-                st.markdown(f"<div style='margin-top: 6px; margin-left: 2px; opacity: {badge_opacity};'>{badge_html}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-top: 4px; margin-left: 2px; font-size: 16px; opacity: {badge_opacity};'>{emojis}</div>", unsafe_allow_html=True)
             
             with col_actions:
-                # 우측 정렬된 수정/제거 버튼 세트
+                # 오른쪽 끝으로 떨어지는 깔끔한 정렬 버튼 구조
                 st.write("<div style='margin-top: 1px;'></div>", unsafe_allow_html=True)
                 if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
                 
-                if st.button("제거", key=f"del_{player}", use_container_width=True, type="secondary"):
+                if st.button("제거", key=f"del_{player}", use_container_width=True):
                     del st.session_state.players_dict[player]
                     if player in st.session_state.attendance:
                         del st.session_state.attendance[player]
                     save_players_to_db(st.session_state.players_dict)
                     st.rerun()
 else:
-    st.info("등록된 선수가 없습니다.")
+    st.info("등록된 선수가 없습니다. 구글 시트를 확인하거나 선수를 직접 추가해 보세요.")
 
 st.markdown("---")
 
-# 공정한 라인업 생성 알고리즘
+# 공정한 라인업 생성 알고리즘 (기존 로직 유지)
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
-    if len(active_players) < 5: return None
+    if len(active_players) < 5:
+        return None
+
     lineups = {}
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
+    
     last_quarter_gk = None
     
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
         
+        # 1. 골레이로(GK) 선정
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
-        if not gk_candidates: gk_candidates = remaining.copy()
+        if not gk_candidates:
+            gk_candidates = remaining.copy()
+            
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
             gk_candidates.remove(last_quarter_gk)
             
         random.shuffle(gk_candidates)
         gk_candidates.sort(key=lambda name: gk_counts[name])
+        
         chosen_gk = gk_candidates[0]
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
         last_quarter_gk = chosen_gk
         
+        # 2. 필드 플레이어 선정
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
+        
         shuffled_positions = FIELD_POSITIONS.copy()
         random.shuffle(shuffled_positions)
         
         for pos in shuffled_positions:
             wished_candidates = [p for p in remaining if pos in players_pool[p]]
+            
             if wished_candidates:
                 chosen_player = wished_candidates[0]
             else:
                 remaining.sort(key=lambda name: (field_counts[name], player_pos_history[name][pos]))
                 chosen_player = remaining[0]
+                
             starters[pos] = chosen_player
             remaining.remove(chosen_player)
+            
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
@@ -260,24 +258,30 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5:
-        st.error("오늘 경기 참석자가 최소 5명 이상이어야 합니다.")
+        st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
     else:
-        st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
+        st.session_state.lineups = generate_fair_lineups(
+            st.session_state.players_dict, 
+            st.session_state.attendance, 
+            total_quarters
+        )
 
 # 결과 출력 섹션
 if st.session_state.lineups:
     st.write("## 📋 경기 라인업 결과")
     
+    # 카톡 공유용 텍스트 포맷팅
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\n\n"
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n"
-        kakao_text += f"🔱 PIVO : {data['starters'][0] or '미지정'}\n"
-        kakao_text += f"◀️ ALA_L : {data['starters'][1] or '미지정'}\n"
-        kakao_text += f"▶️ ALA_R : {data['starters'][2] or '미정'}\n"
+        kakao_text += f"🔥 PIVO : {data['starters'][0] or '미지정'}\n"
+        kakao_text += f"⚡ ALA_L : {data['starters'][1] or '미지정'}\n"
+        kakao_text += f"✨ ALA_R : {data['starters'][2] or '미정'}\n"
         kakao_text += f"🛡️ FIXO : {data['starters'][3] or '미지정'}\n"
         kakao_text += f"🧤 GOLEIRO : {data['starters'][4] or '미정'}\n"
         kakao_text += "\n"
 
+    # 공유하기 카톡 노란색 버튼 유지
     html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background: linear-gradient(135deg, #FEE500, #FCD34D); color: #381E1F; border: none; padding: 14px; font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-weight: bold; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
@@ -289,12 +293,17 @@ function copyToClipboard() {{
     textArea.select();
     try {{
         var successful = document.execCommand('copy');
-        if(successful) {{ alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!'); }}
-        else {{ alert('복사 실패'); }}
+        if(successful) {{
+            alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
+        }} else {{
+            alert('복사 실패');
+        }}
     }} catch (err) {{
         navigator.clipboard.writeText(textToCopy).then(function() {{
             alert('📋 [KOKO FC] 카톡 공유용 텍스트가 복사되었습니다!');
-        }}).catch(function(e) {{ alert('복사 실패'); }});
+        }}).catch(function(e) {{
+            alert('복사 실패');
+        }});
     }}
     document.body.removeChild(textArea);
 }}
@@ -303,6 +312,7 @@ function copyToClipboard() {{
     st.components.v1.html(html_button_code, height=55)
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
+    # 데이터 에디터 표 생성
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
@@ -313,6 +323,7 @@ function copyToClipboard() {{
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
+    # 최종 포지션별 상세 출전 통계 표 가공 (개선된 모던 UI 스타일 유지)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -324,15 +335,17 @@ function copyToClipboard() {{
         player_history = final_history[name]
         stats_data.append({
             "선수명": name,
-            "🧤 GK": f"{final_gks[name]}회",
-            "🏃 필드": f"{final_fields[name]}회",
-            "🔱 PIVO": f"{player_history['PIVO (공격)']}회",
-            "◀️ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
-            "▶️ ALA_R": f"{player_history['ALA_R (우윙)']}회",
+            "🧤 GK": f"{final_gks[name]}회", # 순서를 2번째로 이동
+            "🏃 필드": f"{final_fields[name]}회", # 순서를 3번째로 이동
+            "🔥 PIVO": f"{player_history['PIVO (공격)']}회",
+            "⚡ ALA_L": f"{player_history['ALA_L (좌윙)']}회",
+            "✨ ALA_R": f"{player_history['ALA_R (우윙)']}회",
             "🛡️ FIXO": f"{player_history.get('🛡️ FIXO (수비)', player_history.get('FIXO (수비)', 0))}회"
         })
     
     df_stats = pd.DataFrame(stats_data)
+    
+    # 데이터 본문(tbody)의 html 코드만 추출
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
@@ -374,6 +387,7 @@ function copyToClipboard() {{
                 color: #0f172a;
             }}
         </style>
+        
         <table class="modern-table">
             <thead>
                 <tr>
@@ -383,9 +397,9 @@ function copyToClipboard() {{
                     <th colspan="4" class="main-header">상세 (필드 포지션별 출전)</th>
                 </tr>
                 <tr>
-                    <th>🔱 PIVO</th>
-                    <th>◀️ ALA_L</th>
-                    <th>▶️ ALA_R</th>
+                    <th>🔥 PIVO</th>
+                    <th>⚡ ALA_L</th>
+                    <th>✨ ALA_R</th>
                     <th>🛡️ FIXO</th>
                 </tr>
             </thead>
