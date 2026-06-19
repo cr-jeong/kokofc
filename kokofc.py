@@ -141,43 +141,27 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (모바일 반응형 레이아웃 적용 및 에러 케어 완료)
+# 참여 명단 출력 (원래 스타일 그대로 완벽 원복!)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 반복문 도중 유저가 명단을 삭제(제거)할 때 크기 변경 에러 방지를 위해 list()로 래핑
-    for player in list(st.session_state.players_dict.keys()):
-        positions = st.session_state.players_dict[player]
-        emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
-        
-        # 선수를 개별 테두리 카드로 분리하여 정렬 엇박자 완벽 해결
-        with st.container(border=True):
-            # [UX 레이아웃 핵심]: 정보를 담은 왼쪽(3.2)과 관리용 버튼이 있는 오른쪽(1) 대분할 구조
-            col_content, col_actions = st.columns([3.2, 1])
+    with st.container(border=True):
+        # 유저가 제거 버튼을 누를 때 딕셔너리 크기가 변해 터지는 버그만 list()로 묶어 안전하게 방어
+        for player in list(st.session_state.players_dict.keys()):
+            positions = st.session_state.players_dict[player]
+            emojis = "".join([POS_CONFIG[p]['emoji'] for p in positions if p in POS_CONFIG])
             
-            with col_content:
-                # 체크박스와 이름을 강제로 한 행에 가로 밀착 배치
-                col_chk, col_txt = st.columns([0.4, 2.6])
-                with col_chk:
-                    is_attended = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}", label_visibility="collapsed")
-                    if is_attended != st.session_state.attendance.get(player, True):
-                        st.session_state.attendance[player] = is_attended
-                        st.rerun()
-                
-                with col_txt:
-                    color = "black" if is_attended else "#A0A0A0"
-                    text_style = "font-weight:bold; font-size:16px;" if is_attended else "text-decoration: line-through; opacity: 0.6; font-size:16px;"
-                    st.markdown(f"<div style='padding-top: 1px;'><span style='color:{color}; {text_style}'>🏃 {player}</span></div>", unsafe_allow_html=True)
-                
-                # 포지션 이모지 배지는 이름 아랫줄에 넉넉하게 자동 줄바꿈되도록 흐름 분리 (모바일 가로 찌그러짐 해소)
-                badge_opacity = "1.0" if is_attended else "0.4"
-                st.markdown(f"<div style='margin-top: 4px; margin-left: 2px; font-size: 16px; opacity: {badge_opacity};'>{emojis}</div>", unsafe_allow_html=True)
+            col_att, col_p, col_edit, col_b = st.columns([1, 2.5, 1, 0.8])
             
-            with col_actions:
-                # 오른쪽 끝으로 떨어지는 깔끔한 정렬 버튼 구조
-                st.write("<div style='margin-top: 1px;'></div>", unsafe_allow_html=True)
+            with col_att:
+                st.session_state.attendance[player] = st.checkbox("참석", value=st.session_state.attendance.get(player, True), key=f"att_{player}")
+            with col_p:
+                color = "black" if st.session_state.attendance[player] else "#A0A0A0"
+                text_style = "font-weight:bold;" if st.session_state.attendance[player] else "text-decoration: line-through; opacity: 0.6;"
+                st.write(f"<div style='padding-top: 4px;'><span style='color:{color}; {text_style}'>🏃 {player}</span> <span style='font-size:14px; margin-left:5px;'>{emojis}</span></div>", unsafe_allow_html=True)
+            with col_edit:
                 if st.button("⚙️ 수정", key=f"edit_btn_{player}", use_container_width=True):
                     edit_position_dialog(player)
-                
+            with col_b:
                 if st.button("제거", key=f"del_{player}", use_container_width=True):
                     del st.session_state.players_dict[player]
                     if player in st.session_state.attendance:
