@@ -371,7 +371,7 @@ if st.session_state.lineups:
             <td>{ala_l}</td>
             <td>{ala_r}</td>
             <td>{fixo}</td>
-            <td style="font-weight: 600; background-color: rgba(156, 163, 175, 0.03);">{gk}</td>
+            <td>{gk}</td>
         </tr>
         """
         # 카톡 복사용 텍스트 포맷 빌드
