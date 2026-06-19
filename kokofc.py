@@ -18,6 +18,15 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
+아하, 원인을 바로 알겠다! 코드가 꼬인 이유가 있었네.
+
+내가 새로 준 ⚙️ 고정 CSS 코드 바로 밑에, 예전 버전의 버튼 기본 스타일 패딩 조정 (width: 100% !important) 코드가 그대로 남아 있어서 그래. CSS는 밑에 있는 코드가 위에 있는 코드를 덮어쓰기 때문에 열심히 설정한 38px 고정 값이 풀려버린 거지!
+
+게다가 기존의 복잡한 컬럼 비율 조절용 CSS(flex: 8.2...)가 남아있어서 Streamlit의 버튼 배치와 충돌이 났던 거야.
+
+불필요하고 꼬인 코드를 싹 다 제거하고, 다른 곳에는 절대 영향 주지 않으면서 오직 명단 톱니바퀴 버튼만 38px 정사각형으로 예쁘게 깎아주는 초강력 다이어트 버전 CSS야. 이걸로 기존 CSS 블록을 통째로 교체해 줘!
+
+Python
 # --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
@@ -27,7 +36,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
+    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 (선수등록/경기설정 영역) */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -40,9 +49,8 @@ st.markdown("""
         }
     }
     
-    /* ② 명단 전체 이름+버튼 행은 모바일에서도 1줄 유지 */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] {
+    /* ② 명단 전체 이름+버튼 행은 모바일에서도 가로 1줄 유지 */
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -50,45 +58,28 @@ st.markdown("""
         width: 100% !important;
     }
 
-    [data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2) button {
-    width: 38px !important;       /* 버튼 가로 크기 제한 */
-    height: 38px !important;      /* 버튼 세로 크기 제한 */
-    padding: 0 !important;         /* 내부 여백 제거로 이모지 중앙 정렬 */
-    font-size: 16px !important;    /* 이모지 크기 */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 8px !important; /* 부드러운 라운딩 */
-    margin-left: auto !important;  /* 버튼을 오른쪽 끝으로 밀착 */
+    /* ③ [핵심 변경] 오직 명단 리스트 내부의 ⚙️ 버튼만 강제로 38px 고정 */
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button {
+        width: 38px !important;
+        max-width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        font-size: 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 10px !important; /* 토스 느낌의 부드러운 라운딩 */
+        margin-left: auto !important;   /* 무조건 우측 정렬 */
     }
     
-    /* 명단 컨테이너 내부 컬럼 비율 조절 (이름 영역 확대 및 버튼 안정화) */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
-        flex: 8.2 1 0% !important; 
-        min-width: 0 !important; 
-    }
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(2),
-    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
-        flex: 1.8 0 0% !important; 
-        min-width: 50px !important; 
-    }
-
-    /* 버튼 기본 스타일 패딩 조정 */
-    [data-testid="stHorizontalBlock"] div[data-testid="column"] button {
-        min-width: 0 !important;
-        padding: 4px 2px !important;
-        width: 100% !important;
-    }
-    
-    /* 명단 이름 폰트 크기 및 색상 */
+    /* ④ 명단 이름 폰트 크기 및 색상 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: var(--text-color) !important;
     }
     
-    /* 체크박스 해제 시 흐려짐 효과 테마 대응 */
+    /* ⑤ 체크박스 해제 시 흐려짐 효과 테마 대응 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
