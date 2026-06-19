@@ -66,8 +66,8 @@ st.markdown("""
         font-weight: 700 !important;
     }
     
-    /* 체크박스가 해제(False)되었을 때만 취소선과 음영을 줍니다 */
-    [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
+    /* 💡 [핵심 수정] 오직 .player-list-area 클래스 내부에 있는 미출석 체크박스만 취소선+음영 처리 */
+    .player-list-area [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
@@ -257,19 +257,17 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 💡 [치트키] st.toggle 대신 st.checkbox를 사용하여 CSS 꼬임 문제를 원천 차단합니다!
+    # 🔍 상단 메뉴 체크박스 (여기는 일반 영역이라 취소선이 절대 안 먹힙니다)
     hide_absent = st.checkbox("🔍 오늘 참석자만 보기 (미출석자 숨기기)", value=False, key="global_hide_absent_toggle")
     
-    # 💡 이 체크박스만큼은 절대로 취소선이 안 가게 만드는 안전장치 (세션 상태 강제 고정)
-    # (이 체크박스는 항상 True 상태로 처리되어 CSS 취소선 대상에서 완벽히 제외됩니다)
-    st.session_state.attendance["global_hide_absent_toggle"] = True 
+    # 💡 선수 명단 감싸는 타겟 박스 시작
+    st.markdown('<div class="player-list-area">', unsafe_allow_html=True)
     
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
-            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에서 즉시 제외
             if hide_absent and not is_active:
                 continue
                 
@@ -296,6 +294,10 @@ if st.session_state.players_dict:
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
+            
+    st.markdown('</div>', unsafe_allow_html=True) # 💡 타겟 박스 끝
+else:
+    st.info("등록된 선수가 없습니다.")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
