@@ -28,7 +28,7 @@ st.markdown("""
     #MainMenu {display: none !important;}
     footer {display: none !important;}
     
-    /* 🍏 [여백 초밀착 가공] 화면 전체 레이아웃 설정 */
+    /* 화면을 꽉 채우고 상단 빈 여백 없애기 */
     [data-testid="stAppViewContainer"] {
         overflow-x: hidden !important;
         width: 100% !important;
@@ -36,17 +36,11 @@ st.markdown("""
         padding-top: 0px !important;
     }
     
-    /* 🍏 [여백 초밀착 가공] 최상단 빈 공백(패딩)을 20px로 확 줄여서 로고를 맨 위로 밀어 올림 */
+    /* 맨 위 빈 공간(Block Container) 패딩 강제 제거 */
     [data-testid="stAppViewBlockContainer"] {
-        padding-top: 20px !important;    /* 👈 숫자가 작을수록 맨 위로 바짝 붙습니다! */
-        padding-bottom: 30px !important;
+        padding-top: 2rem !important;
     }
     
-    .main .block-container {
-        max-width: 100% !important;
-    }
-    
-    /* ---------------- 기존 토스 테이블 스타일 (유지) ---------------- */
     [data-testid="stExpander"] {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
