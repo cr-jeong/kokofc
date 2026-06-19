@@ -3,7 +3,7 @@ import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# [상수 및 포지션 설정]
+# [1. 기본 설정 및 포지션 딕셔너리]
 POS_CONFIG = {
     'PIVO (공격)': {'emoji': '🔱', 'label': '🔱 PIVO', 'color': '#EF4444', 'bg': 'rgba(254, 226, 226, 0.15)', 'border': 'rgba(239, 68, 68, 0.3)'},
     'ALA_L (좌윙)': {'emoji': '◀️', 'label': '◀️ ALA_L', 'color': '#38BDF8', 'bg': 'rgba(224, 242, 254, 0.15)', 'border': 'rgba(56, 189, 248, 0.3)'},
@@ -17,7 +17,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# [토스 & 카카오 스타일 최신 트렌드 CSS 인터페이스]
+# [2. 토스 & 카카오 스타일 최적화 CSS 인젝션]
 st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] {
@@ -26,7 +26,7 @@ st.markdown("""
         background-color: var(--background-color);
     }
     
-    /* 카드 컨테이너 토스풍 라운딩 및 그림자 */
+    /* 컴포넌트 라운딩 및 카드 스타일 디자인 */
     [data-testid="stExpander"], .stForm {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -40,7 +40,7 @@ st.markdown("""
         }
     }
     
-    /* 명단 체크박스 테두리 박멸 */
+    /* 명단 체크박스 테두리 UI 정리 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -50,14 +50,15 @@ st.markdown("""
     }
     [data-testid="stCheckbox"] {
         border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
         padding: 4px 0 !important;
     }
-    [data-testid="stCheckbox"] > label {
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
+    .stCheckbox p {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+    }
+    .stCheckbox [aria-checked="false"] ~ div p {
+        opacity: 0.3 !important;
+        text-decoration: line-through !important;
     }
     
     @media (max-width: 768px) {
@@ -67,17 +68,7 @@ st.markdown("""
         }
     }
     
-    .stCheckbox p {
-        font-size: 16px !important;
-        font-weight: 700 !important;
-    }
-    
-    .stCheckbox [aria-checked="false"] ~ div p {
-        opacity: 0.3 !important;
-        text-decoration: line-through !important;
-    }
-    
-    /* 테이블 공통 디자인 */
+    /* 가로 스크롤 반응형 테이블 최적화 */
     .toss-table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -106,38 +97,29 @@ st.markdown("""
         padding: 10px 8px;
         white-space: nowrap;
         position: relative;
-        z-index: 1; /* 일반 셀들은 완전 바닥 */
+        z-index: 1; /* 일반 셀은 최하단 레이어 고정 */
     }
     
     .toss-table th {
         color: var(--text-color);
         font-weight: 600;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        border-right: 1px solid rgba(0, 0, 0, 0.04);
     }
     
-    .toss-table td {
-        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-        border-right: 1px solid rgba(0, 0, 0, 0.04);
-    }
-    
-    .toss-table th:last-child, .toss-table td:last-child {
-        border-right: none;
-    }
-    
+    .toss-table td { border-bottom: 1px solid rgba(0, 0, 0, 0.04); }
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 클래스 기반 절대 고정 열 방어막: 브라우저 기본 우선순위를 완전히 짓밟는 구조 선언 */
+    /* [핵심 최적화] 클래스 기반 첫 번째 열 절대 방어벽 */
     .sticky-col {
         position: sticky !important;
         left: 0 !important;
-        z-index: 99999 !important; /* 그 어떤 요소보다 무조건 위 */
-        border-right: none !important;
+        z-index: 99999 !important; /* 브라우저의 그 어떤 자식 요소보다 위에 배치 */
+        font-weight: 600;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 테마별 완전 불투명 배경색 강제 할당 */
+    /* 테마별 테이블 라인 및 스티키 열 불투명 배경색 지정 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; }
         .toss-table td { background-color: #0e1117; }
@@ -151,6 +133,8 @@ st.markdown("""
         .toss-table td { background-color: #ffffff; }
         th.sticky-col { background-color: #f0f2f6 !important; }
         td.sticky-col { background-color: #ffffff !important; }
+        .toss-table th, .toss-table td { border-right: 1px solid rgba(0, 0, 0, 0.04); }
+        .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -158,6 +142,7 @@ st.markdown("""
 st.title("⚽ KOKO FC 😈 라인업 매니저")
 st.caption("KOKO 화이팅!! 버그 제보 환영")
 
+# [3. 구글 시트 연동 및 데이터 로드]
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
@@ -191,6 +176,7 @@ for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
+# [4. 선수 관리 팝업 다이얼로그]
 @st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
@@ -216,6 +202,7 @@ def edit_position_dialog(player_name):
             st.cache_data.clear()
             st.rerun()
 
+# [5. 경기 설정 및 신규 등록]
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     with st.container(border=True):
         st.write("**① 경기 설정**")
@@ -248,6 +235,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                         st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                         st.rerun()
 
+# [6. 출석 및 명단 관리 UI]
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
@@ -282,6 +270,7 @@ else:
     
 st.markdown("---")
 
+# [7. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
@@ -293,6 +282,8 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
+        
+        # 골키퍼 배정 (지정 희망자 우선순위 및 최소 출전자 계산)
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates: gk_candidates = remaining.copy()
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: gk_candidates.remove(last_quarter_gk)
@@ -302,6 +293,8 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters[GK_POSITION] = chosen_gk
         gk_counts[chosen_gk] += 1  
         remaining.remove(chosen_gk)
+        
+        # 필드 포지션 균등 배정
         random.shuffle(remaining)
         remaining.sort(key=lambda name: field_counts[name])
         shuffled_positions = FIELD_POSITIONS.copy()
@@ -316,9 +309,9 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             remaining.remove(chosen_player)
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
+            
         lineups[f"{q}쿼터"] = {
             "starters": [starters[pos] for pos in ALL_POSITIONS],
-            "subs": remaining,
             "field_snapshot": field_counts.copy(),
             "gk_snapshot": gk_counts.copy(),
             "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
@@ -333,6 +326,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다!")
     else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
+# [8. 결과 출력 및 공유 섹션]
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
@@ -353,6 +347,7 @@ function copyToClipboard() {{
 </script>"""
     st.components.v1.html(html_button_code, height=55)
     
+    # 경기 라인업 테이블 빌드
     lineup_tbody_rows = ""
     for quarter, data in st.session_state.lineups.items():
         lineup_tbody_rows += f"""
@@ -385,6 +380,7 @@ function copyToClipboard() {{
     """
     st.html(lineup_table_html)
     
+    # [9. 통계 테이블 세션]
     st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
