@@ -213,7 +213,7 @@ if st.session_state.players_dict:
             tags_inline = "".join(tag_htmls)
             
             # 버튼 통합으로 인해 컬럼을 2개로 축소 (가로 깨짐 원천 차단)
-            col_main, col_btn = st.columns([8.2, 1.8])
+            col_main, col_btn = st.columns([0.88, 0.12])
             
             with col_main:
                 selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
