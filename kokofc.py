@@ -54,7 +54,6 @@ st.markdown("""
         color: var(--text-color) !important;
     }
     
-    /* 선수 명단 체크박스 영역 컨테이너 정리 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -62,23 +61,13 @@ st.markdown("""
         padding: 0 !important;
         margin: 0 !important;
     }
-    
-    /* 1. 토글(st.toggle) 글자 스타일 절대 보존 (취소선, 음영 강제 해제) */
-    [data-testid="stCheckbox"]:has(input[type="checkbox"][role="switch"]) p {
-        opacity: 1.0 !important;
-        text-decoration: none !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-    }
-    
-    /* 2. 일반 체크박스(선수 명단) 기본 글자 스타일 */
-    [data-testid="stCheckbox"]:not(:has(input[type="checkbox"][role="switch"])) p {
+    [data-testid="stCheckbox"] p {
         font-size: 16px !important;
         font-weight: 700 !important;
     }
     
-    /* 3. 💡 오직 일반 체크박스가 '해제(False)' 되었을 때만 선수 이름에 음영+취소선 정밀 타겟팅 */
-    [data-testid="stCheckbox"]:not(:has(input[type="checkbox"][role="switch"])) [aria-checked="false"] ~ div p {
+    /* 체크박스가 해제(False)되었을 때만 취소선과 음영을 줍니다 */
+    [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
     }
@@ -115,7 +104,6 @@ st.markdown("""
         color: var(--text-color);
     }
     
-    /* 중복 보더 코드를 하나로 깔끔하게 다이어트 */
     .toss-table th, .toss-table td {
         padding: 11px 8px;
         white-space: nowrap;
@@ -144,7 +132,6 @@ st.markdown("""
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
     
-    /* 다크/라이트 모드별 테이블 배경색 최적화 */
     @media (prefers-color-scheme: dark) {
         .toss-table th { background-color: #1a1c23; border-bottom: 2px solid rgba(255, 255, 255, 0.08); }
         .toss-table td { background-color: #0e1117; border-right: 1px solid rgba(255, 255, 255, 0.04); }
@@ -270,8 +257,12 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 🏃 참석자만 보기 토글 스위치
-    hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
+    # 💡 [치트키] st.toggle 대신 st.checkbox를 사용하여 CSS 꼬임 문제를 원천 차단합니다!
+    hide_absent = st.checkbox("🔍 오늘 참석자만 보기 (미출석자 숨기기)", value=False, key="global_hide_absent_toggle")
+    
+    # 💡 이 체크박스만큼은 절대로 취소선이 안 가게 만드는 안전장치 (세션 상태 강제 고정)
+    # (이 체크박스는 항상 True 상태로 처리되어 CSS 취소선 대상에서 완벽히 제외됩니다)
+    st.session_state.attendance["global_hide_absent_toggle"] = True 
     
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
@@ -287,13 +278,11 @@ if st.session_state.players_dict:
                 for p in positions if p in POS_CONFIG
             ]
             
-            # 💡 체크박스가 바뀌면 그 즉시 세션 상태를 바꾸고 즉시 새로고침(rerun)합니다.
             selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_{player}")
             if selected != is_active:
                 st.session_state.attendance[player] = selected
-                st.rerun() # 👈 이 녀석 덕분에 토글이 켜져 있을 땐 취소선 보일 새도 없이 즉시 사라집니다!
+                st.rerun()
             
-            # 토글을 껐을 때는 기존 CSS 디자인(취소선/흐려짐)이 정상 작동하도록 원래 스타일 유지!
             st.write(
                 f"""<div style='padding-left: 28px; margin-top: 2px; margin-bottom: 8px; opacity: {1.0 if selected else 0.35};'>
                     <div style='display: flex; flex-wrap: wrap; gap: 4px; align-items: center;'>
@@ -307,8 +296,6 @@ if st.session_state.players_dict:
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
-else:
-    st.info("등록된 선수가 없습니다.")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
