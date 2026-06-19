@@ -259,13 +259,20 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 
 # [7. 출석 및 명단 관리 UI]
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
+
 if st.session_state.players_dict:
+    # 💡 [세계적 디자이너의 한 끗] 참석자만 보기 필터 스위치 추가
+    hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
+    
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
             positions = st.session_state.players_dict[player]
             is_active = st.session_state.attendance.get(player, True)
             
-            # ✨ 명단 태그 생성과 출석 체크 뷰의 문자열 바인딩 구조를 깔끔하게 일원화했습니다.
+            # 필터가 켜져 있고, 이 선수가 미출석 상태라면 화면에 그리지 않고 패스!
+            if hide_absent and not is_active:
+                continue
+                
             tag_htmls = [
                 f"<span style='padding: 3px 8px; margin-right: 4px; border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; background-color: {POS_CONFIG[p]['bg']}; color: {POS_CONFIG[p]['color']}; border: 1px solid {POS_CONFIG[p]['border']};'>{POS_CONFIG[p]['label']}</span>"
                 for p in positions if p in POS_CONFIG
@@ -287,10 +294,6 @@ if st.session_state.players_dict:
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
-else:
-    st.info("등록된 선수가 없습니다.")
-    
-st.markdown("---")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
