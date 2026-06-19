@@ -301,11 +301,10 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     
     lineups_dict = {}
     
+    # 골레이로와 필드는 완벽히 독립된 카운트를 가집니다.
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in ALL_POSITIONS} for name in active_players}
-    
-    # 🔥 [추가] 각 선수의 '연속 휴식 쿼터 수'를 기록할 딕셔너리
     consecutive_rests = {name: 0 for name in active_players}
     
     last_quarter_gk = None
@@ -331,20 +330,23 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters[GK_POSITION] = chosen_gk
         
         # ---------------------------------------------------------
-        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (🔥 연속 휴식 조건 반영)
+        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (🔥 필드 균등 최우선 정렬)
         # ---------------------------------------------------------
         field_candidates = [p for p in active_players if p != chosen_gk]
         random.shuffle(field_candidates)
         
-        # 정렬 기준 고도화:
-        # 1순위: 연속 휴식 횟수가 많은 사람 역순 (-consecutive_rests) -> 많이 쉰 사람 무조건 선발
-        # 2순위: 총 필드 출전 횟수가 적은 사람 (field_counts)
-        field_candidates.sort(key=lambda name: (-consecutive_rests[name], field_counts[name]))
+        # 💡 정렬 기준 전면 수정:
+        # 1순위: 오직 필드 출전 횟수(field_counts)가 적은 사람 -> 요건 최우선 반영!
+        # 2순위: 그 안에서 연속 휴식 횟수가 많은 사람 (-consecutive_rests)
+        field_candidates.sort(key=lambda name: (
+            field_counts[name], 
+            -consecutive_rests[name]
+        ))
         
         quarter_field_players = field_candidates[:4]
         
         # ---------------------------------------------------------
-        # 단계 C: 확정된 4명을 선호 포지션에 최적 매칭 (동일)
+        # 단계 C: 확정된 4명을 선호 포지션에 최적 매칭
         # ---------------------------------------------------------
         best_match = None
         max_match_score = -999999
@@ -369,20 +371,16 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             starters[pos] = best_match[idx]
             
         # ---------------------------------------------------------
-        # 단계 D: 전역 변수 트래킹 정보 및 휴식 카운트 업데이트 🔥
+        # 단계 D: 전역 변수 트래킹 정보 및 휴식 카운트 업데이트
         # ---------------------------------------------------------
-        # 이번 쿼터에 어떤 형태로든 뛴 사람들 (필드 4명 + 키퍼 1명)
         players_playing_this_quarter = set(list(best_match) + [chosen_gk])
         
         for name in active_players:
             if name in players_playing_this_quarter:
-                # 이번 쿼터에 뛰었으면 연속 휴식 카운트 리셋!
                 consecutive_rests[name] = 0
             else:
-                # 이번 쿼터에 벤치에서 쉬었으면 휴식 카운트 +1
                 consecutive_rests[name] += 1
 
-        # 기존 출전 카운트 업데이트 로직
         gk_counts[chosen_gk] += 1
         player_pos_history[chosen_gk][GK_POSITION] += 1
         last_quarter_gk = chosen_gk
