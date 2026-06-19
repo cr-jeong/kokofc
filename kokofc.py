@@ -106,21 +106,22 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 💥 겹침 및 테두리 수정 포인트: 첫 번째 열 고정 및 배경 불투명화 (테두리는 투명하게 제거) */
+    /* 💥 겹침 및 테두리 수정 완료: 첫 번째 열 고정 및 배경 불투명화 (테두리는 완전 투명하게 제거) */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
         left: 0;
         z-index: 2;
-        border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.02); /* 스크롤 시 입체감만 살짝 부여 */
+        border-right: none !important; /* 이름 칸 오른쪽 테두리 완전 삭제 */
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04); /* 스크롤할 때 살짝 입체감만 주는 그림자 */
     }
     
-    /* 라이트/다크모드 대응 고정 열 투명도 제거 */
+    /* 라이트/다크모드 대응 고정 열 투명도 완벽 제거 (배경 100% 덮어쓰기) */
     @media (prefers-color-scheme: dark) {
         .toss-table td:nth-child(1) { background-color: #0e1117 !important; }
         .toss-table th:nth-child(1) { background-color: #1a1c23 !important; }
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
+        .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
         .toss-table td:nth-child(1) { background-color: #ffffff !important; }
