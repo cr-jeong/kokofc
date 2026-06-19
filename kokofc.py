@@ -41,7 +41,7 @@ st.markdown("""
         }
     }
     
-    /* 🔥 [디자인 수정] 선수 등록 Form의 기본 테두리 및 그림자 흔적 완전 박멸 */
+    /* 선수 등록 Form의 기본 테두리 및 그림자 흔적 완전 박멸 */
     .stForm {
         border: none !important;
         box-shadow: none !important;
@@ -197,7 +197,7 @@ if 'players_dict' not in st.session_state:
     st.cache_data.clear()
     st.session_state.players_dict = load_players_from_db()
     st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-    st.session_state.lineups = None
+    st.session_state.lineups_df = None  # 변형 가능한 DataFrame 형태로 관리하기 위해 구조 변경
 
 for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
@@ -239,6 +239,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
             st.cache_data.clear()
             st.session_state.players_dict = load_players_from_db()
             st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+            st.session_state.lineups_df = None
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
@@ -246,7 +247,6 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 
     with st.container(border=True):
         st.write("**② 선수 등록 (실시간 반영)**")
-        # 내부 테두리를 완전 제거하기 위해 CSS 최적화 적용됨
         with st.form(key="player_add_form", clear_on_submit=True, border=False):
             name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
             wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
@@ -299,14 +299,16 @@ else:
 st.markdown("---")
 
 # [8. 균등 분배 알고리즘 핵심 엔진]
-def generate_fair_lineups(players_pool, attendance_dict, total_q):
+def generate_fair_lineups_df(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
-    lineups = {}
+    
+    rows = []
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in FIELD_POSITIONS} for name in active_players}
     last_quarter_gk = None
+    
     for q in range(1, total_q + 1):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
@@ -338,30 +340,61 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             field_counts[chosen_player] += 1
             player_pos_history[chosen_player][pos] += 1
             
-        lineups[f"{q}쿼터"] = {
-            "starters": [starters[pos] for pos in ALL_POSITIONS],
-            "field_snapshot": field_counts.copy(),
-            "gk_snapshot": gk_counts.copy(),
-            "history_snapshot": {name: player_pos_history[name].copy() for name in active_players}
-        }
+        rows.append({
+            "쿼터": f"{q}쿼터",
+            "PIVO (공격)": starters['PIVO (공격)'],
+            "ALA_L (좌윙)": starters['ALA_L (좌윙)'],
+            "ALA_R (우윙)": starters['ALA_R (우윙)'],
+            "FIXO (수비)": starters['FIXO (수비)'],
+            "GOLEIRO (키퍼)": starters['GOLEIRO (키퍼)']
+        })
         last_quarter_gk = chosen_gk
-    return lineups
+        
+    return pd.DataFrame(rows)
 
 st.write("")
 st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다!")
-    else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
+    else: 
+        st.session_state.lineups_df = generate_fair_lineups_df(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
-# [9. 결과 출력 및 공유 섹션]
-if st.session_state.lineups:
-    st.markdown("### 📋 경기 라인업 결과")
+# [9. 🔥 인터랙티브 결과 출력 및 실시간 공유 연동 섹션]
+if st.session_state.lineups_df is not None:
+    st.markdown("### 📋 경기 라인업 결과 (💡 셀을 누르면 선수 교체 가능)")
+    
+    # 현재 출석한 활성 선수들 명단 추출 (드롭다운 옵션용)
+    active_players_list = [p for p, att in st.session_state.attendance.items() if att and p in st.session_state.players_dict]
+    
+    # 🌟 [핵심 대안 적용] st.data_editor를 사용하여 가독성 높은 인터랙티브 테이블 매핑
+    edited_df = st.data_editor(
+        st.session_state.lineups_df,
+        column_config={
+            "쿼터": st.column_config.TextColumn("쿼터", disabled=True), # 쿼터 이름은 수정 불가
+            "PIVO (공격)": st.column_config.SelectboxColumn("🔱 PIVO", options=active_players_list, required=True),
+            "ALA_L (좌윙)": st.column_config.SelectboxColumn("◀️ ALA_L", options=active_players_list, required=True),
+            "ALA_R (우윙)": st.column_config.SelectboxColumn("▶️ ALA_R", options=active_players_list, required=True),
+            "FIXO (수비)": st.column_config.SelectboxColumn("🛡️ FIXO", options=active_players_list, required=True),
+            "GOLEIRO (키퍼)": st.column_config.SelectboxColumn("🧤 GOLEIRO", options=active_players_list, required=True),
+        },
+        disabled=False,
+        hide_index=True,
+        use_container_width=True,
+        key="lineup_editor"
+    )
+    
+    # 사용자가 화면에서 선수를 바꾸면 session_state 데이터를 즉시 동기화
+    if not edited_df.equals(st.session_state.lineups_df):
+        st.session_state.lineups_df = edited_df
+        st.rerun() # 수정 시 하단의 카톡 텍스트 및 상세 통계를 실시간으로 재계산하기 위해 강제 새로고침
+        
+    # 실시간 동기화된 데이터를 기반으로 카카오톡 텍스트 동적 생성
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
-    for quarter, data in st.session_state.lineups.items():
-        kakao_text += f"-----[{quarter}]-----\\n🔱 PIVO : {data['starters'][0] or '미지정'}\\n◀️ ALA_L : {data['starters'][1] or '미지정'}\\n▶️ ALA_R : {data['starters'][2] or '미정'}\\n🛡️ FIXO : {data['starters'][3] or '미지정'}\\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\\n\\n"
+    for _, row in st.session_state.lineups_df.iterrows():
+        kakao_text += f"-----[{row['쿼터']}]-----\\n🔱 PIVO : {row['PIVO (공격)']}\\n◀️ ALA_L : {row['ALA_L (좌윙)']}\\n▶️ ALA_R : {row['ALA_R (우윙)']}\\n🛡️ FIXO : {row['FIXO (수비)']}\\n🧤 GOLEIRO : {row['GOLEIRO (키퍼)']}\\n\\n"
 
-    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-bottom: 10px;">💬 카카오톡 공유용 라인업 복사하기</button>
+    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: background 0.2s; margin-top: 5px; margin-bottom: 20px;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
     var textToCopy = `{kakao_text}`;
@@ -373,67 +406,46 @@ function copyToClipboard() {{
     document.body.removeChild(textArea);
 }}
 </script>"""
-    st.components.v1.html(html_button_code, height=55)
+    st.components.v1.html(html_button_code, height=65)
     
-    # 경기 라인업 테이블 빌드
-    lineup_tbody_rows = ""
-    for quarter, data in st.session_state.lineups.items():
-        lineup_tbody_rows += f"""
-        <tr>
-            <td class="sticky-col">{quarter}</td>
-            <td>{data['starters'][0] or '미지정'}</td>
-            <td>{data['starters'][1] or '미지정'}</td>
-            <td>{data['starters'][2] or '미지정'}</td>
-            <td>{data['starters'][3] or '미지정'}</td>
-            <td><strong>{data['starters'][4] or '미지정'}</strong></td>
-        </tr>
-        """
+    # [10. 🔥 실시간 연동 통계 테이블 세션]
+    st.markdown("### 📊 포지션별 상세 출전 통계 (실시간 연동)")
+    
+    # 실시간 수정된 라인업 데이터프레임을 기반으로 통계 데이터 즉시 역계산(Reverse Engineering)
+    active_players_current = [p for p, att in st.session_state.attendance.items() if att and p in st.session_state.players_dict]
+    stats_data = {
+        name: {"GK": 0, "필드 합계": 0, "PIVO": 0, "ALA_L": 0, "ALA_R": 0, "FIXO": 0} 
+        for name in active_players_current
+    }
+    
+    for _, row in st.session_state.lineups_df.iterrows():
+        pivo, ala_l, ala_r, fixo, gk = row['PIVO (공격)'], row['ALA_L (좌윙)'], row['ALA_R (우윙)'], row['FIXO (수비)'], row['GOLEIRO (키퍼)']
         
-    lineup_table_html = f"""
-    <div class="toss-table-container">
-        <table class="toss-table">
-            <thead>
-                <tr>
-                    <th class="sticky-col">쿼터</th>
-                    <th><span style="color:{POS_CONFIG['PIVO (공격)']['color']}">{POS_CONFIG['PIVO (공격)']['emoji']} PIVO</span></th>
-                    <th><span style="color:{POS_CONFIG['ALA_L (좌윙)']['color']}">{POS_CONFIG['ALA_L (좌윙)']['emoji']} ALA_L</span></th>
-                    <th><span style="color:{POS_CONFIG['ALA_R (우윙)']['color']}">{POS_CONFIG['ALA_R (우윙)']['emoji']} ALA_R</span></th>
-                    <th><span style="color:{POS_CONFIG['FIXO (수비)']['color']}">{POS_CONFIG['FIXO (수비)']['emoji']} FIXO</span></th>
-                    <th><span style="color:{POS_CONFIG['GOLEIRO (키퍼)']['color']}">{POS_CONFIG['GOLEIRO (키퍼)']['emoji']} GK</span></th>
-                </tr>
-            </thead>
-            <tbody>{lineup_tbody_rows}</tbody>
-        </table>
-    </div>
-    """
-    st.html(lineup_table_html)
-    
-    # [10. 통계 테이블 세션]
-    st.markdown("### 📊 포지션별 상세 출전 통계")
-    last_quarter = list(st.session_state.lineups.keys())[-1]
-    final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
-    final_gks = st.session_state.lineups[last_quarter]["gk_snapshot"]
-    final_history = st.session_state.lineups[last_quarter]["history_snapshot"]
-    
+        if gk in stats_data: stats_data[gk]["GK"] += 1
+        if pivo in stats_data: 
+            stats_data[pivo]["PIVO"] += 1
+            stats_data[pivo]["필드 합계"] += 1
+        if ala_l in stats_data: 
+            stats_data[ala_l]["ALA_L"] += 1
+            stats_data[ala_l]["필드 합계"] += 1
+        if ala_r in stats_data: 
+            stats_data[ala_r]["ALA_R"] += 1
+            stats_data[ala_r]["필드 합계"] += 1
+        if fixo in stats_data: 
+            stats_data[fixo]["FIXO"] += 1
+            stats_data[fixo]["필드 합계"] += 1
+
     stats_tbody_rows = ""
-    for name in final_fields.keys():
-        player_history = final_history.get(name, {})
-        goleiro = f"{final_gks.get(name, 0)}회"
-        field = f"{final_fields.get(name, 0)}회"
-        pivo = f"{player_history.get('PIVO (공격)', 0)}회"
-        ala_l = f"{player_history.get('ALA_L (좌윙)', 0)}회"
-        ala_r = f"{player_history.get('ALA_R (우윙)', 0)}회"
-        fixo = f"{player_history.get('FIXO (수비)', 0)}회"
-        
+    for name, s in stats_data.items():
         stats_tbody_rows += f"""
         <tr>
             <td class="sticky-col">{name}</td>
-            <td>{goleiro}</td>
-            <td style="background-color: rgba(34, 197, 94, 0.05); color: #22C55E; font-weight: 700;">{field}</td>
-            <td>{pivo}</td>
-            <td>{ala_l}</td>
-            <td>{ala_r}</td>
-            <td>{fixo}</td>
+            <td>{s['GK']}회</td>
+            <td style="background-color: rgba(34, 197, 94, 0.05); color: #22C55E; font-weight: 700;">{s['필드 합계']}회</td>
+            <td>{s['PIVO']}회</td>
+            <td>{s['ALA_L']}회</td>
+            <td>{s['ALA_R']}회</td>
+            <td>{s['FIXO']}회</td>
         </tr>
         """
 
