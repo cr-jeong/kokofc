@@ -99,7 +99,7 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# --- [모바일 최적화 업그레이드] 설정 및 선수 등록 섹션을 아코디언으로 접기 ---
+# --- 경기 설정 및 선수 등록 아코디언 적용 ---
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     col1, col2 = st.columns(2)
 
@@ -141,7 +141,7 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                 st.success("구글 시트에서 명단을 다시 불러왔습니다!")
                 st.rerun()
 
-# 참여 명단 출력 (간격 및 텍스트 100% 동일)
+# 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     st.markdown(
@@ -187,7 +187,7 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v9_{player}")
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v10_{player}")
                 st.session_state.attendance[player] = selected
                 
                 st.write(
@@ -206,7 +206,7 @@ if st.session_state.players_dict:
                     if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True, help="포지션 수정"):
                         edit_position_dialog(player)
                 with btn_col2:
-                    if st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
+                    if th_btn := st.button("❌", key=f"del_{player}", use_container_width=True, help="선수 제거"):
                         del st.session_state.players_dict[player]
                         if player in st.session_state.attendance:
                             del st.session_state.attendance[player]
@@ -338,7 +338,7 @@ function copyToClipboard() {{
     st.components.v1.html(html_button_code, height=55)
     st.info("💡 팁: 생성된 표의 셀을 더블클릭해서 이름을 직접 수정할 수 있습니다.")
     
-    # 데이터 에디터 표 생성 (수정 기능 및 디자인 원본 100% 동일)
+    # 데이터 에디터 표 생성
     edited_data = []
     for quarter, data in st.session_state.lineups.items():
         row = {"쿼터": quarter}
@@ -349,7 +349,7 @@ function copyToClipboard() {{
         
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 최종 포지션별 상세 출전 통계 표 (요청하신 대로 스타일/구조 절대 수정 없이 완벽 보존)
+    # 최종 통계 표 섹션
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -373,6 +373,8 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
+    # --- [녹색/연두색 음영 CSS 수정 복원] ---
+    # td:nth-child(3) -> 🏃 필드 칸에 부드러운 연두색 배경 적용!
     custom_html = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <style>
@@ -409,6 +411,12 @@ function copyToClipboard() {{
             .modern-table td:nth-child(1) {{
                 font-weight: bold;
                 color: #0f172a;
+            }}
+            /* 🏃 필드 출전 횟수 칸에 화사하고 은은한 연두색 음영 주입 완료!! */
+            .modern-table td:nth-child(3) {{
+                background-color: #F0FDF4 !important;
+                color: #16A34A !important;
+                font-weight: bold;
             }}
         </style>
         
