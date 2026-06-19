@@ -61,12 +61,12 @@ st.markdown("""
         padding: 0 !important;
         margin: 0 !important;
     }
-    [data-testid="stCheckbox"] p {
+    .stCheckbox p {
         font-size: 16px !important;
         font-weight: 700 !important;
     }
     
-    /* 🔄 순정 복구: 모든 체크박스가 해제(False)되면 음영과 취소선이 정상 작동합니다 */
+    /* 기존 선수들 체크 해제 시 취소선 및 음영 정상 복구 */
     [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
         text-decoration: line-through !important;
@@ -257,8 +257,8 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 
 if st.session_state.players_dict:
-    # 🔄 순정 복구: 기존에 잘 작동하던 체크박스 형태의 메뉴 스위치 유지
-    hide_absent = st.checkbox("🔍 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
+    # 🏃 원하셨던 이쁜 토글(st.toggle) 컴포넌트로 원복!
+    hide_absent = st.toggle("🏃 오늘 참석자만 보기 (미출석자 숨기기)", value=False)
     
     with st.container(border=True):
         for player in list(st.session_state.players_dict.keys()):
