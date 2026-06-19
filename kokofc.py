@@ -2,6 +2,7 @@ import streamlit as st
 import random
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
+from PIL import Image
 
 # [1. 기본 설정 및 포지션 딕셔너리]
 POS_CONFIG = {
@@ -27,20 +28,28 @@ st.markdown("""
     }
     
     /* 컴포넌트 라운딩 및 카드 스타일 디자인 */
-    [data-testid="stExpander"], .stForm {
+    [data-testid="stExpander"] {
         border-radius: 16px !important;
         border: 1px solid rgba(0, 0, 0, 0.05) !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
         background-color: var(--background-color) !important;
     }
     @media (prefers-color-scheme: dark) {
-        [data-testid="stExpander"], .stForm {
+        [data-testid="stExpander"] {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
         }
     }
     
-    /* 🔥 [디자인 세밀 조정] 메인 설정창(Expander) 타이틀 글자 크기 15px로 최적화 */
+    /* 🔥 [디자인 수정] 선수 등록 Form의 기본 테두리 및 그림자 흔적 완전 박멸 */
+    .stForm {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    
+    /* 메인 설정창(Expander) 타이틀 글자 크기 15px로 최적화 */
     [data-testid="stExpander"] details summary p {
         font-size: 15px !important;
         font-weight: 700 !important;
@@ -83,7 +92,7 @@ st.markdown("""
         margin: 16px 0;
         border-radius: 16px;
         border: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 4px 166px rgba(0, 0, 0, 0.02);
     }
     @media (prefers-color-scheme: dark) {
         .toss-table-container { border: 1px solid rgba(255, 255, 255, 0.08); }
@@ -146,10 +155,21 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("KOKO 화이팅!! 버그 제보 환영")
+# [3. 타이틀 디자인 최적화: 사진+제목 가로 정렬]
+col1, col2 = st.columns([1, 6])
 
-# [3. 구글 시트 연동 및 데이터 로드]
+with col1:
+    try:
+        img = Image.open("koko_logo.png")
+        st.image(img, width=65)
+    except FileNotFoundError:
+        st.title("⚽")
+
+with col2:
+    st.markdown("<h1 style='margin: 0; padding-top: 5px; font-size: 32px;'>KOKO FC 😈 라인업 매니저</h1>", unsafe_allow_html=True)
+    st.caption("KOKO 화이팅!! 버그 제보 환영")
+
+# [4. 구글 시트 연동 및 데이터 로드]
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=300)
@@ -183,7 +203,7 @@ for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
-# [4. 선수 관리 팝업 다이얼로그]
+# [5. 선수 관리 팝업 다이얼로그]
 @st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
@@ -209,8 +229,8 @@ def edit_position_dialog(player_name):
             st.cache_data.clear()
             st.rerun()
 
-# [5. 경기 설정 및 신규 등록]
-with st.expander("⚙️ 쿼터 설정 및 선수 등록 (터치해서 열기)", expanded=False):
+# [6. 경기 설정 및 신규 등록]
+with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
     with st.container(border=True):
         st.write("**① 경기 설정**")
         total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
@@ -226,6 +246,7 @@ with st.expander("⚙️ 쿼터 설정 및 선수 등록 (터치해서 열기)",
 
     with st.container(border=True):
         st.write("**② 선수 등록 (실시간 반영)**")
+        # 내부 테두리를 완전 제거하기 위해 CSS 최적화 적용됨
         with st.form(key="player_add_form", clear_on_submit=True, border=False):
             name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동(용병)")
             wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
@@ -242,7 +263,7 @@ with st.expander("⚙️ 쿼터 설정 및 선수 등록 (터치해서 열기)",
                         st.success(f"'{name}' 선수가 명단에 등록되었습니다!")
                         st.rerun()
 
-# [6. 출석 및 명단 관리 UI]
+# [7. 출석 및 명단 관리 UI]
 st.markdown(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
     with st.container(border=True):
@@ -277,7 +298,7 @@ else:
     
 st.markdown("---")
 
-# [7. 균등 분배 알고리즘 핵심 엔진]
+# [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
@@ -333,7 +354,7 @@ if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_contain
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다!")
     else: st.session_state.lineups = generate_fair_lineups(st.session_state.players_dict, st.session_state.attendance, total_quarters)
 
-# [8. 결과 출력 및 공유 섹션]
+# [9. 결과 출력 및 공유 섹션]
 if st.session_state.lineups:
     st.markdown("### 📋 경기 라인업 결과")
     kakao_text = "⚽ KOKO FC 경기 라인업 ⚽\\n\\n"
@@ -387,7 +408,7 @@ function copyToClipboard() {{
     """
     st.html(lineup_table_html)
     
-    # [9. 통계 테이블 세션]
+    # [10. 통계 테이블 세션]
     st.markdown("### 📊 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
