@@ -40,7 +40,7 @@ st.markdown("""
         }
     }
     
-    /* 💥 선수 명단 체크박스의 '동그란 테두리/박스' 원천 박멸 */
+    /* 선수 명단 체크박스의 '동그란 테두리/박스' 원천 박멸 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
         background: transparent !important;
@@ -102,18 +102,19 @@ st.markdown("""
         color: var(--text-color);
     }
     
+    /* 💥 여백 수정 포인트: 14px -> 10px로 축소하여 단정하게 변경 */
     .toss-table th {
         background-color: var(--secondary-background-color);
         color: var(--text-color);
         font-weight: 600;
-        padding: 14px 8px;
+        padding: 10px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
     }
     
     .toss-table td {
-        padding: 14px 8px;
+        padding: 10px 8px;
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
         border-right: 1px solid rgba(0, 0, 0, 0.04);
         white-space: nowrap;
@@ -126,7 +127,7 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* 표 내부 첫 번째 열 고정 및 배경 불투명화 (세로 테두리 제거) */
+    /* 첫 번째 열 고정 설정 및 그림자 효과 */
     .toss-table td:nth-child(1), .toss-table th:nth-child(1) {
         font-weight: 600;
         position: sticky;
@@ -136,16 +137,18 @@ st.markdown("""
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
     }
     
-    /* 라이트/다크모드 대응 고정 열 투명도 완벽 제거 */
+    /* 💥 음영 완벽 일치 수정 포인트: 일반 헤더 및 바디와 색상을 100% 동일하게 맞춰 튀는 음영 제거 */
     @media (prefers-color-scheme: dark) {
-        .toss-table td:nth-child(1) { background-color: #0e1117 !important; }
-        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; }
+        .toss-table td:nth-child(1) { background-color: #0e1117 !important; } /* 다크모드 기본 배경 */
+        .toss-table th:nth-child(1) { background-color: #1a1c23 !important; } /* 다크모드 헤더 배경 */
+        .toss-table th { background-color: #1a1c23 !important; }             /* PIVO 등 중복 꼬임 방지 */
         .toss-table th, .toss-table td { border-right: 1px solid rgba(255, 255, 255, 0.04); }
         .toss-table th:last-child, .toss-table td:last-child { border-right: none; }
     }
     @media (prefers-color-scheme: light) {
-        .toss-table td:nth-child(1) { background-color: #ffffff !important; }
-        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; }
+        .toss-table td:nth-child(1) { background-color: #ffffff !important; } /* 라이트모드 기본 배경 */
+        .toss-table th:nth-child(1) { background-color: #f0f2f6 !important; } /* 라이트모드 헤더 배경 */
+        .toss-table th { background-color: #f0f2f6 !important; }             /* PIVO 등 중복 꼬임 방지 */
     }
     </style>
 """, unsafe_allow_html=True)
