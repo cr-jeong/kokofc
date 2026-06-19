@@ -212,7 +212,7 @@ if st.session_state.players_dict:
             
             # 3. 뚱뚱한 버튼 대신, 아주 미니멀하고 슬림한 가로형 버튼으로 이름 바로 밑에 배치
             # 테두리가 없고 컴팩트해서 모바일에서 한 줄 가득 차도 전혀 이상하지 않고 깔끔한 링크처럼 보입니다.
-            if st.button(f"⚙️ {player} 포지션/삭제 설정", key=f"edit_btn_{player}", use_container_width=True):
+            if st.button(f"⚙️ 포지션/삭제 설정", key=f"edit_btn_{player}", use_container_width=True):
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
