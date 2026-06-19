@@ -18,7 +18,7 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 # 페이지 설정
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
-# --- 모바일 화면/반응형 레이아웃 및 폰트 밸런스 CSS 튜닝 ---
+# --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -27,35 +27,27 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ❗ [요청 반영] 설정창 내 가로 분할 레이아웃 반응형 마법 주입 */
-    .responsive-settings-container {
-        display: flex;
-        flex-direction: row; /* 기본 데스크탑은 가로 배치 */
-        gap: 16px;
-        width: 100%;
-    }
-    .responsive-settings-box {
-        flex: 1;
-        min-width: 0;
-    }
-    
-    /* 📱 스마트폰(화면 폭 768px 이하)일 때만 세로 배치로 강제 변경 */
+    /* ❗ [요청 반영] 데스크탑의 st.columns(2) 가로 배치를 유지하되, 모바일에서만 세로로 자동 전환 */
     @media (max-width: 768px) {
-        .responsive-settings-container {
-            flex-direction: column !important; /* 모바일은 깔끔한 세로 배치 */
+        /* expander 내부의 컬럼 블록을 찾아 모바일에서 세로 정렬로 강제 전환 */
+        .stExpander [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+            gap: 16px !important;
+        }
+        .stExpander [data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            max-width: 100% !important;
         }
     }
     
     /* 명단 열(st.columns)이 화면 좁아져도 아래로 찢어지지 않고 한 줄 유지 */
-    [data-testid="stHorizontalBlock"] {
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
+    [data-testid="stElementContainer"] + [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         width: 100% !important;
-    }
-    [data-testid="stHorizontalBlock"] > div {
-        min-width: 0 !important;
     }
     
     /* 명단 이름 폰트 크기 고정 */
@@ -136,47 +128,38 @@ def edit_position_dialog(player_name):
         st.success(f"{player_name} 선수의 포지션이 수정되었습니다!")
         st.rerun()
 
-# --- ⚙️ 설정 및 선수 등록 반응형 아코디언 구현 ---
+# --- ⚙️ 원래 버전의 깔끔한 st.columns 가로 배치 복원 ---
 with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expanded=False):
-    # HTML 컨테이너를 열어서 CSS 반응형 flex-direction 작동 유도
-    st.markdown('<div class="responsive-settings-container">', unsafe_allow_html=True)
-    
-    # 좌측 구역: 선수 등록 (HTML 카드 효과 브래킷으로 래핑)
-    st.markdown('<div class="responsive-settings-box">', unsafe_allow_html=True)
-    with st.container(border=True):
-        st.write("**① 선수 등록 (실시간 반영)**")
-        with st.form(key="player_add_form", clear_on_submit=True):
-            name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
-            wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
-            if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
-                name = name_input.strip()
-                if name:
-                    if name in st.session_state.players_dict:
-                        st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
-                    else:
-                        st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
-                        st.session_state.attendance[name] = True
-                        save_players_to_db(st.session_state.players_dict)
-                        st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
-                        st.rerun()
-                else: st.error("선수 이름을 먼저 입력해 주세요.")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # 우측 구역: 경기 설정
-    st.markdown('<div class="responsive-settings-box">', unsafe_allow_html=True)
-    with st.container(border=True):
-        st.write("**② 경기 설정**")
-        total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-        st.write("") 
-        if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
-            st.cache_data.clear()
-            st.session_state.players_dict = load_players_from_db()
-            st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-            st.success("구글 시트에서 명단을 다시 불러왔습니다!")
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True) # 컨테이너 닫기
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.container(border=True):
+            st.write("**① 선수 등록 (실시간 반영)**")
+            with st.form(key="player_add_form", clear_on_submit=True):
+                name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
+                wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
+                if st.form_submit_button("🏃 선수 등록하기", use_container_width=True):
+                    name = name_input.strip()
+                    if name:
+                        if name in st.session_state.players_dict:
+                            st.warning(f"'{name}' 선수는 이미 등록되어 있습니다.")
+                        else:
+                            st.session_state.players_dict[name] = wished_input if wished_input else ALL_POSITIONS.copy()
+                            st.session_state.attendance[name] = True
+                            save_players_to_db(st.session_state.players_dict)
+                            st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
+                            st.rerun()
+                    else: st.error("선수 이름을 먼저 입력해 주세요.")
+    with col2:
+        with st.container(border=True):
+            st.write("**② 경기 설정**")
+            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
+            st.write("") 
+            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
+                st.cache_data.clear()
+                st.session_state.players_dict = load_players_from_db()
+                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
+                st.rerun()
 
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
@@ -204,7 +187,7 @@ if st.session_state.players_dict:
             col_main, col_btn1, col_btn2 = st.columns([5.5, 1.2, 1.2])
             
             with col_main:
-                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v14_{player}")
+                selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
                 st.session_state.attendance[player] = selected
                 
                 st.write(
