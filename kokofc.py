@@ -5,41 +5,11 @@ import pandas as pd
 
 # [UI/UX 디자인 업그레이드] 창과 방패 구도 + 윙어 방향성 + 가독성 최적화 컬러 매칭
 POS_CONFIG = {
-    'PIVO (공격)': {
-        'emoji': '🔱', 
-        'label': '🔱 PIVO (공격)', 
-        'bg': '#FEE2E2',     # 연한 레드 (공격적, 열정)
-        'color': '#B91C1C',  # 딥 레드
-        'text': 'PIVO'
-    },
-    'ALA_L (좌윙)': {
-        'emoji': '◀️', 
-        'label': '◀️ ALA_L (좌윙)', 
-        'bg': '#EFF6FF',     # 연한 블루 (신속, 시원한 돌파)
-        'color': '#1D4ED8',  # 딥 블루
-        'text': 'ALA_L'
-    },
-    'ALA_R (우윙)': {
-        'emoji': '▶️', 
-        'label': '▶️ ALA_R (우윙)', 
-        'bg': '#ECFDF5',     # 연한 에메랄드 (안정감 있는 전진)
-        'color': '#047857',  # 딥 에메랄드
-        'text': 'ALA_R'
-    },
-    'FIXO (수비)': {
-        'emoji': '🛡️', 
-        'label': '🛡️ FIXO (수비)', 
-        'bg': '#FFF7ED',     # 연한 오렌지/앰버 (든든하고 무게감 있는 수비)
-        'color': '#C2410C',  # 딥 오렌지
-        'text': 'FIXO'
-    },
-    'GOLEIRO (키퍼)': {
-        'emoji': '🧤', 
-        'label': '🧤 GOLEIRO (키퍼)', 
-        'bg': '#F1F5F9',     # 톤다운된 슬레이트 그레이 (최후방의 차분함)
-        'color': '#475569',  # 묵직한 그레이
-        'text': 'GK'
-    }
+'PIVO (공격)': { 'emoji': '🔱', 'bg': '#FEE2E2', 'color': '#B91C1C', 'text': 'PIV' },
+'ALA_L (좌윙)': { 'emoji': '◀️', 'bg': '#EFF6FF', 'color': '#1D4ED8', 'text': 'AL' },
+'ALA_R (우윙)': { 'emoji': '▶️', 'bg': '#ECFDF5', 'color': '#047857', 'text': 'AR' },
+'FIXO (수비)': { 'emoji': '🛡️', 'bg': '#FFF7ED', 'color': '#C2410C', 'text': 'FIX' },
+'GOLEIRO (키퍼)': { 'emoji': '🧤', 'bg': '#F1F5F9', 'color': '#475569', 'text': 'GK' }
 }
 FIELD_POSITIONS = ['PIVO (공격)', 'ALA_L (좌윙)', 'ALA_R (우윙)', 'FIXO (수비)']
 GK_POSITION = 'GOLEIRO (키퍼)'
