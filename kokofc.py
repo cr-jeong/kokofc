@@ -27,7 +27,7 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 (선수등록/경기설정 영역) */
+    /* ① 데스크탑의 st.columns(2) 설정창만 모바일에서 세로 전환 */
     @media (max-width: 768px) {
         .stExpander [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -40,64 +40,18 @@ st.markdown("""
         }
     }
     
-    /* ② 명단 전체 이름+버튼 행은 모바일에서도 가로 1줄 유지 */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-
-    /* ③ [핵심 변경] 오직 명단 리스트 내부의 ⚙️ 버튼만 강제로 38px 고정 */
-    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button {
-        width: 38px !important;
-        max-width: 38px !important;
-        height: 38px !important;
-        padding: 0 !important;
-        font-size: 16px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border-radius: 10px !important; /* 토스 느낌의 부드러운 라운딩 */
-        margin-left: auto !important;   /* 무조건 우측 정렬 */
-    }
-    
-    /* ④ 명단 이름 폰트 크기 및 색상 */
+    /* ② 명단 이름 폰트 크기 및 색상 */
     .stCheckbox p {
         font-size: 16px !important;
         font-weight: 800 !important;
         color: var(--text-color) !important;
     }
     
-    /* ⑤ 체크박스 해제 시 흐려짐 효과 테마 대응 */
+    /* ③ 체크박스 해제 시 흐려짐 효과 테마 대응 */
     .stCheckbox [aria-checked="false"] ~ div p {
         opacity: 0.35 !important;
         text-decoration: line-through !important;
         color: var(--text-color) !important;
-    }
-    /* 명단 내부 버튼의 배경, 테두리, 그림자를 전부 투명하게 압수 */
-.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button {
-    background-color: transparent !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    width: auto !important;          /* 가로 꽉 차는 성질 죽이기 */
-    min-width: 0 !important;
-    margin-left: auto !important;     /* 우측 정렬 */
-    padding: 0 8px !important;
-    font-size: 18px !important;
-    }
-
-/* 버튼에 마우스 올리거나 눌렀을 때도 배경이 안 생기게 방어 */
-.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:hover,
-.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:active,
-.stCheckbox ~ div + div [data-testid="stHorizontalBlock"] button:focus {
-    background-color: transparent !important;
-    background: transparent !important;
-    color: inherit !important;
-    border: none !important;
-    box-shadow: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -148,7 +102,7 @@ for p in st.session_state.players_dict.keys():
     if p not in st.session_state.attendance:
         st.session_state.attendance[p] = True
 
-# --- 🎯 희망 포지션 관리 및 삭제 다이얼로그 (통합본) ---
+# --- 🎯 희망 포지션 관리 및 삭제 다이얼로그 ---
 @st.dialog("🎯 선수 설정 및 포지션 관리")
 def edit_position_dialog(player_name):
     st.write(f"🏃 **{player_name}** 선수의 설정을 변경합니다.")
@@ -163,7 +117,6 @@ def edit_position_dialog(player_name):
     )
     
     st.write("")
-    # 변경사항 저장과 선수 삭제 버튼 분할 배치
     d_col1, d_col2 = st.columns(2)
     with d_col1:
         if st.button("💾 변경사항 저장", use_container_width=True, type="primary"):
@@ -184,7 +137,18 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
     col1, col2 = st.columns(2)
     with col1:
         with st.container(border=True):
-            st.write("**① 선수 등록 (실시간 반영)**")
+            st.write("**① 경기 설정**")
+            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
+            st.write("") 
+            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
+                st.cache_data.clear()
+                st.session_state.players_dict = load_players_from_db()
+                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
+                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
+                st.rerun()
+    with col2:
+        with st.container(border=True):
+            st.write("**② 선수 등록 (실시간 반영)**")
             with st.form(key="player_add_form", clear_on_submit=True):
                 name_input = st.text_input("1. 선수 이름 입력", placeholder="예: 홍길동")
                 wished_input = st.multiselect("2. 희망 포지션 선택 (생략 가능)", options=ALL_POSITIONS, format_func=lambda x: POS_CONFIG[x]['label'])
@@ -200,17 +164,6 @@ with st.expander("⚙️ 설정 및 선수 등록 (터치해서 열기)", expand
                             st.success(f"'{name}' 선수가 임시 명단에 등록되었습니다!")
                             st.rerun()
                     else: st.error("선수 이름을 먼저 입력해 주세요.")
-    with col2:
-        with st.container(border=True):
-            st.write("**② 경기 설정**")
-            total_quarters = st.number_input("오늘 경기 쿼터 수 입력", min_value=1, max_value=12, value=7)
-            st.write("") 
-            if st.button("🔄 구글 시트 수동 새로고침", use_container_width=True):
-                st.cache_data.clear()
-                st.session_state.players_dict = load_players_from_db()
-                st.session_state.attendance = {p: True for p in st.session_state.players_dict.keys()}
-                st.success("구글 시트에서 명단을 다시 불러왔습니다!")
-                st.rerun()
 
 # 참여 명단 출력
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
@@ -235,8 +188,8 @@ if st.session_state.players_dict:
                     tag_htmls.append(f"<span style='padding: 2px 6px; margin-right: 4px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; {TAG_STYLES.get(p, '')}'>{label}</span>")
             tags_inline = "".join(tag_htmls)
             
-            # 버튼 통합으로 인해 컬럼을 2개로 축소 (가로 깨짐 원천 차단)
-            col_main, col_btn = st.columns([0.88, 0.12])
+            # 🌟 3분할 샌드위치 구조로 모바일 1줄 정렬 강제 고정
+            col_main, col_space, col_btn = st.columns([0.65, 0.20, 0.15])
             
             with col_main:
                 selected = st.checkbox(f"🏃 {player}", value=is_active, key=f"att_v15_{player}")
@@ -249,8 +202,12 @@ if st.session_state.players_dict:
                     unsafe_allow_html=True
                 )
                 
+            with col_space:
+                pass # 여백 방패막이 역할
+                
             with col_btn:
-                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=True):
+                # use_container_width=False 로 늘어나는 현상 완전 종결
+                if st.button("⚙️", key=f"edit_btn_{player}", use_container_width=False):
                     edit_position_dialog(player)
             
             st.write("<div style='margin: 2px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
@@ -259,7 +216,7 @@ else:
     
 st.markdown("---")
 
-# 알고리즘 (동일)
+# 알고리즘
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: return None
@@ -314,9 +271,8 @@ if st.session_state.lineups:
     for quarter, data in st.session_state.lineups.items():
         kakao_text += f"-----[{quarter}]-----\n🔱 PIVO : {data['starters'][0] or '미지정'}\n◀️ ALA_L : {data['starters'][1] or '미지정'}\n▶️ ALA_R : {data['starters'][2] or '미정'}\n🛡️ FIXO : {data['starters'][3] or '미지정'}\n🧤 GOLEIRO : {data['starters'][4] or '미정'}\n\n"
 
-    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: background 0.2s;">
-    💬 카카오톡 공유용 라인업 복사하기
-</button>
+    # 카카오톡 버튼 최신 플랫 및 라운딩 디자인 적용
+    html_button_code = f"""<button onclick="copyToClipboard()" style="width: 100%; background-color: #FEE500; color: #191919; border: none; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">💬 카카오톡 공유용 라인업 복사하기</button>
 <script>
 function copyToClipboard() {{
     var textToCopy = `{kakao_text}`;
@@ -339,7 +295,7 @@ function copyToClipboard() {{
         edited_data.append(row)
     st.data_editor(edited_data, use_container_width=True, num_rows="fixed")
     
-    # 통계 표 섹션
+    # 통계 표 섹션 (토스/카카오 스타일 초슬림 격자선 디자인)
     st.write("### 📊 최종 포지션별 상세 출전 통계")
     last_quarter = list(st.session_state.lineups.keys())[-1]
     final_fields = st.session_state.lineups[last_quarter]["field_snapshot"]
@@ -358,24 +314,22 @@ function copyToClipboard() {{
     html_tbody = df_stats.to_html(index=False, header=False, classes='modern-table')
     tbody_content = html_tbody.split('<tbody>')[1].split('</tbody>')[0]
     
-    # ⚠️ 이 문자열(f""" ... """) 구조가 깨지지 않게 통째로 복사해야 해!
     custom_html = f"""
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid var(--secondary-background-color); contain: content;">
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); contain: content;">
         <style>
             .modern-table {{
                 width: 100%;
                 min-width: 600px;
-                border-collapse: separate !important; /* 부드러운 라운딩을 위해 separate로 변경 */
+                border-collapse: separate !important;
                 border-spacing: 0;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
                 font-size: 14px;
                 background-color: var(--background-color);
                 color: var(--text-color);
-                border: 1px solid rgba(0, 0, 0, 0.08) !important; /* 토스풍 초슬림 외곽선 */
-                border-radius: 12px; /* 전체 테이블 모서리 곡률 */
+                border: 1px solid rgba(0, 0, 0, 0.08) !important;
+                border-radius: 12px;
                 overflow: hidden;
             }}
-            /* 다크모드 대응을 위한 미세 조정 */
             @media (prefers-color-scheme: dark) {{
                 .modern-table {{
                     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -385,7 +339,7 @@ function copyToClipboard() {{
                 background-color: var(--secondary-background-color);
                 color: var(--text-color);
                 font-weight: 600;
-                padding: 14px 8px; /* 위아래 여백을 주어 더 시원하게 변경 */
+                padding: 14px 8px;
                 border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
                 border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
                 text-align: center !important;
@@ -393,22 +347,18 @@ function copyToClipboard() {{
             }}
             .modern-table td {{
                 padding: 14px 8px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important; /* 아주 부드러운 가로 구분선 */
-                border-right: 1px solid rgba(0, 0, 0, 0.04) !important; /* 아주 부드러운 세로 구분선 */
+                border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+                border-right: 1px solid rgba(0, 0, 0, 0.04) !important;
                 text-align: center !important; 
                 white-space: nowrap;
             }}
-            /* 가장 우측과 하단 테두리 중복 제거로 깔끔하게 정리 */
             .modern-table th:last-child, .modern-table td:last-child {{
                 border-right: none !important;
             }}
             .modern-table tr:last-child td {{
                 border-bottom: none !important;
             }}
-            .modern-table tr:hover {{ 
-                background-color: rgba(0, 0, 0, 0.02); 
-            }}
-            /* 첫 번째 열(선수명) 고정 및 토스 스타일 그림자 제거 후 깔끔하게 */
+            .modern-table tr:hover {{ background-color: rgba(0,0,0,0.02); }}
             .modern-table td:nth-child(1) {{
                 font-weight: 600;
                 position: sticky;
@@ -416,7 +366,6 @@ function copyToClipboard() {{
                 background-color: var(--background-color);
                 border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
             }}
-            /* 필드 출전 횟수 하이라이트 투명도 및 색상 세련되게 다듬기 */
             .modern-table td:nth-child(3) {{
                 background-color: rgba(34, 197, 94, 0.08) !important;
                 color: #22C55E !important;
