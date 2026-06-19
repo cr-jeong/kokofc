@@ -292,7 +292,8 @@ if st.session_state.players_dict:
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
 else:
     st.info("등록된 선수가 없습니다.")
-    
+
+# [8. 균등 분배 알고리즘 핵심 엔진]
 def generate_fair_lineups(players_pool, attendance_dict, total_q):
     active_players = [p for p, att in attendance_dict.items() if att and p in players_pool]
     if len(active_players) < 5: 
@@ -304,39 +305,41 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in ALL_POSITIONS} for name in active_players}
     
+    # 🔥 [추가] 각 선수의 '연속 휴식 쿼터 수'를 기록할 딕셔너리
+    consecutive_rests = {name: 0 for name in active_players}
+    
     last_quarter_gk = None
 
     for q in range(1, total_q + 1):
         starters = {}
         
         # ---------------------------------------------------------
-        # 단계 A: 이번 쿼터 골레이로(GK) 먼저 선발 (🔥 선호도 필터링 추가)
+        # 단계 A: 이번 쿼터 골레이로(GK) 먼저 선발
         # ---------------------------------------------------------
-        # 1. 오늘 참석자 중 골레이로를 희망 포지션에 넣은 사람만 먼저 거릅니다.
         gk_candidates = [p for p in active_players if GK_POSITION in players_pool[p]]
-        
-        # 2. 만약 골레이로를 희망한 사람이 '아무도 없다면', 어쩔 수 없이 전원 후보로 등록합니다.
         if not gk_candidates:
             gk_candidates = active_players.copy()
             
         random.shuffle(gk_candidates)
         
-        # 연속 2쿼터 키퍼 방지 (후보가 2명 이상일 때만 작동)
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1:
             gk_candidates.remove(last_quarter_gk)
             
-        # 키퍼 출전 횟수가 가장 적은 순으로 정렬
         gk_candidates.sort(key=lambda name: gk_counts[name])
         chosen_gk = gk_candidates[0]
         
         starters[GK_POSITION] = chosen_gk
         
         # ---------------------------------------------------------
-        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (동일)
+        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (🔥 연속 휴식 조건 반영)
         # ---------------------------------------------------------
         field_candidates = [p for p in active_players if p != chosen_gk]
         random.shuffle(field_candidates)
-        field_candidates.sort(key=lambda name: field_counts[name])
+        
+        # 정렬 기준 고도화:
+        # 1순위: 연속 휴식 횟수가 많은 사람 역순 (-consecutive_rests) -> 많이 쉰 사람 무조건 선발
+        # 2순위: 총 필드 출전 횟수가 적은 사람 (field_counts)
+        field_candidates.sort(key=lambda name: (-consecutive_rests[name], field_counts[name]))
         
         quarter_field_players = field_candidates[:4]
         
@@ -366,8 +369,20 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
             starters[pos] = best_match[idx]
             
         # ---------------------------------------------------------
-        # 단계 D: 전역 변수 트래킹 정보 업데이트 (동일)
+        # 단계 D: 전역 변수 트래킹 정보 및 휴식 카운트 업데이트 🔥
         # ---------------------------------------------------------
+        # 이번 쿼터에 어떤 형태로든 뛴 사람들 (필드 4명 + 키퍼 1명)
+        players_playing_this_quarter = set(list(best_match) + [chosen_gk])
+        
+        for name in active_players:
+            if name in players_playing_this_quarter:
+                # 이번 쿼터에 뛰었으면 연속 휴식 카운트 리셋!
+                consecutive_rests[name] = 0
+            else:
+                # 이번 쿼터에 벤치에서 쉬었으면 휴식 카운트 +1
+                consecutive_rests[name] += 1
+
+        # 기존 출전 카운트 업데이트 로직
         gk_counts[chosen_gk] += 1
         player_pos_history[chosen_gk][GK_POSITION] += 1
         last_quarter_gk = chosen_gk
