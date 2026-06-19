@@ -40,6 +40,13 @@ st.markdown("""
         }
     }
     
+    /* 🔥 [디자인 분리] 메인 설정창(Expander) 타이틀 글자 크기 키우기 */
+    [data-testid="stExpander"] details summary p {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: var(--text-color) !important;
+    }
+    
     /* 명단 체크박스 테두리 UI 정리 */
     div:has(> [data-testid="stCheckbox"]) {
         border: none !important;
@@ -97,7 +104,7 @@ st.markdown("""
         padding: 10px 8px;
         white-space: nowrap;
         position: relative;
-        z-index: 1; /* 일반 셀은 최하단 레이어 고정 */
+        z-index: 1;
     }
     
     .toss-table th {
@@ -110,11 +117,11 @@ st.markdown("""
     .toss-table tr:last-child td { border-bottom: none; }
     .toss-table tr:hover { background-color: rgba(0, 0, 0, 0.015); }
     
-    /* [핵심 최적화] 클래스 기반 첫 번째 열 절대 방어벽 */
+    /* 클래스 기반 첫 번째 열 절대 방어벽 */
     .sticky-col {
         position: sticky !important;
         left: 0 !important;
-        z-index: 99999 !important; /* 브라우저의 그 어떤 자식 요소보다 위에 배치 */
+        z-index: 99999 !important;
         font-weight: 600;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
     }
@@ -283,7 +290,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters = {pos: None for pos in ALL_POSITIONS}
         remaining = active_players.copy()
         
-        # 골키퍼 배정 (지정 희망자 우선순위 및 최소 출전자 계산)
+        # 골키퍼 배정
         gk_candidates = [p for p in remaining if GK_POSITION in players_pool[p]]
         if not gk_candidates: gk_candidates = remaining.copy()
         if last_quarter_gk in gk_candidates and len(gk_candidates) > 1: gk_candidates.remove(last_quarter_gk)
