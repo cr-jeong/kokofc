@@ -252,7 +252,7 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
 
 # 버튼 무게감 카피 추가
 st.write("")
-st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려하여 가장 공평한 라인업을 계산합니다.")
+st.caption("✨ 모든 인원의 출전 횟수와 포지션 밸런스를 고려합니다.")
 if st.button("🚀 KOKO FC 라인업 자동 생성", type="primary", use_container_width=True):
     active_count = sum(1 for att in st.session_state.attendance.values() if att)
     if active_count < 5: st.error("오늘 경기 참석자가 최소 5명 이상이어야 라인업을 짜 수 있습니다! 체크박스를 확인해주세요.")
