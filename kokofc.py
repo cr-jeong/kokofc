@@ -301,13 +301,14 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
     
     lineups_dict = {}
     
-    # 골레이로와 필드는 완벽히 독립된 카운트를 가집니다.
     field_counts = {name: 0 for name in active_players} 
     gk_counts = {name: 0 for name in active_players}    
     player_pos_history = {name: {pos: 0 for pos in ALL_POSITIONS} for name in active_players}
     consecutive_rests = {name: 0 for name in active_players}
     
     last_quarter_gk = None
+    # 🔥 [추가] 직전 쿼터 필드 플레이어 명단 트래킹
+    last_quarter_field = set()
 
     for q in range(1, total_q + 1):
         starters = {}
@@ -330,17 +331,19 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         starters[GK_POSITION] = chosen_gk
         
         # ---------------------------------------------------------
-        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발 (🔥 필드 균등 최우선 정렬)
+        # 단계 B: 이번 쿼터 필드 플레이어 4명 선발
         # ---------------------------------------------------------
         field_candidates = [p for p in active_players if p != chosen_gk]
         random.shuffle(field_candidates)
         
-        # 💡 정렬 기준 전면 수정:
-        # 1순위: 오직 필드 출전 횟수(field_counts)가 적은 사람 -> 요건 최우선 반영!
-        # 2순위: 그 안에서 연속 휴식 횟수가 많은 사람 (-consecutive_rests)
+        # 💡 정렬 기준 (우선순위 대폭 정교화):
+        # 1순위: 오직 필드 출전 횟수(field_counts)가 적은 사람 (최우선 요건)
+        # 2순위: 연속 휴식 횟수가 많은 사람 (-consecutive_rests)
+        # 3순위: 직전 쿼터에 필드를 뛰었던 사람은 뒤로 밀기 (1 if name in last_quarter_field else 0) 🔥연속출전 방지!
         field_candidates.sort(key=lambda name: (
             field_counts[name], 
-            -consecutive_rests[name]
+            -consecutive_rests[name],
+            1 if name in last_quarter_field else 0
         ))
         
         quarter_field_players = field_candidates[:4]
@@ -384,6 +387,9 @@ def generate_fair_lineups(players_pool, attendance_dict, total_q):
         gk_counts[chosen_gk] += 1
         player_pos_history[chosen_gk][GK_POSITION] += 1
         last_quarter_gk = chosen_gk
+        
+        # 다음 쿼터 연속 출전 방지를 위해 기억해두기 🔥
+        last_quarter_field = set(best_match) 
         
         for pos in FIELD_POSITIONS:
             p_name = starters[pos]
