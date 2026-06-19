@@ -19,7 +19,6 @@ ALL_POSITIONS = FIELD_POSITIONS + [GK_POSITION]
 st.set_page_config(page_title="⚽ KOKO FC 😈 라인업 매니저", layout="centered")
 
 # --- 화면 제어 및 반응형 레이아웃 CSS ---
-# --- 화면 제어 및 반응형 레이아웃 CSS ---
 st.markdown("""
     <style>
     /* 모바일 브라우저 화면 전체 흔들림 차단 */
@@ -37,13 +36,13 @@ st.markdown("""
         .stExpander [data-testid="stHorizontalBlock"] > div {
             width: 100% !important;
             max-width: 100% !important;
+            flex: 1 1 auto !important; /* 모바일에서 꽉 차게 변경 */
         }
     }
     
-    /* ② [해결책] 명단 전체 이름+버튼 행은 모바일에서도 절대 세로로 찢어지지 않고 1줄 유지 */
-    [data-testid="dataGridElementContainer"] ~ div [data-testid="stHorizontalBlock"],
+    /* ② 명단 전체 이름+버튼 행은 모바일에서도 절대 세로로 찢어지지 않고 1줄 유지 */
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"],
-    div[data-testid="stBlock"] [data-testid="stHorizontalBlock"] {
+    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -51,10 +50,22 @@ st.markdown("""
         width: 100% !important;
     }
     
-    /* 명단 내부의 컬럼 비율이 무너지지 않도록 강제 지정 */
-    [data-testid="stHorizontalBlock"] > div:nth-child(1) { flex: 5.5 1 0% !important; min-width: 0 !important; }
-    [data-testid="stHorizontalBlock"] > div:nth-child(2) { flex: 1.2 0 0% !important; min-width: 42px !important; }
-    [data-testid="stHorizontalBlock"] > div:nth-child(3) { flex: 1.2 0 0% !important; min-width: 42px !important; }
+    /* ❗ [버그 해결] 설정창 내부 컬럼과 완전히 분리하여 '전체 명단 컨테이너' 내부의 컬럼 비율만 조절 */
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
+    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(1) { 
+        flex: 5.5 1 0% !important; 
+        min-width: 0 !important; 
+    }
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(2),
+    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(2) { 
+        flex: 1.2 0 0% !important; 
+        min-width: 42px !important; 
+    }
+    .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(3),
+    [data-testid="stContainer"] [data-testid="stHorizontalBlock"] > div:nth-child(3) { 
+        flex: 1.2 0 0% !important; 
+        min-width: 42px !important; 
+    }
 
     /* 버튼 내부 텍스트 패딩 조정으로 모바일에서 버튼이 찌그러지는 현상 방지 */
     [data-testid="stHorizontalBlock"] button {
