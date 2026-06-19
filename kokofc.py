@@ -56,7 +56,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("⚽ KOKO FC 😈 라인업 매니저")
-st.caption("참석 체크 + 앱 내 실시간 포지션 수정 기능 + [카톡 복사] 대기 명단 제외 버전!")
+st.caption("KOKO 화이팅!! 버그 제보 환영"\n"카톡 복사 추가, 기능 수정 중")
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -197,7 +197,7 @@ if st.session_state.players_dict:
             )
             
             # 3. 미니멀 투명 슬림 버튼 스타일로 이름 하단 배치 (타협안 안착)
-            if st.button(f"⚙️ {player} 포지션/삭제 설정", key=f"edit_btn_{player}", use_container_width=True):
+            if st.button(f"⚙️ 포지션 설정/선수 삭제", key=f"edit_btn_{player}", use_container_width=True):
                 edit_position_dialog(player)
             
             st.write("<div style='margin: 4px 0; border-bottom: 1px dashed var(--secondary-background-color);'></div>", unsafe_allow_html=True)
