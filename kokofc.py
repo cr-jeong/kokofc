@@ -141,17 +141,25 @@ with col2:
             st.success("구글 시트에서 명단을 다시 불러왔습니다!")
             st.rerun()
 
-# 참여 명단 출력 (체크박스 오류 완벽 해결 및 폰트 크기 고정 버전!)
+# 참여 명단 출력 (미참석 시 이름까지 완벽하게 흐려지는 최종본! 🌟)
 st.write(f"### 👥 전체 명단 ({len(st.session_state.players_dict)}명)")
 if st.session_state.players_dict:
-    # 텍스트 크기를 16px 볼드로 고정하고 스타일을 다듬는 순정 CSS 주입
+    # 체크박스 해제 시 이름까지 흐려지게 만드는 맞춤형 CSS 주입
     st.markdown(
         """
         <style>
-        /* 체크박스 라벨의 글자 크기를 16px bold로 변경 */
+        /* 기본 체크박스 라벨 스타일 (16px bold) */
         .stCheckbox p {
             font-size: 16px !important;
             font-weight: bold !important;
+            transition: all 0.2s ease;
+        }
+        
+        /* 미참석(체크 해제)된 행의 스타일을 제어하기 위한 투명도 처리 */
+        .unselected-player {
+            opacity: 0.4 !important;
+            text-decoration: line-through !important;
+            color: #9CA3AF !important;
         }
         </style>
         """,
@@ -186,12 +194,20 @@ if st.session_state.players_dict:
             with col_left:
                 is_active = st.session_state.attendance.get(player, True)
                 
-                # 순정 체크박스로 기능을 100% 살리고, 이름 크기는 위 CSS가 알아서 16px로 띄워줍니다!
-                cb_label = f"🏃 {player}"
-                selected = st.checkbox(cb_label, value=is_active, key=f"att_v6_{player}")
-                st.session_state.attendance[player] = selected
+                # 미참석 상태일 때 이름에도 흐림 효과+취소선을 주기 위해 별도 컨테이너로 감싸기
+                # markdown 내부에서 class를 동적으로 부여합니다.
+                player_class = "" if is_active else "class='unselected-player'"
                 
-                # 미참석 시 태그 투명도 조절 및 모바일 하단 여백 확보
+                # 이름 부분 출력 (HTML 스타일과 순정 체크박스의 결합)
+                cb_label = f"🏃 {player}"
+                
+                # st.markdown을 통해 div로 감싸서 체크박스 전체 스타일을 제어합니다.
+                st.markdown(f"<div {player_class}>", unsafe_allow_html=True)
+                selected = st.checkbox(cb_label, value=is_active, key=f"att_v7_{player}")
+                st.session_state.attendance[player] = selected
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+                # 태그 영역 (이름과 동일하게 활성/비활성 싱크 맞춤)
                 st.write(
                     f"""<div style='padding-left: 28px; margin-top: 4px; margin-bottom: 12px; opacity: {1.0 if selected else 0.4};'>
                         <div style='display: flex; flex-wrap: wrap; gap: 4px;'>
