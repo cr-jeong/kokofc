@@ -49,6 +49,18 @@ st.markdown("""
         align-items: center !important;
         width: 100% !important;
     }
+
+    [data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2) button {
+    width: 38px !important;       /* 버튼 가로 크기 제한 */
+    height: 38px !important;      /* 버튼 세로 크기 제한 */
+    padding: 0 !important;         /* 내부 여백 제거로 이모지 중앙 정렬 */
+    font-size: 16px !important;    /* 이모지 크기 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important; /* 부드러운 라운딩 */
+    margin-left: auto !important;  /* 버튼을 오른쪽 끝으로 밀착 */
+    }
     
     /* 명단 컨테이너 내부 컬럼 비율 조절 (이름 영역 확대 및 버튼 안정화) */
     .stCheckbox ~ div + div [data-testid="stHorizontalBlock"] > div:nth-child(1),
