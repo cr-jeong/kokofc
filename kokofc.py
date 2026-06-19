@@ -66,10 +66,9 @@ st.markdown("""
         font-weight: 700 !important;
     }
     
-    /* 기존 선수들 체크 해제 시 취소선 및 음영 정상 복구 */
+    /* 💡 [수정 포인트] 취소선을 완전히 삭제하고, 미출석 선수는 은은한 음영(opacity)만 적용합니다. */
     [data-testid="stCheckbox"] [aria-checked="false"] ~ div p {
         opacity: 0.3 !important;
-        text-decoration: line-through !important;
     }
     
     @media (max-width: 768px) {
