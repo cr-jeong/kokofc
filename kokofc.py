@@ -342,46 +342,48 @@ function copyToClipboard() {{
     custom_html = f"""
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; margin-top: 10px; border-radius: 8px; border: 1px solid var(--secondary-background-color); contain: content;">
         <style>
-            .modern-table {{
+            .modern-table {
                 width: 100%;
                 min-width: 600px;
-                border-collapse: collapse;
+                border-collapse: collapse !important;
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
                 font-size: 14px;
                 background-color: var(--background-color);
                 color: var(--text-color);
-            }}
-            .modern-table th {{
+                border: 1px solid rgba(128, 128, 128, 0.3) !important; /* 전체 외곽 테두리 부활 */
+            }
+            .modern-table th {
                 background-color: var(--secondary-background-color);
                 color: var(--text-color);
                 font-weight: 600;
                 padding: 12px 6px;
-                border: 1px solid var(--secondary-background-color);
+                border: 1px solid rgba(128, 128, 128, 0.3) !important; /* 헤더 격자 테두리 */
                 text-align: center !important;
                 white-space: nowrap;
-            }}
-            .modern-table th.main-header {{
+            }
+            .modern-table th.main-header {
                 opacity: 0.9;
-            }}
-            .modern-table td {{
+            }
+            .modern-table td {
                 padding: 12px 6px;
-                border: 1px solid var(--secondary-background-color);
+                border: 1px solid rgba(128, 128, 128, 0.2) !important; /* 데이터 셀 격자 테두리 부활 */
                 text-align: center !important; 
                 white-space: nowrap;
-            }}
-            .modern-table tr:hover {{ background-color: var(--secondary-background-color); }}
-            .modern-table td:nth-child(1) {{
+            }
+            .modern-table tr:hover { background-color: var(--secondary-background-color); }
+            .modern-table td:nth-child(1) {
                 font-weight: bold;
                 position: sticky;
                 left: 0;
                 background-color: var(--background-color);
                 box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            }}
-            .modern-table td:nth-child(3) {{
+                border-right: 1px solid rgba(128, 128, 128, 0.3) !important;
+            }
+            .modern-table td:nth-child(3) {
                 background-color: rgba(34, 197, 94, 0.15) !important;
                 color: #4ADE80 !important;
                 font-weight: bold;
-            }}
+            }
         </style>
         
         <table class="modern-table">
